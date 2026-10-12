@@ -391,6 +391,34 @@ body.chatpg #app{padding-bottom:calc(96px + env(safe-area-inset-bottom))}
 .composer .ico{width:48px;height:48px;border-radius:50%;border:1.5px solid var(--line);font-size:24px;flex:none}
 .composer .send{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 
+/* чат: дополнения */
+.msg{cursor:pointer}
+.msg.flash .mb,.msg.flash .mcard,.msg.flash .mimg{box-shadow:0 0 0 3px var(--mint2)}
+.mrep{border-left:3px solid var(--mint2);padding:2px 0 2px 8px;margin:0 0 6px;font-size:13px;opacity:.85}.mrep b{display:block;font-size:12px}
+.mb a{color:inherit;text-decoration:underline}
+.mre{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}.mre button{border:0;border-radius:999px;background:var(--card);padding:3px 9px;font-size:13px;font-weight:700}.mre button.on{background:var(--mint);color:#0e0f11}
+.composer{flex-wrap:wrap}
+.cstrip{flex:0 0 100%;display:flex;align-items:center;gap:8px;background:var(--card);border-radius:16px;padding:8px 12px}.cstrip span{flex:1;min-width:0;font-weight:700;font-size:13px}.cstrip small{display:block;color:var(--muted);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cstrip button{border:0;background:none;font-size:16px}
+.cpin{position:sticky;top:calc(64px + env(safe-area-inset-top));z-index:4;margin:0 12px;background:var(--mint);color:#0e0f11;border-radius:16px;padding:9px 14px;font-size:14px;font-weight:650;display:flex;gap:8px;white-space:nowrap;overflow:hidden}.cpin span{overflow:hidden;text-overflow:ellipsis}
+.mimg{background:var(--card);border-radius:20px;overflow:hidden;width:min(72vw,300px)}.mimg img{display:block;width:100%;object-fit:cover;background:var(--soft)}.mcap{padding:8px 12px;font-size:15px}
+.msg.me .mimg{background:var(--ink);color:var(--bg)}
+.mgeo{background:var(--card);border-radius:20px;overflow:hidden;width:min(76vw,300px)}.mgeo .map{position:relative;height:150px;overflow:hidden;background:var(--mint)}.mgeo .map img{position:absolute;left:50%;top:50%;width:256px;height:256px;transform:translate(-50%,-50%)}
+.mgeo .map i{position:absolute;width:18px;height:18px;border-radius:50%;background:var(--bad);border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.4);transform:translate(-50%,-50%)}
+.mgeo .map{--o:0}.mgeo .gi{padding:10px 12px}.mgeo .gi b{display:block;font-size:14px}.mgeo .gi small{color:var(--muted);font-size:12px}.mgeo .chip{height:34px;font-size:13px;text-decoration:none;display:inline-flex;align-items:center;background:var(--bg);color:var(--ink)}
+.msg.geo .map img{left:0;top:0;transform:none;width:100%;height:auto}
+.mpoll{display:flex;flex-direction:column;gap:6px;margin:10px 0 6px}.mpoll button{position:relative;overflow:hidden;border:0;border-radius:14px;background:var(--bg);padding:10px 12px;text-align:left;display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.mpoll .pvb{position:absolute;left:0;top:0;bottom:0;background:var(--mint);opacity:.55;transition:width .4s var(--ease)}.mpoll .pt{position:relative;flex:1;font-weight:650}.mpoll b{position:relative}.mpoll small{position:relative;flex:0 0 100%;color:var(--muted);font-size:11.5px}.mpoll button.on{box-shadow:inset 0 0 0 1.5px var(--ink)}
+.rx{display:flex;justify-content:space-between;gap:6px}.rx button{flex:1;height:52px;border:0;border-radius:16px;background:var(--card);font-size:24px}.rx button.on{background:var(--mint)}
+.att{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.att button,.att label{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;height:92px;border:0;border-radius:20px;background:var(--card);font-weight:650;font-size:13.5px;cursor:pointer;text-align:center}.att span{font-size:26px}
+.ped{position:fixed;inset:0;z-index:80;background:#0b0c0d;color:#fff;display:flex;flex-direction:column;touch-action:none}
+.pbar{display:flex;align-items:center;gap:8px;padding:calc(10px + env(safe-area-inset-top)) 12px 8px}.pbar b{flex:1;font-size:18px}
+.pb{width:44px;height:44px;border-radius:50%;border:1.5px solid #3a3d42;background:none;color:#fff;font-size:20px}
+.pcv{flex:1;min-height:0;display:grid;place-items:center;padding:6px}.pcv canvas{touch-action:none;border-radius:12px;max-width:100%;max-height:100%}
+.ptools,.pcols{display:flex;gap:6px;justify-content:center;padding:6px 10px;flex-wrap:wrap}
+.ptools button{width:46px;height:44px;border-radius:14px;border:0;background:#1d1f23;color:#fff;font-size:19px}.ptools button.on{background:#fff;color:#000}
+.pcols button{width:32px;height:32px;border-radius:50%;border:2px solid #3a3d42}.pcols button.on{box-shadow:0 0 0 3px #0b0c0d,0 0 0 5px #fff}.pcols .pw{background:#1d1f23;color:#fff;font-size:14px;width:40px;border-radius:12px}
+.psend{display:flex;gap:8px;padding:8px 12px calc(12px + env(safe-area-inset-bottom))}.psend input{flex:1;background:#1d1f23;color:#fff;border-radius:24px}.psend .send{width:52px;height:52px;border-radius:50%;background:#cde9e2;color:#0b0c0d;border:0}
+
 /* сканер QR */
 .qrscan{position:fixed;inset:0;z-index:70;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;animation:fadeIn .25s}
 .qrscan.out{opacity:0;transition:opacity .2s}
@@ -605,6 +633,7 @@ let closing=0,ignorePop=0;
 function closeAllSheets(){const n=sheets.length;if(!n)return;sheets.length=0;drawSheet();ignorePop++;history.go(-n)}
 function back(){if(closing)return;closing=1;history.back();setTimeout(()=>closing=0,350)}
 window.addEventListener('popstate',()=>{
+  if(document.querySelector('.ped'))return;
   closing=0;if(ignorePop>0){ignorePop--;return}
   if(viewerEl){viewerEl.remove();viewerEl=null;return}
   if(sheets.length){sheets.pop();drawSheet();render();return}
@@ -988,7 +1017,7 @@ async function syncNow(){
   try{
     await push();await pull();
     if(migrate())await push();
-    if(SY.role!=='worker')await pushPhotos().catch(e=>SY.phErr=e.message);
+    await pushPhotos().catch(e=>SY.phErr=e.message);
     SY.err='';SY.last=Date.now();setTimeout(()=>autoBackup(),2000);
   }catch(e){SY.err=(e&&(e.message||e.error_description))||String(e);console.error(e);
     if(SY.role==='worker'){Object.keys(SY.pend).forEach(k=>{if(k.startsWith('tasks/'))delete SY.pend[k]})}}
@@ -1900,7 +1929,7 @@ const IC={
   pay:'<svg viewBox="0 0 24 24"><rect x="3" y="6.5" width="18" height="11" rx="2.5"/><circle cx="12" cy="12" r="2.4"/><path d="M6.5 9.5v5M17.5 9.5v5"/></svg>',
   photo:'<svg viewBox="0 0 24 24"><path d="M4 8.5h3.2L9 6h6l1.8 2.5H20V19H4z"/><circle cx="12" cy="13.3" r="3.3"/></svg>'};
 /* ================= Стройка 2.2: бизнес-функции ================= */
-const APP_VERSION='3.6';
+const APP_VERSION='3.7';
 const LOGC=['work','expenses','payments','est','payplan','cash','objects','tools'];
 const TRASHC=['objects','tasks','work','workers','rates','est','plans','expenses','payments','fuelDays','tools','events','photos','payplan','cash','checks','tpls','team'];
 const STAGES={before:'До',work:'Процесс',after:'После',hidden:'Скрытые'};
@@ -3040,7 +3069,7 @@ function nativeInit(){
 
 /* ---------- действия ---------- */
 function bizInit(){
-planInit();workersInit();chatInit();
+planInit();workersInit();chatInit();chatInit2();
 Object.assign(A,{
   tab(el){ui.tab=el.dataset.id;const n=ui.page.length;ui.page=[];if(n)history.go(-n);render();window.scrollTo(0,0)},
   fab(el){const k=el.dataset.k,p=curPage();
@@ -3424,11 +3453,13 @@ function vChats(){
   return `<div class="wrap">${!me()?`<div class="alert warn"><i></i><span>Укажи «Моё имя» в Меню → Профиль, чтобы партнёр видел, кто пишет</span></div>`:''}
    <div class="list">${chs.map(ch=>{const l=last(ch),u=unreadIn(ch),t=chatTitle(ch);
      return `<button class="li" data-a="openChat" data-id="${esc(ch)}"><span class="av">${ch==='all'?'👥':esc(initials(t))}</span><span class="t"><b>${esc(t)}</b><small>${l?esc((l.by===chMe()?'Вы: ':(ch==='all'?l.by+': ':''))+msgText(l).split('\n')[0]):ch==='all'?'Для всех: партнёр и рабочие':'Нет сообщений'}</small></span><span class="r">${l?`<small>${chatTime(l)}</small>`:''}${u?`<span class="cun">${u}</span>`:''}</span></button>`}).join('')}</div>
+   ${('Notification' in window&&Notification.permission!=='granted')||capP('LocalNotifications')?`<button class="btn w" style="margin-top:10px" data-a="notifyOn">🔔 Включить уведомления</button>`:''}
    <p class="muted sm" style="margin:10px 6px">Сообщения синхронизируются через вашу базу, как объекты и работы. Рабочие видят общий чат и свои личные, если зайдут в приложение.</p></div>`;
 }
 const chatTime=m=>{const d=new Date(m.at||m.ts||0),t=today(),ds=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());return ds===t?pad(d.getHours())+':'+pad(d.getMinutes()):fdate(ds)};
 function msgHtml(m){
-  const mine=m.by===chMe(),tm=chatTime(m);
+  const mine=m.by===chMe(),tm=chatTime(m)+(m.edited?' · изм.':'');
+  const x=msgExtra(m);if(x)return x;
   if(m.kind==='tpl'){const t=m.tpl||{},T=TPL[t.type]||['💬','Сообщение'];
     const items=(t.items||[]).map((it,i)=>`<button class="mitem ${it.done?'done':''}" data-a="msgItem" data-id="${m.id}" data-i="${i}"><i>${it.done?'✓':''}</i><span>${esc(it.t)}${it.done&&it.by?`<small>${esc(it.by)}</small>`:''}</span></button>`).join('');
     const acts=[];
@@ -3437,20 +3468,20 @@ function msgHtml(m){
     if(t.type==='job'&&!t.done)acts.push(`<button class="chip" data-a="msgTasks" data-id="${m.id}">В задачи</button>`);
     if(t.objectId&&S.objects.find(o=>o.id===t.objectId))acts.push(`<button class="chip" data-a="openObj" data-id="${t.objectId}">Объект</button>`);
     acts.push(`<button class="chip" data-a="msgShare" data-id="${m.id}">Переслать</button>`);
-    return `<div class="msg tpl ${mine?'me':''}">${mine?'':`<b class="mby">${esc(m.by||'')}</b>`}<div class="mcard"><div class="mh"><span>${T[0]}</span><b>${T[1]}</b></div>
+    return `<div class="msg tpl ${mine?'me':''}" data-a="msgMenu" data-id="${m.id}">${mine?'':`<b class="mby">${esc(m.by||'')}</b>`}<div class="mcard"><div class="mh"><span>${T[0]}</span><b>${T[1]}</b></div>
       ${t.objectId?`<div class="mobj">🏠 ${esc(oname(t.objectId))}</div>`:''}
       ${(t.rows||[]).length?`<div class="mrows">${t.rows.map(([l,v])=>`<div><small>${esc(l)}</small><b>${esc(v)}</b></div>`).join('')}</div>`:''}
       ${items?`<div class="mitems">${items}</div>`:''}${t.note?`<p class="mnote">${esc(t.note)}</p>`:''}
-      <div class="chips" style="margin-top:8px;flex-wrap:wrap">${acts.join('')}</div></div><small class="mt">${tm}${t.done&&t.doneBy?' · ✓ '+esc(t.doneBy):''}</small></div>`}
-  return `<div class="msg ${mine?'me':''}">${mine?'':`<b class="mby">${esc(m.by||'')}</b>`}<div class="mb">${esc(m.text||'').replace(/\n/g,'<br>')}</div><small class="mt">${tm}</small></div>`;
+      <div class="chips" style="margin-top:8px;flex-wrap:wrap">${acts.join('')}</div></div>${reactHtml(m)}<small class="mt">${tm}${t.done&&t.doneBy?' · ✓ '+esc(t.doneBy):''}</small></div>`}
+  return `<div class="msg ${mine?'me':''}" data-a="msgMenu" data-id="${m.id}">${mine?'':`<b class="mby">${esc(m.by||'')}</b>`}<div class="mb">${replyHtml(m)}${linkify(esc(m.text||'')).replace(/\n/g,'<br>')}</div>${reactHtml(m)}<small class="mt">${tm}</small></div>`;
 }
 function chatListHtml(ch){
   let prev='';return chatMsgs(ch).map(m=>{const d=new Date(m.at||m.ts||0),ds=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
     const sep=ds!==prev?`<div class="mday">${ds===today()?'Сегодня':fdateY(ds)}</div>`:'';prev=ds;return sep+msgHtml(m)}).join('')||'<p class="empty">Напиши первое сообщение или отправь шаблон: закупка, выплата, отчёт по объекту</p>';
 }
 function vChat(ch){
-  return `<div class="chat"><div id="chatList">${chatListHtml(ch)}</div></div>
-   <div class="composer"><button class="ico" data-a="chatTpl" data-id="${esc(ch)}" aria-label="Шаблон">＋</button>
+  return `${pinHtml(ch)}<div class="chat"><div id="chatList">${chatListHtml(ch)}</div></div>
+   <div class="composer">${stripHtml()}<button class="ico" data-a="chatAtt" data-id="${esc(ch)}" aria-label="Вложение">＋</button>
     <textarea id="chatIn" rows="1" placeholder="Сообщение…" enterkeyhint="send"></textarea>
     <button class="ico send" data-a="chatSend" data-id="${esc(ch)}" aria-label="Отправить"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></button></div>`;
 }
@@ -3461,7 +3492,7 @@ function chatAfter(){const p=curPage();if(!p||p.t!=='chat'||!p.id)return;markRea
     ta.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&matchMedia('(pointer:fine)').matches){e.preventDefault();A.chatSend({dataset:{id:p.id}})}})}}
 /* обновить только ленту, не трогая поле ввода */
 function chatLive(){const p=curPage();if(!p||p.t!=='chat'||sheets.length)return false;
-  if(p.id){const el=g('chatList');if(!el)return false;const atEnd=innerHeight+scrollY>=document.body.scrollHeight-80;el.innerHTML=chatListHtml(p.id);markRead(p.id);chatBadge();if(atEnd)scrollTo(0,document.body.scrollHeight);return true}
+  if(p.id){const el=g('chatList');if(!el)return false;const atEnd=innerHeight+scrollY>=document.body.scrollHeight-80;el.innerHTML=chatListHtml(p.id);const pn=g('chatPin');if(pn)pn.outerHTML=pinHtml(p.id)||'<div id="chatPin"></div>';markRead(p.id);chatBadge();setTimeout(hydratePhotos,0);if(atEnd)scrollTo(0,document.body.scrollHeight);return true}
   render();return true}
 function onMsg(m,isNew){if(!isNew||m.by===chMe()||!chVisible(m.ch))return;const p=curPage();if(p&&p.t==='chat'&&p.id===m.ch)return;
   toast(`💬 ${m.by}: ${msgText(m).split('\n')[0].slice(0,60)}`);if(navigator.vibrate)navigator.vibrate(40);setTimeout(chatBadge,50)}
@@ -3502,8 +3533,11 @@ function repRows(oid){const s=objStats(oid);return [['Выполнено раб�
 function chatInit(){
   Object.assign(A,{
     chat(){openPage({t:'chat'})},
-    openChat(el){openPage({t:'chat',id:el.dataset.id})},
-    chatSend(el){const ta=g('chatIn'),t=(ta&&ta.value||'').trim();if(!t)return;sendMsg(el.dataset.id,{kind:'txt',text:t});ta.value='';ta.style.height='auto';try{sessionStorage.removeItem('draft:'+el.dataset.id)}catch(e){}chatLive();ta.focus()},
+    openChat(el){chatCtx={reply:null,edit:null};openPage({t:'chat',id:el.dataset.id})},
+    chatSend(el){const ta=g('chatIn'),t=(ta&&ta.value||'').trim();if(!t)return;
+      if(chatCtx.edit){const m=S.msgs.find(x=>x.id===chatCtx.edit);if(m&&m.text!==t){m.text=t;m.edited=true;put('msgs',m);commit(true)}chatCtx.edit=null}
+      else{const d={kind:'txt',text:t};if(chatCtx.reply){const r=S.msgs.find(x=>x.id===chatCtx.reply);if(r)d.reply={id:r.id,by:r.by,t:msgText(r).split('\n')[0].slice(0,80)};chatCtx.reply=null}sendMsg(el.dataset.id,d)}
+      const st=document.querySelector('.cstrip');if(st)st.remove();ta.value='';ta.style.height='auto';try{sessionStorage.removeItem('draft:'+el.dataset.id)}catch(e){}chatLive();ta.focus()},
     chatTpl(el){openSheet(tplSheet(el.dataset.id))},
     msgItem(el){const m=S.msgs.find(x=>x.id===el.dataset.id);if(!m)return;const it=m.tpl.items[+el.dataset.i];it.done=!it.done;it.by=it.done?chMe():'';put('msgs',m);commit(true);chatLive()},
     msgShare(el){const m=S.msgs.find(x=>x.id===el.dataset.id);if(m)shareText('Сообщение',msgText(m))},
@@ -3513,6 +3547,176 @@ function chatInit(){
       openSheet(paySheet(null,{objectId:t.objectId,amount:t.amount}));const id=m.id;setTimeout(()=>{const prev=SS.save;if(prev)SS.save=()=>{prev();const mm=S.msgs.find(x=>x.id===id);if(mm){mm.tpl.done=true;mm.tpl.doneBy=chMe();put('msgs',mm);commit(true)}}},0)},
     msgTasks(el){const m=S.msgs.find(x=>x.id===el.dataset.id);if(!m)return;const t=m.tpl;
       t.items.forEach(it=>put('tasks',{id:uid(),objectId:t.objectId||'',title:it.t,done:false,who:t.who||'',due:t.due||''}));t.done=true;t.doneBy=chMe();put('msgs',m);commit(true);toast(`Задач создано: ${t.items.length}`);chatLive()},
+  });
+}
+
+/* ================= Чат: меню, ответы, реакции, фото с рисованием, набросок, геопозиция, опросы, уведомления ================= */
+let chatCtx={reply:null,edit:null};
+const REACTS=['👍','✅','🔥','😂','👀','❤️'];
+const linkify=s=>s.replace(/(https?:\/\/[^\s<]+)/g,'<a href="$1" target="_blank" rel="noopener">$1</a>');
+function replyHtml(m){return m.reply?`<div class="mrep"><b>${esc(m.reply.by||'')}</b>${esc(m.reply.t||'')}</div>`:''}
+function reactHtml(m){const r=m.re||{},ks=Object.keys(r).filter(k=>r[k]&&r[k].length);if(!ks.length)return '';
+  return `<div class="mre">${ks.map(k=>`<button class="${r[k].includes(chMe())?'on':''}" data-a="msgReact" data-id="${m.id}" data-r="${k}">${k} ${r[k].length}</button>`).join('')}</div>`}
+function stripHtml(){const c=chatCtx.edit||chatCtx.reply;if(!c)return '';const m=S.msgs.find(x=>x.id===c);if(!m)return '';
+  return `<div class="cstrip"><span>${chatCtx.edit?'✏️ Изменение':'↩ Ответ '+esc(m.by||'')}<small>${esc(msgText(m).split('\n')[0].slice(0,70))}</small></span><button data-a="chatCtxX">✕</button></div>`}
+function pinHtml(ch){const m=S.msgs.find(x=>x.ch===ch&&x.pin);if(!m)return '<div id="chatPin"></div>';
+  return `<div id="chatPin" class="cpin" data-a="msgGo" data-id="${m.id}">📌 <span>${esc(msgText(m).split('\n')[0].slice(0,80))}</span></div>`}
+const tileOf=(lat,lng,z)=>{const n=2**z,x=(lng+180)/360*n,r=lat*Math.PI/180,y=(1-Math.log(Math.tan(r)+1/Math.cos(r))/Math.PI)/2*n;return {x,y}};
+function msgExtra(m){
+  const mine=m.by===chMe(),tm=chatTime(m)+(m.edited?' · изм.':''),head=mine?'':`<b class="mby">${esc(m.by||'')}</b>`,wrap=inner=>`<div class="msg ${mine?'me':''} ${m.kind}" data-a="msgMenu" data-id="${m.id}">${head}${inner}${reactHtml(m)}<small class="mt">${tm}</small></div>`;
+  if(m.kind==='img')return wrap(`<div class="mimg"><img data-ph="${m.img}" data-a="msgImg" data-id="${m.img}" alt="" style="aspect-ratio:${m.w||4}/${m.h||3}">${m.text?`<div class="mcap">${linkify(esc(m.text))}</div>`:''}</div>`);
+  if(m.kind==='geo'){const z=16,t=tileOf(m.lat,m.lng,z),tx=Math.floor(t.x),ty=Math.floor(t.y),px=(t.x-tx)*100,py=(t.y-ty)*100;
+    return wrap(`<div class="mgeo"><div class="map"><img src="https://tile.openstreetmap.org/${z}/${tx}/${ty}.png" alt="" onerror="this.style.display='none'"><i style="left:${px}%;top:${py}%"></i></div>
+      <div class="gi"><b>${esc(m.label||'Геопозиция')}</b><small>${m.lat.toFixed(5)}, ${m.lng.toFixed(5)}${m.acc?' · ±'+Math.round(m.acc)+' м':''}</small>
+      <div class="chips" style="margin-top:6px"><a class="chip" href="https://www.google.com/maps/search/?api=1&query=${m.lat},${m.lng}" target="_blank" rel="noopener">Google Карты</a><a class="chip" href="https://waze.com/ul?ll=${m.lat},${m.lng}&navigate=yes" target="_blank" rel="noopener">Waze</a></div></div></div>`)}
+  if(m.kind==='poll'){const tot=(m.opts||[]).reduce((s,o)=>s+(o.v||[]).length,0);
+    return wrap(`<div class="mcard"><div class="mh"><span>📊</span><b>${esc(m.q||'Опрос')}</b></div><div class="mpoll">${(m.opts||[]).map((o,i)=>{const n=(o.v||[]).length,me2=(o.v||[]).includes(chMe());
+      return `<button class="${me2?'on':''}" data-a="msgVote" data-id="${m.id}" data-i="${i}"><span class="pvb" style="width:${tot?n/tot*100:0}%"></span><span class="pt">${me2?'✓ ':''}${esc(o.t)}</span><b>${n||''}</b>${n?`<small>${esc((o.v||[]).join(', '))}</small>`:''}</button>`}).join('')}</div><small class="muted sm">Голосов: ${tot}</small></div>`)}
+  return null;
+}
+function msgMenuSheet(id){return ()=>{const m=S.msgs.find(x=>x.id===id);if(!m)return {title:'Сообщение',html:'<p class="empty">Удалено</p>'};
+  const mine=m.by===chMe(),canEdit=mine&&m.kind==='txt',canDel=mine||!isWorker();
+  return {title:'Сообщение',html:`<div class="rx">${REACTS.map(r=>`<button data-s="mR" data-id="${r}" class="${(m.re&&m.re[r]||[]).includes(chMe())?'on':''}">${r}</button>`).join('')}</div>
+   <div class="list menu" style="margin-top:12px">
+    <button class="li" data-s="mReply"><span>↩</span><span class="t"><b>Ответить</b></span></button>
+    <button class="li" data-s="mCopy"><span>⧉</span><span class="t"><b>Копировать текст</b></span></button>
+    <button class="li" data-s="mShare"><span>↗</span><span class="t"><b>Переслать в Viber / Telegram</b></span></button>
+    <button class="li" data-s="mPin"><span>📌</span><span class="t"><b>${m.pin?'Открепить':'Закрепить в чате'}</b></span></button>
+    ${m.kind==='txt'||m.kind==='tpl'?`<button class="li" data-s="mTask"><span>✅</span><span class="t"><b>Сделать задачей</b></span></button>`:''}
+    ${canEdit?`<button class="li" data-s="mEdit"><span>✏️</span><span class="t"><b>Изменить</b></span></button>`:''}
+    ${canDel?`<button class="li" data-s="mDel"><span>🗑</span><span class="t"><b class="neg">Удалить у всех</b></span></button>`:''}</div>
+   <p class="muted sm" style="margin:10px 6px 0">${esc(m.by||'')} · ${chatTime(m)}</p>`,
+  init(){
+    const done=()=>{back();setTimeout(()=>chatLive(),120)};
+    SS.mR=el=>{const r=el.dataset.id;m.re=m.re||{};const a=m.re[r]=m.re[r]||[],i=a.indexOf(chMe());i<0?a.push(chMe()):a.splice(i,1);put('msgs',m);commit(true);done()};
+    SS.mReply=()=>{chatCtx={reply:m.id,edit:null};back();setTimeout(()=>{render();const t=g('chatIn');t&&t.focus()},150)};
+    SS.mEdit=()=>{chatCtx={reply:null,edit:m.id};back();setTimeout(()=>{render();const t=g('chatIn');if(t){t.value=m.text||'';t.focus();t.dispatchEvent(new Event('input'))}},150)};
+    SS.mCopy=()=>{const t=m.kind==='geo'?`https://www.google.com/maps/search/?api=1&query=${m.lat},${m.lng}`:msgText(m);navigator.clipboard&&navigator.clipboard.writeText(t).then(()=>toast('Скопировано'),()=>{});back()};
+    SS.mShare=()=>{shareText('Сообщение',m.kind==='geo'?`${m.label||'Геопозиция'}: https://www.google.com/maps/search/?api=1&query=${m.lat},${m.lng}`:msgText(m));back()};
+    SS.mPin=()=>{const on=!m.pin;S.msgs.filter(x=>x.ch===m.ch&&x.pin&&x.id!==m.id).forEach(x=>{x.pin=false;put('msgs',x)});m.pin=on;put('msgs',m);commit(true);done()};
+    SS.mTask=()=>{const t=msgText(m).split('\n')[0].replace(/^\S+\s/,m.kind==='tpl'?'':'$&').slice(0,120);back();setTimeout(()=>openSheet(taskSheet(null,{title:m.kind==='txt'?m.text.slice(0,120):t,objectId:(m.tpl&&m.tpl.objectId)||''})),200)};
+    SS.mDel=()=>{if(!confirm('Удалить сообщение у всех?'))return;del('msgs',m.id);if(m.img)idbDel(m.img).catch(()=>{});commit(true);done()};
+  }}}}
+function attachSheet(ch){return ()=>({title:'Отправить',html:`<div class="att">
+   <label><span>📷</span>Фото<input type="file" accept="image/*" capture="environment" id="atCam" hidden></label>
+   <label><span>🖼</span>Галерея<input type="file" accept="image/*" id="atGal" hidden></label>
+   <button data-s="atSk"><span>✏️</span>Набросок</button>
+   <button data-s="atGeo"><span>📍</span>Где я</button>
+   <button data-s="atHere"><span>🏠</span>Я на объекте</button>
+   <button data-s="atPoll"><span>📊</span>Опрос</button></div>
+  <div class="menu-h">Шаблоны</div><div class="att">${Object.entries(TPL).map(([k,[i,t]])=>`<button data-s="atTpl" data-id="${k}"><span>${i}</span>${t}</button>`).join('')}</div>`,
+ init(){
+  SS.change=async ev=>{const f=ev.target.files&&ev.target.files[0];if(!f)return;back();await new Promise(r=>setTimeout(r,200));
+    const url=URL.createObjectURL(f);photoEditor({src:url,onSend:(d,cap,w,h)=>sendImg(ch,d,cap,w,h),onClose:()=>URL.revokeObjectURL(url)})};
+  SS.atSk=()=>{back();setTimeout(()=>photoEditor({sketch:true,onSend:(d,cap,w,h)=>sendImg(ch,d,cap,w,h)}),200)};
+  SS.atGeo=()=>{back();setTimeout(()=>sendGeo(ch,''),200)};
+  SS.atHere=()=>replaceSheet(hereSheet(ch));
+  SS.atPoll=()=>replaceSheet(pollSheet(ch));
+  SS.atTpl=el=>replaceSheet(tplSheet(ch,el.dataset.id));
+ }})}
+async function sendImg(ch,dataUrl,cap,w,h){const pid='p'+uid();await idbPut(pid,dataUrl);SY.ph[pid]=1;sendMsg(ch,{kind:'img',img:pid,w,h,text:cap||''});chatLive()}
+async function getGeo(){
+  const G=capP('Geolocation');
+  if(G){try{await G.requestPermissions().catch(()=>{});const p=await G.getCurrentPosition({enableHighAccuracy:true,timeout:15000});return {lat:p.coords.latitude,lng:p.coords.longitude,acc:p.coords.accuracy}}catch(e){}}
+  return new Promise((res,rej)=>{if(!navigator.geolocation)return rej(new Error('нет геолокации'));navigator.geolocation.getCurrentPosition(p=>res({lat:p.coords.latitude,lng:p.coords.longitude,acc:p.coords.accuracy}),e=>rej(e),{enableHighAccuracy:true,timeout:15000,maximumAge:30000})});
+}
+async function sendGeo(ch,label,extra={}){toast('Определяю место…');try{const p=await getGeo();sendMsg(ch,{kind:'geo',...p,label:label||'Я здесь',...extra});chatLive();return p}
+  catch(e){toast('Не удалось получить геопозицию — включи GPS и разреши доступ');return null}}
+function hereSheet(ch){return ()=>({title:'Я на объекте',html:`<p class="muted sm">Отправит в чат «на объекте», время и точку на карте. Если у объекта ещё нет координат — запомню их, потом можно строить маршрут.</p>
+  <div class="list">${activeObjs().map(o=>`<button class="li" data-s="hereO" data-id="${o.id}"><span>🏠</span><span class="t"><b>${esc(o.name)}</b><small>${esc(o.address||'')}</small></span></button>`).join('')||'<p class="empty">Нет активных объектов</p>'}</div>`,
+ init(){SS.hereO=async el=>{const o=S.objects.find(x=>x.id===el.dataset.id);back();const d=new Date();
+   const p=await sendGeo(ch,`${chMe()} на объекте «${o.name}» · ${pad(d.getHours())}:${pad(d.getMinutes())}`,{objectId:o.id});
+   if(p&&!o.geo){o.geo={lat:p.lat,lng:p.lng};put('objects',o);commit(true)}}}})}
+function pollSheet(ch){return ()=>({title:'Опрос',html:`${F('Вопрос',I('plq','','placeholder="Кто завтра едет на Сидоренко?"'))}
+  ${F('Варианты — каждый с новой строки',`<textarea id="plo" rows="4">Еду\nНе могу\nПосле обеда</textarea>`)}
+  <button class="btn p w" style="margin-top:12px" data-s="plGo">Отправить опрос</button>`,
+ init(){setTimeout(()=>{const e=g('plq');e&&e.focus()},80);SS.plGo=()=>{const q=v('plq').trim(),o=v('plo').split('\n').map(x=>x.trim()).filter(Boolean);if(!q||o.length<2){toast('Вопрос и минимум 2 варианта');return}
+   sendMsg(ch,{kind:'poll',q,opts:o.map(t=>({t,v:[]}))});back();setTimeout(chatLive,150)}}})}
+
+/* ---------- редактор фото / набросок ---------- */
+function photoEditor({src,sketch,onSend,onClose}){
+  const ov=document.createElement('div');ov.className='ped';
+  const COLS=['#ff3b30','#ffcc00','#34c759','#0a84ff','#ffffff','#111111'];
+  ov.innerHTML=`<div class="pbar"><button class="pb" data-x="close">✕</button><b>${sketch?'Набросок':'Фото'}</b><button class="pb" data-x="undo">↶</button>${sketch?'':'<button class="pb" data-x="rot">⟳</button>'}</div>
+   <div class="pcv"><canvas></canvas></div>
+   <div class="ptools">${[['pen','✏️'],['line','╱'],['arrow','↗'],['rect','▭'],['circle','◯'],['dim','📏'],['text','T']].map(([k,i])=>`<button data-t="${k}" class="${k==='pen'?'on':''}">${i}</button>`).join('')}</div>
+   <div class="pcols">${COLS.map((c,i)=>`<button data-c="${c}" class="${i===(sketch?5:0)?'on':''}" style="background:${c}"></button>`).join('')}<button data-w="1" class="pw">${'●'}</button></div>
+   <div class="psend"><input placeholder="Подпись…" id="pedCap"><button class="ico send" data-x="send"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></button></div>`;
+  document.body.appendChild(ov);history.pushState({ped:1},'');
+  const cv=ov.querySelector('canvas'),x=cv.getContext('2d'),box=ov.querySelector('.pcv');
+  let base=document.createElement('canvas'),ops=[],tool='pen',col=sketch?'#111111':'#ff3b30',wd=1,cur=null,closed=false;
+  const lw=()=>Math.max(base.width,base.height)/(wd===1?220:wd===2?120:400);
+  const fitView=()=>{const bw=box.clientWidth,bh=box.clientHeight,k=Math.min(bw/base.width,bh/base.height),dpr=Math.min(2,devicePixelRatio||1);
+    cv.style.width=Math.round(base.width*k)+'px';cv.style.height=Math.round(base.height*k)+'px';cv.width=Math.round(base.width*k*dpr);cv.height=Math.round(base.height*k*dpr);paint()};
+  const drawOp=(c,o,s)=>{c.save();c.strokeStyle=c.fillStyle=o.c;c.lineWidth=o.w*s;c.lineCap='round';c.lineJoin='round';const P=q=>[q[0]*s,q[1]*s];
+    if(o.t==='pen'){c.beginPath();o.p.forEach((q,i)=>{const [a,b]=P(q);i?c.lineTo(a,b):c.moveTo(a,b)});c.stroke()}
+    else if(o.t==='line'||o.t==='arrow'||o.t==='dim'){const [a,b]=P(o.a),[e,f]=P(o.b);c.beginPath();c.moveTo(a,b);c.lineTo(e,f);c.stroke();
+      const ang=Math.atan2(f-b,e-a),h=o.w*s*4.5;
+      if(o.t==='arrow'){c.beginPath();c.moveTo(e,f);c.lineTo(e-h*Math.cos(ang-.45),f-h*Math.sin(ang-.45));c.moveTo(e,f);c.lineTo(e-h*Math.cos(ang+.45),f-h*Math.sin(ang+.45));c.stroke()}
+      if(o.t==='dim'){[[a,b],[e,f]].forEach(([u,w])=>{c.beginPath();c.moveTo(u-h*.7*Math.cos(ang+Math.PI/4),w-h*.7*Math.sin(ang+Math.PI/4));c.lineTo(u+h*.7*Math.cos(ang+Math.PI/4),w+h*.7*Math.sin(ang+Math.PI/4));c.stroke()});
+        if(o.s){const fs=o.w*s*7;c.font=`700 ${fs}px Manrope,Arial,sans-serif`;c.textAlign='center';c.textBaseline='bottom';c.translate((a+e)/2,(b+f)/2);let r=ang;if(r>Math.PI/2)r-=Math.PI;if(r<-Math.PI/2)r+=Math.PI;c.rotate(r);
+          const tw=c.measureText(o.s).width;c.fillStyle=sketch?'#fff':'rgba(0,0,0,.55)';c.fillRect(-tw/2-fs*.2,-fs*1.25,tw+fs*.4,fs*1.15);c.fillStyle=sketch?o.c:'#fff';c.fillText(o.s,0,-fs*.2)}}}
+    else if(o.t==='rect'){const [a,b]=P(o.a),[e,f]=P(o.b);c.strokeRect(Math.min(a,e),Math.min(b,f),Math.abs(e-a),Math.abs(f-b))}
+    else if(o.t==='circle'){const [a,b]=P(o.a),[e,f]=P(o.b);c.beginPath();c.ellipse((a+e)/2,(b+f)/2,Math.abs(e-a)/2,Math.abs(f-b)/2,0,0,7);c.stroke()}
+    else if(o.t==='text'){const [a,b]=P(o.a),fs=o.w*s*8;c.font=`800 ${fs}px Manrope,Arial,sans-serif`;c.textBaseline='middle';c.lineWidth=fs*.18;c.strokeStyle=o.c==='#111111'?'#fff':'#000';c.strokeText(o.s,a,b);c.fillText(o.s,a,b)}
+    c.restore()};
+  const paint=()=>{const s=cv.width/base.width;x.setTransform(1,0,0,1,0,0);x.clearRect(0,0,cv.width,cv.height);x.drawImage(base,0,0,cv.width,cv.height);ops.forEach(o=>drawOp(x,o,s));if(cur)drawOp(x,cur,s)};
+  const setBase=img=>{const k=Math.min(1,1600/Math.max(img.width,img.height));base.width=Math.round(img.width*k);base.height=Math.round(img.height*k);base.getContext('2d').drawImage(img,0,0,base.width,base.height);fitView()};
+  if(sketch){base.width=1200;base.height=1600;const b=base.getContext('2d');b.fillStyle='#fff';b.fillRect(0,0,1200,1600);b.strokeStyle='#e3e8ef';b.lineWidth=2;for(let i=0;i<=1200;i+=50){b.beginPath();b.moveTo(i,0);b.lineTo(i,1600);b.stroke()}for(let j=0;j<=1600;j+=50){b.beginPath();b.moveTo(0,j);b.lineTo(1200,j);b.stroke()}setTimeout(fitView,30)}
+  else{const im=new Image();im.onload=()=>setBase(im);im.onerror=()=>{toast('Не удалось открыть фото');close()};im.src=src}
+  const pos=e=>{const r=cv.getBoundingClientRect();return [(e.clientX-r.left)/r.width*base.width,(e.clientY-r.top)/r.height*base.height]};
+  cv.addEventListener('pointerdown',e=>{try{cv.setPointerCapture(e.pointerId)}catch(_){}const p=pos(e);
+    if(tool==='text'){const s=prompt('Текст');if(s)ops.push({t:'text',a:p,s,c:col,w:lw()});paint();return}
+    cur=tool==='pen'?{t:'pen',p:[p],c:col,w:lw()}:{t:tool,a:p,b:p,c:col,w:lw()};paint()});
+  cv.addEventListener('pointermove',e=>{if(!cur)return;const p=pos(e);if(cur.t==='pen')cur.p.push(p);else{cur.b=p;
+    if(cur.t!=='circle'&&cur.t!=='rect'){const dx=p[0]-cur.a[0],dy=p[1]-cur.a[1],an=Math.atan2(dy,dx),k=Math.round(an/(Math.PI/2))*(Math.PI/2);if(Math.abs(an-k)<.1){const L=Math.hypot(dx,dy);cur.b=[cur.a[0]+Math.cos(k)*L,cur.a[1]+Math.sin(k)*L]}}}paint()});
+  const up=()=>{if(!cur)return;const o=cur;cur=null;const moved=o.t==='pen'?o.p.length>1:Math.hypot(o.b[0]-o.a[0],o.b[1]-o.a[1])>8;
+    if(moved){if(o.t==='dim'){const s=prompt('Размер (например 2,40 м)','');if(s===null){paint();return}o.s=s}ops.push(o)}paint()};
+  cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+  const close=()=>{if(closed)return;closed=true;removeEventListener('popstate',onPop);removeEventListener('resize',fitView);ov.remove();onClose&&onClose()};
+  const onPop=()=>close();addEventListener('popstate',onPop);addEventListener('resize',fitView);
+  ov.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+    if(b.dataset.t){tool=b.dataset.t;ov.querySelectorAll('[data-t]').forEach(q=>q.classList.toggle('on',q===b))}
+    if(b.dataset.c){col=b.dataset.c;ov.querySelectorAll('[data-c]').forEach(q=>q.classList.toggle('on',q===b))}
+    if(b.dataset.w){wd=wd%3+1;b.style.fontSize=[0,14,22,9][wd]+'px'}
+    const a=b.dataset.x;
+    if(a==='close'){if(ops.length&&!confirm('Выйти без отправки?'))return;history.back()}
+    if(a==='undo'){ops.pop();paint()}
+    if(a==='rot'){if(ops.length&&!confirm('Поворот сбросит рисунок. Продолжить?'))return;ops=[];const t=document.createElement('canvas');t.width=base.height;t.height=base.width;const c=t.getContext('2d');c.translate(t.width,0);c.rotate(Math.PI/2);c.drawImage(base,0,0);base=t;fitView()}
+    if(a==='send'){const out=document.createElement('canvas');out.width=base.width;out.height=base.height;const c=out.getContext('2d');c.drawImage(base,0,0);ops.forEach(o=>drawOp(c,o,1));
+      const d=out.toDataURL('image/jpeg',0.78),cap=ov.querySelector('#pedCap').value.trim();history.back();onSend(d,cap,base.width,base.height)}});
+}
+
+/* ---------- уведомления ---------- */
+let audioCtx=null;
+function ding(){try{audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();const t=audioCtx.currentTime;[880,1320].forEach((f,i)=>{const o=audioCtx.createOscillator(),g2=audioCtx.createGain();o.frequency.value=f;o.type='sine';g2.gain.setValueAtTime(0.0001,t+i*.12);g2.gain.exponentialRampToValueAtTime(0.18,t+i*.12+.02);g2.gain.exponentialRampToValueAtTime(0.0001,t+i*.12+.25);o.connect(g2).connect(audioCtx.destination);o.start(t+i*.12);o.stop(t+i*.12+.3)})}catch(e){}}
+async function notifyMsg(m){
+  const title=m.ch==='all'?`${m.by} · Общий чат`:m.by,body=msgText(m).split('\n').slice(0,3).join('\n')||(m.kind==='img'?'📷 Фото':m.kind==='geo'?'📍 Геопозиция':'');
+  const LN=capP('LocalNotifications');
+  if(LN&&document.hidden){try{await LN.schedule({notifications:[{id:Math.floor(Math.random()*2e9),title,body,extra:{ch:m.ch}}]})}catch(e){}return}
+  if(document.hidden&&'Notification' in window&&Notification.permission==='granted'){
+    const opt={body,tag:'msg-'+m.ch,renotify:true,icon:'icon-192.png',badge:'icon-192.png',data:{ch:m.ch}};let r=null;
+    try{r=navigator.serviceWorker?await navigator.serviceWorker.getRegistration():null}catch(e){}
+    try{if(r)await r.showNotification(title,opt);else new Notification(title,opt)}catch(e){try{new Notification(title,opt)}catch(_){}}}
+  try{if(navigator.setAppBadge){const n=[...new Set(S.msgs.map(q=>q.ch))].filter(chVisible).reduce((s,ch)=>s+unreadIn(ch),0);n?navigator.setAppBadge(n):navigator.clearAppBadge()}}catch(e){}
+}
+function askNotify(){
+  const LN=capP('LocalNotifications');if(LN){LN.requestPermissions().then(r=>toast(r.display==='granted'?'Уведомления включены':'Уведомления запрещены в настройках телефона')).catch(()=>{});return}
+  if(!('Notification' in window)){toast('Этот браузер не умеет уведомления. На iPhone — добавь приложение на экран «Домой» (iOS 16.4+)');return}
+  Notification.requestPermission().then(p=>toast(p==='granted'?'Уведомления включены':'Уведомления запрещены'));
+}
+const _onMsg0=onMsg;
+onMsg=function(m,isNew){_onMsg0(m,isNew);if(isNew&&m.by!==chMe()&&chVisible(m.ch)){const p=curPage();if(!(p&&p.t==='chat'&&p.id===m.ch&&!document.hidden)){ding();notifyMsg(m)}}};
+function chatInit2(){
+  Object.assign(A,{
+    chatAtt(el){openSheet(attachSheet(el.dataset.id))},
+    msgMenu(el){openSheet(msgMenuSheet(el.dataset.id))},
+    msgReact(el){const m=S.msgs.find(x=>x.id===el.dataset.id);if(!m)return;const r=el.dataset.r;m.re=m.re||{};const a=m.re[r]=m.re[r]||[],i=a.indexOf(chMe());i<0?a.push(chMe()):a.splice(i,1);put('msgs',m);commit(true);chatLive()},
+    msgVote(el){const m=S.msgs.find(x=>x.id===el.dataset.id);if(!m)return;const i=+el.dataset.i;m.opts.forEach((o,j)=>{o.v=(o.v||[]).filter(n=>n!==chMe());if(j===i&&!el.classList.contains('on'))o.v.push(chMe())});put('msgs',m);commit(true);chatLive()},
+    msgImg(el){getPhoto(el.dataset.id).then(s=>s?viewPhoto(s):toast('Фото ещё загружается'))},
+    msgGo(el){const e=document.querySelector(`[data-a=msgMenu][data-id="${el.dataset.id}"]`);if(e){e.scrollIntoView({block:'center',behavior:'smooth'});e.classList.add('flash');setTimeout(()=>e.classList.remove('flash'),1200)}},
+    chatCtxX(){chatCtx={reply:null,edit:null};const s2=document.querySelector('.cstrip');if(s2)s2.remove();const t=g('chatIn');if(t&&!t.value.trim())t.value=''},
+    notifyOn(){askNotify()},
   });
 }
 
