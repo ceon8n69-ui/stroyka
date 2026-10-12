@@ -360,6 +360,37 @@ body.lock .top{backdrop-filter:none;-webkit-backdrop-filter:none;background:var(
 .edc{border:0;border-radius:22px}
 .ph div,.tile{border-radius:16px}
 
+/* чат */
+.top .ico .bd{position:absolute;top:-3px;right:-3px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--bad);color:#fff;font-size:11px;font-weight:700;line-height:18px;font-style:normal}
+.cun{display:inline-block;min-width:22px;height:22px;padding:0 7px;border-radius:11px;background:var(--ink);color:var(--bg);font-size:12px;font-weight:700;line-height:22px;text-align:center;margin-top:4px}
+body.chatpg .tabs,body.chatpg .fab{display:none!important}
+body.chatpg #app{padding-bottom:calc(96px + env(safe-area-inset-bottom))}
+.chat{padding:8px 12px 4px;display:flex;flex-direction:column}
+#chatList{display:flex;flex-direction:column;gap:4px}
+.mday{align-self:center;font-size:12px;font-weight:700;color:var(--muted);background:var(--card);padding:4px 12px;border-radius:999px;margin:12px 0 6px}
+.msg{max-width:84%;align-self:flex-start;display:flex;flex-direction:column;margin-top:4px}
+.msg.me{align-self:flex-end;align-items:flex-end}
+.mby{font-size:12px;color:var(--muted);margin:0 0 2px 12px;font-weight:700}
+.mb{background:var(--card);padding:10px 14px;border-radius:20px 20px 20px 6px;font-size:16px;line-height:1.35;white-space:normal;overflow-wrap:anywhere}
+.msg.me .mb{background:var(--ink);color:var(--bg);border-radius:20px 20px 6px 20px}
+.mt{font-size:11px;color:var(--muted);margin:3px 10px 0}
+.msg.tpl{max-width:92%;width:92%}
+.mcard{background:var(--card);border-radius:22px;padding:14px;width:100%}
+.msg.me .mcard{box-shadow:inset 0 0 0 1.5px var(--ink)}
+.mh{display:flex;align-items:center;gap:8px}.mh span{width:34px;height:34px;border-radius:50%;background:var(--mint);display:grid;place-items:center;font-size:17px}.mh b{font-size:16px}
+.mobj{margin-top:8px;font-weight:650;font-size:14px}
+.mrows{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}.mrows div{background:var(--bg);border-radius:14px;padding:7px 10px}.mrows small{display:block;color:var(--muted);font-size:11.5px}.mrows b{font-size:15px}
+.mitems{margin-top:10px;display:flex;flex-direction:column;gap:2px}
+.mitem{display:flex;gap:10px;align-items:center;border:0;background:none;padding:7px 2px;text-align:left;font-size:15px;font-weight:600;width:100%}
+.mitem i{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--ink);display:grid;place-items:center;font-style:normal;font-size:13px;flex:none}
+.mitem.done i{background:var(--ink);color:var(--bg)}.mitem.done span{text-decoration:line-through;color:var(--muted)}
+.mitem small{display:inline;margin-left:6px;font-size:11px;color:var(--muted);text-decoration:none}
+.mnote{margin:10px 2px 0;font-size:14px}
+.composer{position:fixed;left:0;right:0;bottom:0;z-index:7;max-width:640px;margin:0 auto;display:flex;gap:8px;align-items:flex-end;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:var(--bg)}
+.composer textarea{flex:1;min-height:48px;max-height:140px;border-radius:24px;padding:12px 16px;resize:none;font-size:16px;line-height:1.3}
+.composer .ico{width:48px;height:48px;border-radius:50%;border:1.5px solid var(--line);font-size:24px;flex:none}
+.composer .send{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+
 /* сканер QR */
 .qrscan{position:fixed;inset:0;z-index:70;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;animation:fadeIn .25s}
 .qrscan.out{opacity:0;transition:opacity .2s}
@@ -409,6 +440,7 @@ body.lock .top{backdrop-filter:none;-webkit-backdrop-filter:none;background:var(
     <h1 id="title">Объекты</h1>
     <button class="pill" id="sync" data-a="syncSheet"><i></i><span>—</span></button>
     <button class="ico" data-a="search" aria-label="Поиск"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg></button>
+    <button class="ico" data-a="chat" aria-label="Чат" style="position:relative"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9.5h8M8 12.5h5"/></svg><span class="bd" id="cbd" hidden></span></button>
     <button class="ico" data-a="more" aria-label="Меню">⋮</button>
   </header>
   <main id="view"></main>
@@ -430,7 +462,7 @@ body.lock .top{backdrop-filter:none;-webkit-backdrop-filter:none;background:var(
 'use strict';
 /* ================= данные ================= */
 const KEY='stroyka.v1',SYNC_KEY='stroyka.sync2';
-const COLS=['objects','tasks','work','workers','rates','est','plans','events','photos','estv','payplan','cash','team','checks','tpls','log','trash','calcs','mprice','expenses','payments','fuelDays','tools','stores','materials','prices','baskets'];
+const COLS=['objects','tasks','work','workers','rates','est','plans','events','photos','estv','payplan','cash','team','checks','tpls','log','trash','calcs','mprice','expenses','payments','fuelDays','tools','stores','materials','prices','baskets','msgs'];
 const CATS=['Материалы','Доставка','Инструмент','Топливо','Аренда техники','Питание','Прочее'];
 const MAT_CATS=['Материалы','Доставка'];
 const UNITS=['м²','п.м.','шт','точка','м³','т','ч','день','рейс','компл.'];
@@ -595,7 +627,7 @@ function drawSheet(){
 /* ================= рендер ================= */
 let pendingRender=false;
 const typing=()=>{const a=document.activeElement;return !!(a&&view.contains(a)&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))};
-function softRender(){if(typing()||sheets.length){pendingRender=true;return}render()}
+function softRender(){if(typeof chatLive==='function'&&chatLive())return;if(typing()||sheets.length){pendingRender=true;return}render()}
 function flushRender(){if(pendingRender){pendingRender=false;render()}}
 const LI=(main,sub,right,a,id,rsub='',cls='')=>`<button class="li" data-a="${a}" data-id="${esc(id)}"><span class="t"><b>${main}</b>${sub?`<small>${sub}</small>`:''}</span><span class="r"><span class="n ${cls}">${right}</span>${rsub?`<small>${rsub}</small>`:''}</span></button>`;
 const chip=(t,on,a,id,extra='')=>`<button class="chip ${on?'on':''}" data-a="${a}" data-id="${esc(id)}" ${extra}>${t}</button>`;
@@ -910,13 +942,13 @@ function subscribe(){
       const r=p.new;if(!r||!r.data||SY.pend[r.id]||r.col==='img')return;const c=r.col;S[c]=S[c]||[];
       const i=S[c].findIndex(x=>x.id===r.data.id);i<0?S[c].push(r.data):S[c][i]=r.data;
       if(c==='objects'&&r.data.tasks&&r.data.tasks.length)setTimeout(()=>{if(migrate())commit()},300);
-      saveLocal();softRender();
+      saveLocal();if(c==='msgs'&&typeof onMsg==='function')onMsg(r.data,i<0);softRender();
     }catch(e){console.error(e)}
   }).subscribe(st=>{if(st==='SUBSCRIBED')schedule(100)});
 }
 function unsubscribe(){if(chan&&sb){sb.removeChannel(chan)}chan=null}
 async function push(){
-  if(SY.role==='worker')Object.keys(SY.pend).forEach(k=>{if(!k.startsWith('tasks/')&&!k.startsWith('expenses/'))delete SY.pend[k]});
+  if(SY.role==='worker')Object.keys(SY.pend).forEach(k=>{if(!k.startsWith('tasks/')&&!k.startsWith('expenses/')&&!k.startsWith('msgs/'))delete SY.pend[k]});
   const keys=Object.keys(SY.pend);if(!keys.length)return;
   const snap={...SY.pend},ups=[],ins=[],dels=[];
   for(const k of keys){const i=k.indexOf('/'),c=k.slice(0,i),id=k.slice(i+1);const r=(S[c]||[]).find(x=>x.id===id);
@@ -1868,7 +1900,7 @@ const IC={
   pay:'<svg viewBox="0 0 24 24"><rect x="3" y="6.5" width="18" height="11" rx="2.5"/><circle cx="12" cy="12" r="2.4"/><path d="M6.5 9.5v5M17.5 9.5v5"/></svg>',
   photo:'<svg viewBox="0 0 24 24"><path d="M4 8.5h3.2L9 6h6l1.8 2.5H20V19H4z"/><circle cx="12" cy="13.3" r="3.3"/></svg>'};
 /* ================= Стройка 2.2: бизнес-функции ================= */
-const APP_VERSION='3.5';
+const APP_VERSION='3.6';
 const LOGC=['work','expenses','payments','est','payplan','cash','objects','tools'];
 const TRASHC=['objects','tasks','work','workers','rates','est','plans','expenses','payments','fuelDays','tools','events','photos','payplan','cash','checks','tpls','team'];
 const STAGES={before:'До',work:'Процесс',after:'После',hidden:'Скрытые'};
@@ -2948,7 +2980,8 @@ function render(){
   if(W&&!['today','sched'].includes(ui.tab))ui.tab='today';
   let title,html,fab=null;
   try{
-    if(p&&p.t==='obj'&&!W){const o=S.objects.find(x=>x.id===p.id);if(!o){ui.page.pop();return render()}title=o.name;html=vObject(o);fab='work'}
+    if(p&&p.t==='chat'){title=p.id?chatTitle(p.id):'Чат';html=p.id?vChat(p.id):vChats()}
+    else if(p&&p.t==='obj'&&!W){const o=S.objects.find(x=>x.id===p.id);if(!o){ui.page.pop();return render()}title=o.name;html=vObject(o);fab='work'}
     else if(p&&p.t==='worker'&&!W){title=p.id;html=vWorker(p.id);fab='work'}
     else if(ui.tab==='today'){title=W?'Мой день':'Сегодня';html=vToday();fab=W?null:'work'}
     else if(ui.tab==='objects'){title='Объекты';html=vObjects();fab='work'}
@@ -2957,7 +2990,8 @@ function render(){
     else if(ui.tab==='plans'){title='Чертежи';html=vPlans();fab='plan'}
     else {title='Авто';html=vCar()}
   }catch(e){html=`<div class="card"><b class="neg">Ошибка</b><pre>${esc(e.stack||e)}</pre></div>`;console.error(e)}
-  $('#title').textContent=title;view.innerHTML=html;animView();
+  document.body.classList.toggle('chatpg',!!(p&&p.t==='chat'&&p.id));
+  $('#title').textContent=title;view.innerHTML=html;animView();if(p&&p.t==='chat'&&p.id)chatAfter();chatBadge();
   $('#backBtn').hidden=!p;
   document.querySelectorAll('.tabs button').forEach(b=>{b.classList.toggle('on',b.dataset.id===ui.tab);b.hidden=W&&!['today','sched'].includes(b.dataset.id)});
   const f=$('#fab');f.hidden=!fab;f.dataset.k=fab||'';f.textContent=fab==='plan'?'+ Чертёж':fab==='task'?'+ Задача':fab==='event'?'+ Выход':'+ Работа';
@@ -3006,7 +3040,7 @@ function nativeInit(){
 
 /* ---------- действия ---------- */
 function bizInit(){
-planInit();workersInit();
+planInit();workersInit();chatInit();
 Object.assign(A,{
   tab(el){ui.tab=el.dataset.id;const n=ui.page.length;ui.page=[];if(n)history.go(-n);render();window.scrollTo(0,0)},
   fab(el){const k=el.dataset.k,p=curPage();
@@ -3364,6 +3398,123 @@ function toolsSheet(){return ()=>{
     SS.rm=el=>{if(confirm('Удалить?')){del('tools',el.dataset.id);commit();replaceSheet(toolsSheet())}};
   }};
 }}
+
+/* ================= Чат: общий, личный, шаблонные сообщения ================= */
+const chMe=()=>me()||'Я';
+const dmCh=n=>'dm:'+[chMe(),n].sort().join('|');
+const chMembers=ch=>ch.startsWith('dm:')?ch.slice(3).split('|'):null;
+const chVisible=ch=>ch==='all'||(chMembers(ch)||[]).includes(chMe());
+function chatTitle(ch){if(ch==='all')return 'Общий чат';const m=chMembers(ch);return m?(m.find(x=>x!==chMe())||m[0]):'Чат'}
+const chatMsgs=ch=>S.msgs.filter(m=>m.ch===ch).sort((a,b)=>(a.at||a.ts||0)-(b.at||b.ts||0));
+let chatRead={};try{chatRead=JSON.parse(localStorage.getItem('stroyka.read')||'{}')}catch(e){}
+const markRead=ch=>{const l=chatMsgs(ch).pop();if(!l)return;chatRead[ch]=Math.max(chatRead[ch]||0,l.at||l.ts||0);try{localStorage.setItem('stroyka.read',JSON.stringify(chatRead))}catch(e){}};
+const unreadIn=ch=>S.msgs.filter(m=>m.ch===ch&&m.by!==chMe()&&(m.at||m.ts||0)>(chatRead[ch]||0)).length;
+function chatBadge(){const b=$('#cbd');if(!b)return;const n=[...new Set(S.msgs.map(m=>m.ch))].filter(chVisible).reduce((s,ch)=>s+unreadIn(ch),0);b.hidden=!n;b.textContent=n>99?'99+':n}
+const TPL={buy:['🛒','Закупка'],pay:['💸','Выплата'],got:['💰','Получили оплату'],rep:['📊','Отчёт по объекту'],job:['📋','Задание']};
+function msgText(m){
+  if(m.kind!=='tpl')return m.text||'';const t=m.tpl||{},T=TPL[t.type]||['',''];
+  return [`${T[0]} ${T[1]}${t.objectId?' — '+oname(t.objectId):''}`,...(t.rows||[]).map(([l,v])=>`${l}: ${v}`),...(t.items||[]).map(i=>`${i.done?'✅':'▫️'} ${i.t}`),t.note||''].filter(Boolean).join('\n');
+}
+function vChats(){
+  const people=[...new Set([...team(),...workerNames()])].filter(n=>n&&n!==chMe());
+  const chs=['all',...people.map(dmCh)];
+  [...new Set(S.msgs.map(m=>m.ch))].filter(c=>chVisible(c)&&!chs.includes(c)).forEach(c=>chs.push(c));
+  const last=ch=>chatMsgs(ch).pop();
+  chs.sort((a,b)=>((last(b)||{}).at||(last(b)||{}).ts||0)-((last(a)||{}).at||(last(a)||{}).ts||0)||(a==='all'?-1:b==='all'?1:0));
+  return `<div class="wrap">${!me()?`<div class="alert warn"><i></i><span>Укажи «Моё имя» в Меню → Профиль, чтобы партнёр видел, кто пишет</span></div>`:''}
+   <div class="list">${chs.map(ch=>{const l=last(ch),u=unreadIn(ch),t=chatTitle(ch);
+     return `<button class="li" data-a="openChat" data-id="${esc(ch)}"><span class="av">${ch==='all'?'👥':esc(initials(t))}</span><span class="t"><b>${esc(t)}</b><small>${l?esc((l.by===chMe()?'Вы: ':(ch==='all'?l.by+': ':''))+msgText(l).split('\n')[0]):ch==='all'?'Для всех: партнёр и рабочие':'Нет сообщений'}</small></span><span class="r">${l?`<small>${chatTime(l)}</small>`:''}${u?`<span class="cun">${u}</span>`:''}</span></button>`}).join('')}</div>
+   <p class="muted sm" style="margin:10px 6px">Сообщения синхронизируются через вашу базу, как объекты и работы. Рабочие видят общий чат и свои личные, если зайдут в приложение.</p></div>`;
+}
+const chatTime=m=>{const d=new Date(m.at||m.ts||0),t=today(),ds=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());return ds===t?pad(d.getHours())+':'+pad(d.getMinutes()):fdate(ds)};
+function msgHtml(m){
+  const mine=m.by===chMe(),tm=chatTime(m);
+  if(m.kind==='tpl'){const t=m.tpl||{},T=TPL[t.type]||['💬','Сообщение'];
+    const items=(t.items||[]).map((it,i)=>`<button class="mitem ${it.done?'done':''}" data-a="msgItem" data-id="${m.id}" data-i="${i}"><i>${it.done?'✓':''}</i><span>${esc(it.t)}${it.done&&it.by?`<small>${esc(it.by)}</small>`:''}</span></button>`).join('');
+    const acts=[];
+    if(t.type==='pay'&&t.who)acts.push(`<button class="chip" data-a="msgPay" data-id="${m.id}">${t.done?'✓ Выплачено':'Записать выплату'}</button>`);
+    if(t.type==='got'&&t.objectId)acts.push(`<button class="chip" data-a="msgGot" data-id="${m.id}">${t.done?'✓ Записано':'Записать оплату'}</button>`);
+    if(t.type==='job'&&!t.done)acts.push(`<button class="chip" data-a="msgTasks" data-id="${m.id}">В задачи</button>`);
+    if(t.objectId&&S.objects.find(o=>o.id===t.objectId))acts.push(`<button class="chip" data-a="openObj" data-id="${t.objectId}">Объект</button>`);
+    acts.push(`<button class="chip" data-a="msgShare" data-id="${m.id}">Переслать</button>`);
+    return `<div class="msg tpl ${mine?'me':''}">${mine?'':`<b class="mby">${esc(m.by||'')}</b>`}<div class="mcard"><div class="mh"><span>${T[0]}</span><b>${T[1]}</b></div>
+      ${t.objectId?`<div class="mobj">🏠 ${esc(oname(t.objectId))}</div>`:''}
+      ${(t.rows||[]).length?`<div class="mrows">${t.rows.map(([l,v])=>`<div><small>${esc(l)}</small><b>${esc(v)}</b></div>`).join('')}</div>`:''}
+      ${items?`<div class="mitems">${items}</div>`:''}${t.note?`<p class="mnote">${esc(t.note)}</p>`:''}
+      <div class="chips" style="margin-top:8px;flex-wrap:wrap">${acts.join('')}</div></div><small class="mt">${tm}${t.done&&t.doneBy?' · ✓ '+esc(t.doneBy):''}</small></div>`}
+  return `<div class="msg ${mine?'me':''}">${mine?'':`<b class="mby">${esc(m.by||'')}</b>`}<div class="mb">${esc(m.text||'').replace(/\n/g,'<br>')}</div><small class="mt">${tm}</small></div>`;
+}
+function chatListHtml(ch){
+  let prev='';return chatMsgs(ch).map(m=>{const d=new Date(m.at||m.ts||0),ds=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+    const sep=ds!==prev?`<div class="mday">${ds===today()?'Сегодня':fdateY(ds)}</div>`:'';prev=ds;return sep+msgHtml(m)}).join('')||'<p class="empty">Напиши первое сообщение или отправь шаблон: закупка, выплата, отчёт по объекту</p>';
+}
+function vChat(ch){
+  return `<div class="chat"><div id="chatList">${chatListHtml(ch)}</div></div>
+   <div class="composer"><button class="ico" data-a="chatTpl" data-id="${esc(ch)}" aria-label="Шаблон">＋</button>
+    <textarea id="chatIn" rows="1" placeholder="Сообщение…" enterkeyhint="send"></textarea>
+    <button class="ico send" data-a="chatSend" data-id="${esc(ch)}" aria-label="Отправить"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></button></div>`;
+}
+function chatAfter(){const p=curPage();if(!p||p.t!=='chat'||!p.id)return;markRead(p.id);chatBadge();requestAnimationFrame(()=>scrollTo(0,document.body.scrollHeight));
+  const ta=g('chatIn');if(ta&&!ta.dataset.w){ta.dataset.w=1;try{ta.value=sessionStorage.getItem('draft:'+p.id)||''}catch(e){}
+    const fit=()=>{ta.style.height='auto';ta.style.height=Math.min(140,ta.scrollHeight)+'px'};fit();
+    ta.addEventListener('input',()=>{fit();try{sessionStorage.setItem('draft:'+p.id,ta.value)}catch(e){}});
+    ta.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&matchMedia('(pointer:fine)').matches){e.preventDefault();A.chatSend({dataset:{id:p.id}})}})}}
+/* обновить только ленту, не трогая поле ввода */
+function chatLive(){const p=curPage();if(!p||p.t!=='chat'||sheets.length)return false;
+  if(p.id){const el=g('chatList');if(!el)return false;const atEnd=innerHeight+scrollY>=document.body.scrollHeight-80;el.innerHTML=chatListHtml(p.id);markRead(p.id);chatBadge();if(atEnd)scrollTo(0,document.body.scrollHeight);return true}
+  render();return true}
+function onMsg(m,isNew){if(!isNew||m.by===chMe()||!chVisible(m.ch))return;const p=curPage();if(p&&p.t==='chat'&&p.id===m.ch)return;
+  toast(`💬 ${m.by}: ${msgText(m).split('\n')[0].slice(0,60)}`);if(navigator.vibrate)navigator.vibrate(40);setTimeout(chatBadge,50)}
+function sendMsg(ch,data){const m=put('msgs',{id:uid(),ch,by:chMe(),at:Date.now(),...data});commit(true);return m}
+function tplSheet(ch,type='buy'){let st={type,objectId:lastObjFor()||'',who:'',amount:'',items:'',note:'',date:'tomorrow'};return ()=>{
+  const objs=activeObjs(),wk=workerNames().concat(team()).filter((x,i,a)=>x&&a.indexOf(x)===i);
+  const typ=Object.entries(TPL).map(([k,[i,t]])=>`<button class="chip ${st.type===k?'on':''}" data-s="tpT" data-id="${k}">${i} ${t}</button>`).join('');
+  const objSel=`<select id="tpo"><option value="">— без объекта —</option>${objs.map(o=>`<option value="${o.id}" ${o.id===st.objectId?'selected':''}>${esc(o.name)}</option>`).join('')}</select>`;
+  const whoCh=`<div class="chips" style="flex-wrap:wrap">${wk.map(n=>`<button class="chip ${st.who===n?'on':''}" data-s="tpW" data-id="${esc(n)}">${esc(n)}</button>`).join('')}</div>`;
+  let body='';
+  if(st.type==='buy')body=`${F('Объект',objSel)}${F('Что купить — каждая позиция с новой строки',`<textarea id="tpi" rows="4" placeholder="Клей для плитки 5 мешков&#10;Затирка серая 2 кг&#10;Диск 230">${esc(st.items)}</textarea>`)}<div class="two">${F('Бюджет, ₴',N('tpa',st.amount))}${F('Когда',`<select id="tpd"><option value="today" ${st.date==='today'?'selected':''}>Сегодня</option><option value="tomorrow" ${st.date==='tomorrow'?'selected':''}>Завтра</option><option value="" ${!st.date?'selected':''}>Не срочно</option></select>`)}</div>`;
+  if(st.type==='pay')body=`${F('Кому заплатить',whoCh)}<div class="two">${F('Сумма, ₴',N('tpa',st.amount))}${F('Объект',objSel)}</div>${F('За что',I('tpn',st.note,'placeholder="аванс, за штробы…"'))}`;
+  if(st.type==='got')body=`${F('Объект',objSel)}${F('Сумма, ₴',N('tpa',st.amount))}${F('За что',I('tpn',st.note,'placeholder="аванс, материалы, за этап…"'))}`;
+  if(st.type==='rep')body=`${F('Объект',objSel)}<div id="tprep" class="card sm"></div>${F('Комментарий',`<textarea id="tpn" rows="2" placeholder="Сделали стяжку, завтра плитка">${esc(st.note)}</textarea>`)}`;
+  if(st.type==='job')body=`${F('Кто',whoCh)}${F('Объект',objSel)}${F('Что сделать — каждая задача с новой строки',`<textarea id="tpi" rows="4" placeholder="Штробы в зале&#10;Подрозетники 12 шт">${esc(st.items)}</textarea>`)}${F('Когда',`<select id="tpd"><option value="today" ${st.date==='today'?'selected':''}>Сегодня</option><option value="tomorrow" ${st.date==='tomorrow'?'selected':''}>Завтра</option></select>`)}`;
+  return {title:'Шаблон сообщения',html:`<div class="chips" style="flex-wrap:wrap">${typ}</div>${body}
+   <div class="btns" style="margin-top:14px"><button class="btn" data-s="tpShare">В Viber / Telegram</button><button class="btn p" data-s="tpSend">Отправить в чат</button></div>`,
+  init(){
+    const keep=()=>{const vv=id=>g(id)?v(id):null;['tpo','tpa','tpi','tpn','tpd'].forEach(id=>{const x=vv(id);if(x==null)return;st[{tpo:'objectId',tpa:'amount',tpi:'items',tpn:'note',tpd:'date'}[id]]=x})};
+    const rep=()=>{const b=g('tprep');if(!b)return;const oid=v('tpo');if(!oid){b.innerHTML='<span class="muted">Выбери объект — цифры подставятся сами</span>';return}
+      const s2=objStats(oid);b.innerHTML=repRows(oid).map(([l,v2])=>`<div class="row"><span class="muted">${l}</span><b class="n">${v2}</b></div>`).join('')};
+    rep();
+    SS.change=ev=>{if(ev.target.id==='tpo')rep()};
+    SS.tpT=el=>{keep();st.type=el.dataset.id;replaceSheet(tplSheet(ch,st.type));};
+    SS.tpW=el=>{st.who=el.dataset.id;el.parentElement.querySelectorAll('.chip').forEach(b=>b.classList.toggle('on',b===el))};
+    const build=()=>{keep();const t={type:st.type,objectId:st.objectId||''},rows=[],am=num(st.amount),when=st.date==='today'?'сегодня':st.date==='tomorrow'?'завтра':'';
+      if(st.type==='buy'){t.items=String(st.items).split('\n').map(x=>x.trim()).filter(Boolean).map(x=>({t:x,done:false}));if(!t.items.length)return toast('Впиши, что купить'),null;if(am)rows.push(['Бюджет',money(am)]);if(when)rows.push(['Когда',when])}
+      if(st.type==='pay'){if(!st.who)return toast('Выбери, кому'),null;if(!am)return toast('Сумма'),null;t.who=st.who;t.amount=am;rows.push(['Кому',st.who],['Сумма',money(am)]);if(st.note)rows.push(['За что',st.note])}
+      if(st.type==='got'){if(!am)return toast('Сумма'),null;t.amount=am;rows.push(['Сумма',money(am)]);if(st.note)rows.push(['За что',st.note])}
+      if(st.type==='rep'){if(!st.objectId)return toast('Выбери объект'),null;rows.push(...repRows(st.objectId));if(st.note)t.note=st.note}
+      if(st.type==='job'){t.items=String(st.items).split('\n').map(x=>x.trim()).filter(Boolean).map(x=>({t:x,done:false}));if(!t.items.length)return toast('Впиши задачи'),null;if(st.who){t.who=st.who;rows.push(['Кто',st.who])}if(when){rows.push(['Когда',when]);t.due=st.date==='today'?today():dplus(1)}}
+      t.rows=rows;return t};
+    SS.tpSend=()=>{const t=build();if(!t)return;sendMsg(ch,{kind:'tpl',tpl:t});back();setTimeout(()=>{if(curPage()&&curPage().t==='chat')chatLive()},150)};
+    SS.tpShare=()=>{const t=build();if(!t)return;shareText(TPL[t.type][1],msgText({kind:'tpl',tpl:t}))};
+  }};
+}}
+function repRows(oid){const s=objStats(oid);return [['Выполнено работ',money(s.done)],['Получено от заказчика',money(s.receivedWork)],['Материалы и расходы',money(s.mat+s.fuel+s.other)],['Рабочим начислено',money(s.wages)],[s.clientOwes>=0?'Заказчик должен':'Переплата заказчика',money(Math.abs(s.clientOwes))],['Прибыль по оплатам',money(s.profit)]]}
+function chatInit(){
+  Object.assign(A,{
+    chat(){openPage({t:'chat'})},
+    openChat(el){openPage({t:'chat',id:el.dataset.id})},
+    chatSend(el){const ta=g('chatIn'),t=(ta&&ta.value||'').trim();if(!t)return;sendMsg(el.dataset.id,{kind:'txt',text:t});ta.value='';ta.style.height='auto';try{sessionStorage.removeItem('draft:'+el.dataset.id)}catch(e){}chatLive();ta.focus()},
+    chatTpl(el){openSheet(tplSheet(el.dataset.id))},
+    msgItem(el){const m=S.msgs.find(x=>x.id===el.dataset.id);if(!m)return;const it=m.tpl.items[+el.dataset.i];it.done=!it.done;it.by=it.done?chMe():'';put('msgs',m);commit(true);chatLive()},
+    msgShare(el){const m=S.msgs.find(x=>x.id===el.dataset.id);if(m)shareText('Сообщение',msgText(m))},
+    msgPay(el){const m=S.msgs.find(x=>x.id===el.dataset.id);if(!m)return;const t=m.tpl;if(t.done){toast('Уже отмечено');return}
+      openSheet(()=>payoutBody(t.who,null,t.amount));const id=m.id;setTimeout(()=>{const prev=SS.save;if(prev)SS.save=()=>{prev();const mm=S.msgs.find(x=>x.id===id);if(mm){mm.tpl.done=true;mm.tpl.doneBy=chMe();put('msgs',mm);commit(true)}}},0)},
+    msgGot(el){const m=S.msgs.find(x=>x.id===el.dataset.id);if(!m)return;const t=m.tpl;if(t.done){toast('Уже записано');return}
+      openSheet(paySheet(null,{objectId:t.objectId,amount:t.amount}));const id=m.id;setTimeout(()=>{const prev=SS.save;if(prev)SS.save=()=>{prev();const mm=S.msgs.find(x=>x.id===id);if(mm){mm.tpl.done=true;mm.tpl.doneBy=chMe();put('msgs',mm);commit(true)}}},0)},
+    msgTasks(el){const m=S.msgs.find(x=>x.id===el.dataset.id);if(!m)return;const t=m.tpl;
+      t.items.forEach(it=>put('tasks',{id:uid(),objectId:t.objectId||'',title:it.t,done:false,who:t.who||'',due:t.due||''}));t.done=true;t.doneBy=chMe();put('msgs',m);commit(true);toast(`Задач создано: ${t.items.length}`);chatLive()},
+  });
+}
 
 /* ================= Чертежи: план, ГОСТ-лист, электрика, сантехника, фигуры, 3D ================= */
 const WT=0.12; // толщина стены, м
