@@ -459,6 +459,8 @@ body.chatpg #app{padding-bottom:calc(96px + env(safe-area-inset-bottom))}
   .fab.hide{transform:translateY(140px);opacity:0}
 }
 
+.cstrip .cx{width:40px;height:40px;margin:-6px -8px -6px 0;border-radius:50%;font-size:18px;flex:none;color:var(--ink);touch-action:manipulation;cursor:pointer}.cstrip .cx:active{background:var(--line)}
+
 </style>
 </head>
 <body>
@@ -1929,7 +1931,7 @@ const IC={
   pay:'<svg viewBox="0 0 24 24"><rect x="3" y="6.5" width="18" height="11" rx="2.5"/><circle cx="12" cy="12" r="2.4"/><path d="M6.5 9.5v5M17.5 9.5v5"/></svg>',
   photo:'<svg viewBox="0 0 24 24"><path d="M4 8.5h3.2L9 6h6l1.8 2.5H20V19H4z"/><circle cx="12" cy="13.3" r="3.3"/></svg>'};
 /* ================= Стройка 2.2: бизнес-функции ================= */
-const APP_VERSION='3.8';
+const APP_VERSION='3.8.1';
 const LOGC=['work','expenses','payments','est','payplan','cash','objects','tools'];
 const TRASHC=['objects','tasks','work','workers','rates','est','plans','expenses','payments','fuelDays','tools','events','photos','payplan','cash','checks','tpls','team'];
 const STAGES={before:'До',work:'Процесс',after:'После',hidden:'Скрытые'};
@@ -3566,7 +3568,7 @@ function replyHtml(m){return m.reply?`<div class="mrep"><b>${esc(m.reply.by||'')
 function reactHtml(m){const r=m.re||{},ks=Object.keys(r).filter(k=>r[k]&&r[k].length);if(!ks.length)return '';
   return `<div class="mre">${ks.map(k=>`<button class="${r[k].includes(chMe())?'on':''}" data-a="msgReact" data-id="${m.id}" data-r="${k}">${k} ${r[k].length}</button>`).join('')}</div>`}
 function stripHtml(){const c=chatCtx.edit||chatCtx.reply;if(!c)return '';const m=S.msgs.find(x=>x.id===c);if(!m)return '';
-  return `<div class="cstrip"><span>${chatCtx.edit?'✏️ Изменение':'↩ Ответ '+esc(m.by||'')}<small>${esc(msgText(m).split('\n')[0].slice(0,70))}</small></span><button data-a="chatCtxX">✕</button></div>`}
+  return `<div class="cstrip"><span>${chatCtx.edit?'✏️ Изменение':'↩ Ответ '+esc(m.by||'')}<small>${esc(msgText(m).split('\n')[0].slice(0,70))}</small></span><button class="cx" data-a="chatCtxX" aria-label="Отменить">✕</button></div>`}
 function pinHtml(ch){const m=S.msgs.find(x=>x.ch===ch&&x.pin);if(!m)return '<div id="chatPin"></div>';
   return `<div id="chatPin" class="cpin" data-a="msgGo" data-id="${m.id}">📌 <span>${esc(msgText(m).split('\n')[0].slice(0,80))}</span></div>`}
 const tileOf=(lat,lng,z)=>{const n=2**z,x=(lng+180)/360*n,r=lat*Math.PI/180,y=(1-Math.log(Math.tan(r)+1/Math.cos(r))/Math.PI)/2*n;return {x,y}};
@@ -3738,6 +3740,8 @@ function askNotify(){
 const _onMsg0=onMsg;
 onMsg=function(m,isNew){_onMsg0(m,isNew);if(isNew&&m.by!==chMe()&&chVisible(m.ch)){const p=curPage();if(!(p&&p.t==='chat'&&p.id===m.ch&&!document.hidden)){ding();notifyMsg(m)}}};
 function chatInit2(){
+  const cx=e=>{const b=e.target.closest&&e.target.closest('.cstrip .cx');if(!b)return;e.preventDefault();e.stopPropagation();A.chatCtxX()};
+  document.addEventListener('touchend',cx,{passive:false});document.addEventListener('mousedown',cx);
   Object.assign(A,{
     chatAtt(el){openSheet(attachSheet(el.dataset.id))},
     msgMenu(el){openSheet(msgMenuSheet(el.dataset.id))},
@@ -4692,6 +4696,7 @@ const A={
 /* обработчики внутри форм, общие для чипов */
 const CHIP_STATE={pickWk:'wk',cat:'cat',k:'kind',who:'who',rt:'rt',mk:'mk'};
 document.addEventListener('click',ev=>{
+  const ln=ev.target.closest('a[href]');if(ln){const C=window.Capacitor;if(ln.target==='_blank'&&C&&C.isNativePlatform&&C.isNativePlatform()){ev.preventDefault();location.href=ln.href}return}
   const ee=ev.target.closest('[data-e]');if(ee&&ED){ev.preventDefault();ED.act(ee.dataset.e,ee);return}
   const el=ev.target.closest('[data-a],[data-s]');if(!el)return;
   if(el.tagName==='A')return;
