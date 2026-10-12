@@ -460,6 +460,7 @@ body.chatpg #app{padding-bottom:calc(96px + env(safe-area-inset-bottom))}
 }
 
 .cstrip .cx{width:40px;height:40px;margin:-6px -8px -6px 0;border-radius:50%;font-size:18px;flex:none;color:var(--ink);touch-action:manipulation;cursor:pointer}.cstrip .cx:active{background:var(--line)}
+.mgeo .chip{cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:rgba(0,0,0,.15)}.mgeo .chip:active{background:var(--mint);color:#0b0c0e}
 
 </style>
 </head>
@@ -1931,7 +1932,7 @@ const IC={
   pay:'<svg viewBox="0 0 24 24"><rect x="3" y="6.5" width="18" height="11" rx="2.5"/><circle cx="12" cy="12" r="2.4"/><path d="M6.5 9.5v5M17.5 9.5v5"/></svg>',
   photo:'<svg viewBox="0 0 24 24"><path d="M4 8.5h3.2L9 6h6l1.8 2.5H20V19H4z"/><circle cx="12" cy="13.3" r="3.3"/></svg>'};
 /* ================= Стройка 2.2: бизнес-функции ================= */
-const APP_VERSION='3.8.2';
+const APP_VERSION='3.8.3';
 const LOGC=['work','expenses','payments','est','payplan','cash','objects','tools'];
 const TRASHC=['objects','tasks','work','workers','rates','est','plans','expenses','payments','fuelDays','tools','events','photos','payplan','cash','checks','tpls','team'];
 const STAGES={before:'До',work:'Процесс',after:'После',hidden:'Скрытые'};
@@ -3578,7 +3579,7 @@ function msgExtra(m){
   if(m.kind==='geo'){const z=16,t=tileOf(m.lat,m.lng,z),tx=Math.floor(t.x),ty=Math.floor(t.y),px=(t.x-tx)*100,py=(t.y-ty)*100;
     return wrap(`<div class="mgeo"><div class="map"><img src="https://tile.openstreetmap.org/${z}/${tx}/${ty}.png" alt="" onerror="this.style.display='none'"><i style="left:${px}%;top:${py}%"></i></div>
       <div class="gi"><b>${esc(m.label||'Геопозиция')}</b><small>${m.lat.toFixed(5)}, ${m.lng.toFixed(5)}${m.acc?' · ±'+Math.round(m.acc)+' м':''}</small>
-      <div class="chips" style="margin-top:6px;flex-wrap:wrap"><button class="chip" data-a="openMap" data-id="${m.id}" data-u="g">Google Карты</button>${isIOS()?`<button class="chip" data-a="openMap" data-id="${m.id}" data-u="a">Apple Карты</button>`:''}<button class="chip" data-a="openMap" data-id="${m.id}" data-u="w">Waze</button></div></div></div>`)}
+      <div class="chips" style="margin-top:6px;flex-wrap:wrap"><button class="chip" data-a="openMap" data-id="${m.id}" data-u="g">Google Карты</button>${isIOS()?`<button class="chip" data-a="openMap" data-id="${m.id}" data-u="a">Apple Карты</button>`:''}<button class="chip" data-a="openMap" data-id="${m.id}" data-u="w">Waze</button><button class="chip" data-a="copyGeo" data-id="${m.id}">⧉ Координаты</button></div></div></div>`)}
   if(m.kind==='poll'){const tot=(m.opts||[]).reduce((s,o)=>s+(o.v||[]).length,0);
     return wrap(`<div class="mcard"><div class="mh"><span>📊</span><b>${esc(m.q||'Опрос')}</b></div><div class="mpoll">${(m.opts||[]).map((o,i)=>{const n=(o.v||[]).length,me2=(o.v||[]).includes(chMe());
       return `<button class="${me2?'on':''}" data-a="msgVote" data-id="${m.id}" data-i="${i}"><span class="pvb" style="width:${tot?n/tot*100:0}%"></span><span class="pt">${me2?'✓ ':''}${esc(o.t)}</span><b>${n||''}</b>${n?`<small>${esc((o.v||[]).join(', '))}</small>`:''}</button>`}).join('')}</div><small class="muted sm">Голосов: ${tot}</small></div>`)}
@@ -3751,8 +3752,20 @@ function mapUrl(m,k){const q=m.lat+','+m.lng,l=encodeURIComponent(m.label||'То
   if(k==='w')return `https://waze.com/ul?ll=${q}&navigate=yes`;
   if(k==='a')return `https://maps.apple.com/?ll=${q}&q=${l}`;
   return `https://www.google.com/maps/search/?api=1&query=${q}`}
+/* открыть карту: на iPhone — через схемы приложений (maps://, comgooglemaps://, waze://), в APK — geo:/https Intent */
+function openMapApp(m,k){const q=m.lat+','+m.lng,l=encodeURIComponent(m.label||'Точка'),web=mapUrl(m,k);
+  const go=(app,fb)=>{let left=false;const vis=()=>{if(document.hidden)left=true};document.addEventListener('visibilitychange',vis);
+    location.href=app;setTimeout(()=>{document.removeEventListener('visibilitychange',vis);if(!left&&!document.hidden&&fb)openExt(fb)},1500)};
+  if(isNative()){if(k==='g'){location.href=`geo:${q}?q=${q}(${l})`;setTimeout(()=>{if(!document.hidden)location.href=web},1500);return}location.href=web;return}
+  if(isIOS()){if(k==='a')return go(`maps://?ll=${q}&q=${l}`,web);
+    if(k==='g')return go(`comgooglemaps://?q=${q}&center=${q}&zoom=17`,`maps://?ll=${q}&q=${l}`);
+    if(k==='w')return go(`waze://?ll=${q}&navigate=yes`,web)}
+  openExt(web)}
+let mapTapT=0;
 function chatInit2(){
-  A.openMap=el=>{const m=S.msgs.find(x=>x.id===el.dataset.id);if(!m)return;openExt(mapUrl(m,el.dataset.u))};
+  A.openMap=el=>{if(Date.now()-mapTapT<800)return;mapTapT=Date.now();const m=S.msgs.find(x=>x.id===el.dataset.id);if(!m)return;openMapApp(m,el.dataset.u)};
+  A.copyGeo=el=>{const m=S.msgs.find(x=>x.id===el.dataset.id);if(!m)return;const t=m.lat.toFixed(6)+', '+m.lng.toFixed(6);(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast('Координаты скопированы'),()=>prompt('Координаты',t))};
+  document.addEventListener('touchend',e=>{const b=e.target.closest&&e.target.closest('[data-a=openMap]');if(!b)return;e.preventDefault();A.openMap(b)},{passive:false});
   const cx=e=>{const b=e.target.closest&&e.target.closest('.cstrip .cx');if(!b)return;e.preventDefault();e.stopPropagation();A.chatCtxX()};
   document.addEventListener('touchend',cx,{passive:false});document.addEventListener('mousedown',cx);
   Object.assign(A,{
