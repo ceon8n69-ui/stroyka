@@ -332,7 +332,10 @@ input:focus,select:focus,textarea:focus{outline:0;border-color:var(--ink)}
 .fab{bottom:calc(90px + env(safe-area-inset-bottom));height:58px;border-radius:29px;padding:0 24px;background:var(--ink);color:var(--bg);font-weight:700;box-shadow:0 0 0 4px var(--bg),0 0 0 5.5px var(--ink),0 14px 30px rgba(0,0,0,.22)}
 
 /* листы снизу */
-.scrim{background:rgba(8,9,10,.42);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
+.scrim{background:rgba(8,9,10,.5)}
+body.lock .top{backdrop-filter:none;-webkit-backdrop-filter:none;background:var(--bg)}
+.shb,.shb *,.chips,.chip,button{touch-action:manipulation}
+.chip,.btn,.tabs button,.acts button{-webkit-user-select:none;user-select:none}
 .sh{border-radius:32px 32px 0 0;background:var(--bg);animation:none}
 .sh::before{content:'';display:block;width:44px;height:5px;border-radius:3px;background:var(--line);margin:9px auto 0;flex:none}
 .shh{border-bottom:0;padding:6px 8px 4px 20px}
@@ -388,8 +391,8 @@ input:focus,select:focus,textarea:focus{outline:0;border-color:var(--ink)}
   #sheet.closing{pointer-events:none}
   #sheet.closing .sh{animation:shDown .26s cubic-bezier(.5,0,.75,0) forwards}
   #sheet.closing .scrim{animation:fadeOut .26s ease forwards}
-  button,.li,.chip,.btn,.acts .actlbl,.alert,.ev,.card{transition:transform .16s var(--ease),background-color .25s,color .25s,box-shadow .25s}
-  button:active,.li:active,.acts .actlbl:active,.alert:active,.ev:active{transform:scale(.97)}
+  .btn,.li,.acts button,.acts .actlbl,.alert,.ev,.fab{transition:transform .14s var(--ease)}
+  .btn:active,.li:active,.acts button:active,.acts .actlbl:active,.alert:active,.ev:active{transform:scale(.98)}
   .tabs button.on svg{animation:tabIn .35s var(--ease)}
   .task.done .ck i{animation:pop .35s var(--ease)}
   #toast{transition:opacity .25s,transform .35s var(--ease)}
@@ -1574,9 +1577,10 @@ function calcSheetBody(c){
     SS.addW=()=>{c.ops.push({t:'window',w:'1.5',h:'1.4',sill:'0.8',wall:String(1+c.ops.filter(o=>o.t==='window').length%4)});drawOps();SS.redraw()};
     SS.addD=()=>{c.ops.push({t:'door',w:'0.9',h:'2.0',sill:'0',wall:'3'});drawOps();SS.redraw()};
     SS.rmOp=el=>{c.ops.splice(+el.dataset.id,1);drawOps();SS.redraw()};
-    SS.cwall=el=>{const i=+el.dataset.id;c.on[i]=c.on[i]===false;SS.redraw()};
-    SS.csys=el=>{const k=el.dataset.id,i=c.sys.indexOf(k);i<0?c.sys.push(k):c.sys.splice(i,1);el.classList.toggle('on',i<0);drawPar();drawRes()};
-    SS.cset=el=>{c.p[el.dataset.k]=el.dataset.id;el.parentElement.querySelectorAll('.chip').forEach(b=>b.classList.toggle('on',b===el));drawRes()};
+    const later=f=>{cancelAnimationFrame(SS._raf);SS._raf=requestAnimationFrame(()=>{SS._raf=requestAnimationFrame(f)})};
+    SS.cwall=el=>{const i=+el.dataset.id;c.on[i]=c.on[i]===false;el.classList.toggle('on',c.on[i]!==false);later(SS.redraw)};
+    SS.csys=el=>{const k=el.dataset.id,i=c.sys.indexOf(k);i<0?c.sys.push(k):c.sys.splice(i,1);el.classList.toggle('on',i<0);later(()=>{drawPar();drawRes()})};
+    SS.cset=el=>{c.p[el.dataset.k]=el.dataset.id;el.parentElement.querySelectorAll('.chip').forEach(b=>b.classList.toggle('on',b===el));later(drawRes)};
     SS.mprice=el=>openSheet(matPriceSheet(el.dataset.id));
     SS.after=null;
     SS.share=()=>shareText('Материалы: '+(c.name||'помещение'),calcText(c,SS.rows,SS.res));
@@ -1846,7 +1850,7 @@ function jobSheet(id,init={}){
     const draw=()=>{const res=runJob(id,st.v),rows=calcRows(res);SS.rows=rows;g('jres').innerHTML=calcMoneyHtml(rows,res)};draw();
     SS.input=ev=>{const t=ev.target;if(t.id==='jn'){st.name=t.value;return}if(t.dataset.k){st.v[t.dataset.k]=t.value;draw()}};
     SS.change=ev=>{if(ev.target.id==='jo')st.objectId=ev.target.value};
-    SS.jset=el=>{st.v[el.dataset.k]=el.dataset.id;el.parentElement.querySelectorAll('.chip').forEach(b=>b.classList.toggle('on',b===el));draw()};
+    SS.jset=el=>{st.v[el.dataset.k]=el.dataset.id;el.parentElement.querySelectorAll('.chip').forEach(b=>b.classList.toggle('on',b===el));cancelAnimationFrame(SS._raf);SS._raf=requestAnimationFrame(()=>{SS._raf=requestAnimationFrame(draw)})};
     SS.mprice=el=>openSheet(matPriceSheet(el.dataset.id));
     SS.redraw=draw;
     SS.share=()=>shareText(st.name,calcListText(`${st.name} — ${J.n}`,SS.rows));
@@ -1864,7 +1868,7 @@ const IC={
   pay:'<svg viewBox="0 0 24 24"><rect x="3" y="6.5" width="18" height="11" rx="2.5"/><circle cx="12" cy="12" r="2.4"/><path d="M6.5 9.5v5M17.5 9.5v5"/></svg>',
   photo:'<svg viewBox="0 0 24 24"><path d="M4 8.5h3.2L9 6h6l1.8 2.5H20V19H4z"/><circle cx="12" cy="13.3" r="3.3"/></svg>'};
 /* ================= Стройка 2.2: бизнес-функции ================= */
-const APP_VERSION='3.2';
+const APP_VERSION='3.3';
 const LOGC=['work','expenses','payments','est','payplan','cash','objects','tools'];
 const TRASHC=['objects','tasks','work','workers','rates','est','plans','expenses','payments','fuelDays','tools','events','photos','payplan','cash','checks','tpls','team'];
 const STAGES={before:'До',work:'Процесс',after:'После',hidden:'Скрытые'};
