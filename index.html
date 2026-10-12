@@ -1460,10 +1460,10 @@ function runCalc(c){
     add('tile',a*k);add('tglue',a*5);add('grout',a*0.5);add('cross',a*20);add('primer',a*0.15);work('Укладка плитки на стены',a);work('Затирка швов плитки (стандартная)',a)}
   if(sys.has('tilef')&&g.A>0){add('tile',g.A*k);add('tglue',g.A*5);add('grout',g.A*0.4);add('cross',g.A*15);add('primer',g.A*0.15);work('Укладка плитки на пол',g.A);work('Затирка швов плитки (стандартная)',g.A)}
   if(sys.has('screed')&&g.A>0){const t=num(p.scT)||5;add('screed',g.A*t*20*1.05);add('tape',g.P);add('film',g.A*1.15);work(t>5?'Цементно-песчаная стяжка 5–10 см':'Цементно-песчаная стяжка до 5 см',g.A)}
-  if(sys.has('lam')&&g.A>0){add('lam',g.A*1.07);add('under',g.A*1.1);add('skirt',ceilE((g.P-doorsW)*1.05/2.5));work('Укладка ламината',g.A);work('Подложка под ламинат',g.A);work('Установка пластикового плинтуса',g.P-doorsW)}
+  if(sys.has('lam')&&g.A>0){add('lam',g.A*k);add('under',g.A*1.1);add('skirt',ceilE((g.P-doorsW)*1.05/2.5));work('Укладка ламината',g.A);work('Подложка под ламинат',g.A);work('Установка пластикового плинтуса',g.P-doorsW)}
   if(sys.has('wproof')&&g.A>0){const a=g.A+g.P*0.2;add('wmast',a*2.5);add('wtape',g.P+0.5);add('primer',a*0.15);work('Гидроизоляция санузла',a)}
   if(sys.has('self')&&g.A>0){const t=num(p.slT)||10;add('selflev',g.A*t*1.6);add('primer',g.A*0.15);add('tape',g.P);work('Самовыравнивающийся пол',g.A)}
-  if(sys.has('linol')&&g.A>0){add('linol',g.A*1.1);add('skirt',ceilE((g.P-doorsW)*1.05/2.5));work('Укладка линолеума без клея',g.A);work('Установка пластикового плинтуса',g.P-doorsW)}
+  if(sys.has('linol')&&g.A>0){add('linol',g.A*k);add('skirt',ceilE((g.P-doorsW)*1.05/2.5));work('Укладка линолеума без клея',g.A);work('Установка пластикового плинтуса',g.P-doorsW)}
   if(sys.has('block')&&W.length){const t=(+p.blT||300)/1000,vol=wallsNet*t,bv=0.6*0.2*t;add('block'+p.blT,ceilE(vol/bv*1.05));add('bglue',vol*28);work('Кладка стен из газоблока или пеноблока',vol)}
   return {g,m,works,notes,wallsNet,slopes};
 }
@@ -1560,7 +1560,7 @@ function calcSheetBody(c){
       if(s.has('self'))h+=pch('slT',[['5','5 мм'],['10','10 мм'],['20','20 мм'],['30','30 мм']],'Наливной пол: толщина');
       if(s.has('screed'))h+=pch('scT',[['3','3 см'],['5','5 см'],['7','7 см'],['10','10 см']],'Стяжка: толщина');
       if(s.has('block'))h+=pch('blT',[['200','Газоблок 200 мм'],['300','300 мм']],'Толщина стены');
-      h+=pch('waste',[['5','Запас 5%'],['10','10%'],['15','15%']],'Запас на подрезку');
+      if(['gklw','gklc','part','tilew','tilef','lam','linol'].some(x=>s.has(x)))h+=pch('waste',[['5','Запас 5%'],['10','10%'],['15','15%']],'Запас на подрезку (ГКЛ, плитка, ламинат, линолеум)');
       g('cpar').innerHTML=h};
     const drawRes=()=>{const res=runCalc(c),rows=calcRows(res);SS.res=res;SS.rows=rows;const gg=res.g;
       g('cres').innerHTML=`<div class="kv" style="margin-top:12px"><div><small>Стены без проёмов</small><b class="n">${fA(res.wallsNet)} м²</b></div><div><small>Пол / потолок</small><b class="n">${fA(gg.A)} м²</b></div><div><small>Периметр</small><b class="n">${fA(gg.P)} м</b></div><div><small>Откосы окон</small><b class="n">${fA(res.slopes)} м</b></div></div>
@@ -1868,7 +1868,7 @@ const IC={
   pay:'<svg viewBox="0 0 24 24"><rect x="3" y="6.5" width="18" height="11" rx="2.5"/><circle cx="12" cy="12" r="2.4"/><path d="M6.5 9.5v5M17.5 9.5v5"/></svg>',
   photo:'<svg viewBox="0 0 24 24"><path d="M4 8.5h3.2L9 6h6l1.8 2.5H20V19H4z"/><circle cx="12" cy="13.3" r="3.3"/></svg>'};
 /* ================= Стройка 2.2: бизнес-функции ================= */
-const APP_VERSION='3.3';
+const APP_VERSION='3.4';
 const LOGC=['work','expenses','payments','est','payplan','cash','objects','tools'];
 const TRASHC=['objects','tasks','work','workers','rates','est','plans','expenses','payments','fuelDays','tools','events','photos','payplan','cash','checks','tpls','team'];
 const STAGES={before:'До',work:'Процесс',after:'После',hidden:'Скрытые'};
