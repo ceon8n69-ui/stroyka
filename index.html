@@ -462,6 +462,10 @@ body.chatpg #app{padding-bottom:calc(96px + env(safe-area-inset-bottom))}
 .cstrip .cx{width:40px;height:40px;margin:-6px -8px -6px 0;border-radius:50%;font-size:18px;flex:none;color:var(--ink);touch-action:manipulation;cursor:pointer}.cstrip .cx:active{background:var(--line)}
 .mgeo .chip{cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:rgba(0,0,0,.15)}.mgeo .chip:active{background:var(--mint);color:#0b0c0e}
 body.wk [data-s=toEst],body.wk [data-e=toEst],body.wk .adm{display:none!important}
+.qrscan p small{font-weight:500;opacity:.8}
+.qrother{position:absolute;left:16px;right:16px;bottom:calc(92px + env(safe-area-inset-bottom));background:rgba(20,22,25,.92);border-radius:18px;padding:12px 14px;display:flex;flex-direction:column;gap:4px;font-size:14px}
+.qrother small{opacity:.7;word-break:break-all}.qrother .btn{margin-top:6px;min-height:40px;border-color:#fff;color:#fff}
+.qrbtns [data-t]{flex:0 0 56px}
 
 </style>
 </head>
@@ -641,7 +645,7 @@ function backThen(fn){const n=sheets.length;if(!n){fn();return}closing=0;back();
   const chk=()=>{if(sheets.length<n){setTimeout(fn,30);return}if(++t>48){sheets.length=Math.max(0,n-1);ignorePop++;drawSheet();render();setTimeout(fn,30);return}setTimeout(chk,25)};setTimeout(chk,25)}
 const backP=()=>new Promise(r=>backThen(r));
 window.addEventListener('popstate',()=>{
-  if(document.querySelector('.ped'))return;
+  if(document.querySelector('.ped,.qrscan:not(.out)'))return;
   closing=0;if(ignorePop>0){ignorePop--;return}
   if(viewerEl){viewerEl.remove();viewerEl=null;return}
   if(sheets.length){sheets.pop();drawSheet();render();return}
@@ -1958,7 +1962,7 @@ const IC={
   pay:'<svg viewBox="0 0 24 24"><rect x="3" y="6.5" width="18" height="11" rx="2.5"/><circle cx="12" cy="12" r="2.4"/><path d="M6.5 9.5v5M17.5 9.5v5"/></svg>',
   photo:'<svg viewBox="0 0 24 24"><path d="M4 8.5h3.2L9 6h6l1.8 2.5H20V19H4z"/><circle cx="12" cy="13.3" r="3.3"/></svg>'};
 /* ================= Стройка 2.2: бизнес-функции ================= */
-const APP_VERSION='3.9';
+const APP_VERSION='3.9.1';
 const LOGC=['work','expenses','payments','est','payplan','cash','objects','tools'];
 const TRASHC=['objects','tasks','work','workers','rates','est','plans','expenses','payments','fuelDays','tools','events','photos','payplan','cash','checks','tpls','team'];
 const STAGES={before:'До',work:'Процесс',after:'После',hidden:'Скрытые'};
@@ -2468,20 +2472,7 @@ function expSheet(id,pre={}){return ()=>{
 }}
 let jsqrP=null;
 const loadScript=(src,glob)=>window[glob]?Promise.resolve():new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>rej(new Error(src));document.head.appendChild(s)});
-async function readReceiptQR(file){
-  await loadScript('jsQR.js','jsQR');
-  const url=URL.createObjectURL(file);
-  try{
-    const img=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=url});
-    for(const max of [1400,1000,700,2000]){
-      const k=Math.min(1,max/Math.max(img.width,img.height)),w=Math.round(img.width*k),h=Math.round(img.height*k);
-      const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');x.drawImage(img,0,0,w,h);
-      const d=x.getImageData(0,0,w,h),q=window.jsQR(d.data,w,h,{inversionAttempts:'attemptBoth'});
-      if(q&&q.data)return parseFiscal(q.data);
-    }
-    return null;
-  }finally{URL.revokeObjectURL(url)}
-}
+async function readReceiptQR(file){const r=await qrFromFile(file,true);const q=r.best||r.other;return q?parseFiscal(q):null}
 function parseFiscal(s){
   const get=k=>{const m=String(s).match(new RegExp('[?&]'+k+'=([^&#]+)','i'));return m?decodeURIComponent(m[1]):''};
   const sm=get('sm')||get('sum')||get('s');let d=get('date');
@@ -3334,33 +3325,69 @@ function animView(){
 /* ================= Сканер QR чеков → «Мой инструмент» ================= */
 const normT=s=>String(s||'').toLowerCase().replace(/[^\p{L}\p{N}]+/gu,' ').trim();
 /* живой сканер камеры; если камера недоступна — фото через системную камеру */
+/* ---------- распознавание QR ----------
+   1) встроенный BarcodeDetector (Android/Chrome) — находит все коды сразу;
+   2) jsQR по центру кадра в полном разрешении + по всему кадру + по фрагментам фото. */
+const isReceiptQR=s=>/tax\.gov\.ua|cashregs|[?&](fn|sm)=|checkbox\.(ua|in\.ua)|vchasno|kasa\.|prro/i.test(String(s||''));
+let BD=null;
+async function bdGet(){if(BD!==null)return BD;BD=false;try{if('BarcodeDetector' in window){const f=await BarcodeDetector.getSupportedFormats();if(f.includes('qr_code'))BD=new BarcodeDetector({formats:['qr_code']})}}catch(e){}return BD}
+function pickQR(list){list=[...new Set(list.filter(Boolean))];return {best:list.find(isReceiptQR)||null,other:list.find(x=>!isReceiptQR(x))||null}}
+function jsqrRegion(src,sw,sh,sx,sy,w,h,max,inv){const k=Math.min(1,max/Math.max(w,h)),cw=Math.max(1,Math.round(w*k)),ch=Math.max(1,Math.round(h*k));
+  const c=jsqrRegion.c||(jsqrRegion.c=document.createElement('canvas'));c.width=cw;c.height=ch;const x=c.getContext('2d',{willReadFrequently:true});
+  x.imageSmoothingEnabled=true;x.drawImage(src,sx,sy,w,h,0,0,cw,ch);
+  const q=window.jsQR&&window.jsQR(x.getImageData(0,0,cw,ch).data,cw,ch,{inversionAttempts:inv||'dontInvert'});return q&&q.data||null}
 function scanQR(){return new Promise(async res=>{
-  await loadScript('jsQR.js','jsQR').catch(()=>{});
+  await loadScript('jsQR.js','jsQR').catch(()=>{});const bd=await bdGet();
   const ov=document.createElement('div');ov.className='qrscan';
-  ov.innerHTML=`<video playsinline muted></video><div class="qrframe"><i></i><i></i><i></i><i></i></div>
-   <p>Наведи камеру на QR-код чека</p><div class="qrbtns"><label class="btn">📷 Фото чека<input type="file" accept="image/*" capture="environment" hidden></label><button class="btn p" data-x>Закрыть</button></div>`;
-  document.body.appendChild(ov);
-  const vid=ov.querySelector('video'),c=document.createElement('canvas'),x=c.getContext('2d',{willReadFrequently:true});let stream=null,done=false,raf=0,last=0;
-  const finish=v=>{if(done)return;done=true;cancelAnimationFrame(raf);if(stream)stream.getTracks().forEach(t=>t.stop());ov.classList.add('out');setTimeout(()=>ov.remove(),220);res(v)};
+  ov.innerHTML=`<video playsinline muted autoplay></video><div class="qrframe"><i></i><i></i><i></i><i></i></div>
+   <p>Наведи на QR-код чека — он внизу чека, рядом с суммой.<br><small>Держи 10–20 см, чтобы код занял рамку</small></p>
+   <div class="qrother" hidden></div>
+   <div class="qrbtns"><button class="btn" data-t hidden>🔦</button><label class="btn">📷 Фото чека<input type="file" accept="image/*" hidden></label><button class="btn p" data-x>Закрыть</button></div>`;
+  document.body.appendChild(ov);history.pushState({qr:1},'');
+  const vid=ov.querySelector('video'),oth=ov.querySelector('.qrother');let stream=null,track=null,done=false,raf=0,last=0,n=0,busy=false,torch=false,seenOther='';
+  const onPop=()=>finish(null,true);addEventListener('popstate',onPop);
+  const finish=(v,fromPop)=>{if(done)return;done=true;removeEventListener('popstate',onPop);cancelAnimationFrame(raf);if(stream)stream.getTracks().forEach(t=>t.stop());ov.classList.add('out');setTimeout(()=>ov.remove(),220);
+    if(!fromPop){ignorePop++;history.back()}setTimeout(()=>res(v),fromPop?0:60)};
+  const other=s=>{if(s===seenOther)return;seenOther=s;oth.hidden=false;
+    oth.innerHTML=`<b>Это другой QR-код</b><small>${esc(String(s).slice(0,90))}</small><span>Наведи на QR-код налоговой (обычно самый нижний на чеке)</span><button class="btn" data-use>Всё равно использовать</button>`;
+    oth.querySelector('[data-use]').onclick=()=>finish(s)};
   ov.querySelector('[data-x]').onclick=()=>finish(null);
-  ov.querySelector('input').onchange=async e=>{const f=e.target.files[0];if(!f)return;toast('Ищу QR-код…');const s=await qrFromFile(f);if(s)finish(s);else toast('QR не найден — сфотографируй ближе и ровнее')};
+  ov.querySelector('input').onchange=async e=>{const f=e.target.files[0];if(!f)return;toast('Ищу QR-код…');const r=await qrFromFile(f,true);
+    if(r.best)finish(r.best);else if(r.other)other(r.other);else toast('QR не найден — сфотографируй ближе, без бликов, чтобы код был в центре');e.target.value=''};
+  ov.querySelector('[data-t]').onclick=async()=>{try{torch=!torch;await track.applyConstraints({advanced:[{torch}]})}catch(e){}};
   try{
-    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}},audio:false});
-    vid.srcObject=stream;await vid.play();
-    const tick=t=>{if(done)return;raf=requestAnimationFrame(tick);if(t-last<120||!vid.videoWidth)return;last=t;
-      const s=Math.min(1,720/Math.max(vid.videoWidth,vid.videoHeight));c.width=Math.round(vid.videoWidth*s);c.height=Math.round(vid.videoHeight*s);x.drawImage(vid,0,0,c.width,c.height);
-      const q=window.jsQR&&window.jsQR(x.getImageData(0,0,c.width,c.height).data,c.width,c.height,{inversionAttempts:'dontInvert'});
-      if(q&&q.data){if(navigator.vibrate)navigator.vibrate(60);finish(q.data)}};
+    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:false});
+    vid.srcObject=stream;await vid.play();track=stream.getVideoTracks()[0];
+    try{const cap=track.getCapabilities?track.getCapabilities():{};
+      if(cap.focusMode&&cap.focusMode.includes('continuous'))track.applyConstraints({advanced:[{focusMode:'continuous'}]}).catch(()=>{});
+      if(cap.torch)ov.querySelector('[data-t]').hidden=false}catch(e){}
+    const tick=async t=>{if(done)return;raf=requestAnimationFrame(tick);if(busy||t-last<90||!vid.videoWidth)return;last=t;busy=true;n++;
+      try{const vw=vid.videoWidth,vh=vid.videoHeight;let found=[];
+        if(bd){try{found=(await bd.detect(vid)).map(b=>b.rawValue)}catch(e){}}
+        if(!found.length&&window.jsQR){
+          const m=n%3,side=Math.min(vw,vh)*(m===2?0.95:0.6),sx=(vw-side)/2,sy=(vh-side)/2;
+          const r=m===1?jsqrRegion(vid,vw,vh,0,0,vw,vh,1100,'dontInvert'):jsqrRegion(vid,vw,vh,sx,sy,side,side,900,n%6===0?'attemptBoth':'dontInvert');
+          if(r)found=[r]}
+        if(found.length){const pk=pickQR(found);if(pk.best){if(navigator.vibrate)navigator.vibrate(60);finish(pk.best)}else if(pk.other)other(pk.other)}
+      }finally{busy=false}};
     raf=requestAnimationFrame(tick);
   }catch(e){ov.classList.add('nocam');ov.querySelector('p').textContent='Камера в приложении недоступна — нажми «Фото чека»'}
 })}
-async function qrFromFile(file){
-  await loadScript('jsQR.js','jsQR');const url=URL.createObjectURL(file);
-  try{const img=await new Promise((r,j)=>{const i=new Image();i.onload=()=>r(i);i.onerror=j;i.src=url});
-    for(const max of [1400,1000,700,2000]){const k=Math.min(1,max/Math.max(img.width,img.height)),w=Math.round(img.width*k),h=Math.round(img.height*k);
-      const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');x.drawImage(img,0,0,w,h);
-      const q=window.jsQR(x.getImageData(0,0,w,h).data,w,h,{inversionAttempts:'attemptBoth'});if(q&&q.data)return q.data}
-    return null}catch(e){return null}finally{URL.revokeObjectURL(url)}
+async function qrFromFile(file,all){
+  await loadScript('jsQR.js','jsQR').catch(()=>{});const url=URL.createObjectURL(file),found=[];
+  const ret=()=>{const pk=pickQR(found);return all?pk:(pk.best||pk.other)};
+  try{const img=await new Promise((r,j)=>{const i=new Image();i.onload=()=>r(i);i.onerror=j;i.src=url});const W=img.naturalWidth||img.width,H=img.naturalHeight||img.height;
+    const bd=await bdGet();
+    if(bd){try{const c=document.createElement('canvas'),k=Math.min(1,3000/Math.max(W,H));c.width=Math.round(W*k);c.height=Math.round(H*k);c.getContext('2d').drawImage(img,0,0,c.width,c.height);(await bd.detect(c)).forEach(b=>found.push(b.rawValue));if(pickQR(found).best)return ret()}catch(e){}}
+    if(!window.jsQR)return ret();
+    const tryR=(sx,sy,w,h,max,inv)=>{const r=jsqrRegion(img,W,H,sx,sy,w,h,max,inv);if(r)found.push(r);return r&&isReceiptQR(r)};
+    for(const max of [1200,1800,900])if(tryR(0,0,W,H,max,'attemptBoth'))return ret();
+    // центр и фрагменты: QR на чеке обычно маленький
+    for(const f of [0.6,0.4]){const w=W*f,h=H*f;if(tryR((W-w)/2,(H-h)/2,w,h,1200,'attemptBoth'))return ret()}
+    for(const g of [2,3]){const tw=W/g*1.5,th=H/g*1.5;
+      for(let i=0;i<g;i++)for(let j=0;j<g;j++){const sx=Math.min(W-tw,Math.max(0,W/g*i-tw/6)),sy=Math.min(H-th,Math.max(0,H/g*j-th/6));
+        if(tryR(Math.max(0,sx),Math.max(0,sy),Math.min(tw,W),Math.min(th,H),1200,'attemptBoth'))return ret()}}
+    return ret()}catch(e){return all?{best:null,other:null}:null}finally{URL.revokeObjectURL(url)}
 }
 function parseReceipt(raw){
   const s=String(raw||''),get=k=>{const m=s.match(new RegExp('[?&]'+k+'=([^&#]*)','i'));return m?decodeURIComponent(m[1].replace(/\+/g,' ')):''};
@@ -3437,7 +3464,7 @@ function receiptSheet(raw,info){return ()=>{
 async function scanToTools(){
   const raw=await scanQR();if(!raw)return;
   const rc=parseReceipt(raw);
-  if(!rc.amount&&!rc.tax){toast('Это не похоже на QR фискального чека');}
+  if(!rc.amount&&!rc.tax&&!isReceiptQR(raw)){toast('QR прочитан, но это не код налоговой — проверь сумму вручную')}
   let info=null;
   if(rc.tax&&rc.id){toast('Загружаю позиции чека…');info=await taxCheckItems(rc)}
   openSheet(receiptSheet(raw,info));
