@@ -1929,7 +1929,7 @@ const IC={
   pay:'<svg viewBox="0 0 24 24"><rect x="3" y="6.5" width="18" height="11" rx="2.5"/><circle cx="12" cy="12" r="2.4"/><path d="M6.5 9.5v5M17.5 9.5v5"/></svg>',
   photo:'<svg viewBox="0 0 24 24"><path d="M4 8.5h3.2L9 6h6l1.8 2.5H20V19H4z"/><circle cx="12" cy="13.3" r="3.3"/></svg>'};
 /* ================= Стройка 2.2: бизнес-функции ================= */
-const APP_VERSION='3.7';
+const APP_VERSION='3.8';
 const LOGC=['work','expenses','payments','est','payplan','cash','objects','tools'];
 const TRASHC=['objects','tasks','work','workers','rates','est','plans','expenses','payments','fuelDays','tools','events','photos','payplan','cash','checks','tpls','team'];
 const STAGES={before:'До',work:'Процесс',after:'После',hidden:'Скрытые'};
@@ -3497,7 +3497,12 @@ function chatLive(){const p=curPage();if(!p||p.t!=='chat'||sheets.length)return 
 function onMsg(m,isNew){if(!isNew||m.by===chMe()||!chVisible(m.ch))return;const p=curPage();if(p&&p.t==='chat'&&p.id===m.ch)return;
   toast(`💬 ${m.by}: ${msgText(m).split('\n')[0].slice(0,60)}`);if(navigator.vibrate)navigator.vibrate(40);setTimeout(chatBadge,50)}
 function sendMsg(ch,data){const m=put('msgs',{id:uid(),ch,by:chMe(),at:Date.now(),...data});commit(true);return m}
-function tplSheet(ch,type='buy'){let st={type,objectId:lastObjFor()||'',who:'',amount:'',items:'',note:'',date:'tomorrow'};return ()=>{
+function tplSheet(ch,type='buy',eid,st0){let st={type,objectId:lastObjFor()||'',who:'',amount:'',items:'',note:'',date:'tomorrow'};
+  const em=eid&&S.msgs.find(x=>x.id===eid);
+  if(em&&em.tpl){const t=em.tpl,rw=Object.fromEntries((t.rows||[]).map(r=>r));st={type:t.type,objectId:t.objectId||'',who:t.who||'',amount:t.amount||num(String(rw['Бюджет']||'').replace(/\D/g,''))||'',items:(t.items||[]).map(i=>i.t).join('\n'),
+    note:t.note||rw['За что']||'',date:rw['Когда']==='сегодня'?'today':rw['Когда']==='завтра'?'tomorrow':''}}
+  if(st0)st={...st0,type};
+  return ()=>{
   const objs=activeObjs(),wk=workerNames().concat(team()).filter((x,i,a)=>x&&a.indexOf(x)===i);
   const typ=Object.entries(TPL).map(([k,[i,t]])=>`<button class="chip ${st.type===k?'on':''}" data-s="tpT" data-id="${k}">${i} ${t}</button>`).join('');
   const objSel=`<select id="tpo"><option value="">— без объекта —</option>${objs.map(o=>`<option value="${o.id}" ${o.id===st.objectId?'selected':''}>${esc(o.name)}</option>`).join('')}</select>`;
@@ -3508,15 +3513,15 @@ function tplSheet(ch,type='buy'){let st={type,objectId:lastObjFor()||'',who:'',a
   if(st.type==='got')body=`${F('Объект',objSel)}${F('Сумма, ₴',N('tpa',st.amount))}${F('За что',I('tpn',st.note,'placeholder="аванс, материалы, за этап…"'))}`;
   if(st.type==='rep')body=`${F('Объект',objSel)}<div id="tprep" class="card sm"></div>${F('Комментарий',`<textarea id="tpn" rows="2" placeholder="Сделали стяжку, завтра плитка">${esc(st.note)}</textarea>`)}`;
   if(st.type==='job')body=`${F('Кто',whoCh)}${F('Объект',objSel)}${F('Что сделать — каждая задача с новой строки',`<textarea id="tpi" rows="4" placeholder="Штробы в зале&#10;Подрозетники 12 шт">${esc(st.items)}</textarea>`)}${F('Когда',`<select id="tpd"><option value="today" ${st.date==='today'?'selected':''}>Сегодня</option><option value="tomorrow" ${st.date==='tomorrow'?'selected':''}>Завтра</option></select>`)}`;
-  return {title:'Шаблон сообщения',html:`<div class="chips" style="flex-wrap:wrap">${typ}</div>${body}
-   <div class="btns" style="margin-top:14px"><button class="btn" data-s="tpShare">В Viber / Telegram</button><button class="btn p" data-s="tpSend">Отправить в чат</button></div>`,
+  return {title:em?'Изменить шаблон':'Шаблон сообщения',html:`<div class="chips" style="flex-wrap:wrap">${typ}</div>${body}
+   <div class="btns" style="margin-top:14px"><button class="btn" data-s="tpShare">В Viber / Telegram</button><button class="btn p" data-s="tpSend">${em?'Сохранить':'Отправить в чат'}</button></div>`,
   init(){
     const keep=()=>{const vv=id=>g(id)?v(id):null;['tpo','tpa','tpi','tpn','tpd'].forEach(id=>{const x=vv(id);if(x==null)return;st[{tpo:'objectId',tpa:'amount',tpi:'items',tpn:'note',tpd:'date'}[id]]=x})};
     const rep=()=>{const b=g('tprep');if(!b)return;const oid=v('tpo');if(!oid){b.innerHTML='<span class="muted">Выбери объект — цифры подставятся сами</span>';return}
       const s2=objStats(oid);b.innerHTML=repRows(oid).map(([l,v2])=>`<div class="row"><span class="muted">${l}</span><b class="n">${v2}</b></div>`).join('')};
     rep();
     SS.change=ev=>{if(ev.target.id==='tpo')rep()};
-    SS.tpT=el=>{keep();st.type=el.dataset.id;replaceSheet(tplSheet(ch,st.type));};
+    SS.tpT=el=>{keep();replaceSheet(tplSheet(ch,el.dataset.id,eid,st))};
     SS.tpW=el=>{st.who=el.dataset.id;el.parentElement.querySelectorAll('.chip').forEach(b=>b.classList.toggle('on',b===el))};
     const build=()=>{keep();const t={type:st.type,objectId:st.objectId||''},rows=[],am=num(st.amount),when=st.date==='today'?'сегодня':st.date==='tomorrow'?'завтра':'';
       if(st.type==='buy'){t.items=String(st.items).split('\n').map(x=>x.trim()).filter(Boolean).map(x=>({t:x,done:false}));if(!t.items.length)return toast('Впиши, что купить'),null;if(am)rows.push(['Бюджет',money(am)]);if(when)rows.push(['Когда',when])}
@@ -3525,7 +3530,10 @@ function tplSheet(ch,type='buy'){let st={type,objectId:lastObjFor()||'',who:'',a
       if(st.type==='rep'){if(!st.objectId)return toast('Выбери объект'),null;rows.push(...repRows(st.objectId));if(st.note)t.note=st.note}
       if(st.type==='job'){t.items=String(st.items).split('\n').map(x=>x.trim()).filter(Boolean).map(x=>({t:x,done:false}));if(!t.items.length)return toast('Впиши задачи'),null;if(st.who){t.who=st.who;rows.push(['Кто',st.who])}if(when){rows.push(['Когда',when]);t.due=st.date==='today'?today():dplus(1)}}
       t.rows=rows;return t};
-    SS.tpSend=()=>{const t=build();if(!t)return;sendMsg(ch,{kind:'tpl',tpl:t});back();setTimeout(()=>{if(curPage()&&curPage().t==='chat')chatLive()},150)};
+    SS.tpSend=()=>{const t=build();if(!t)return;
+      if(em){const old=em.tpl||{},od=Object.fromEntries((old.items||[]).map(i=>[i.t,i]));if(t.items)t.items=t.items.map(i=>od[i.t]?{...i,done:od[i.t].done,by:od[i.t].by}:i);
+        ['done','doneBy'].forEach(k=>{if(old[k]!=null&&old.type===t.type)t[k]=old[k]});em.tpl=t;em.edited=true;put('msgs',em);commit(true);toast('Изменено')}
+      else sendMsg(ch,{kind:'tpl',tpl:t});back();setTimeout(()=>{if(curPage()&&curPage().t==='chat')chatLive()},150)};
     SS.tpShare=()=>{const t=build();if(!t)return;shareText(TPL[t.type][1],msgText({kind:'tpl',tpl:t}))};
   }};
 }}
@@ -3575,7 +3583,7 @@ function msgExtra(m){
   return null;
 }
 function msgMenuSheet(id){return ()=>{const m=S.msgs.find(x=>x.id===id);if(!m)return {title:'Сообщение',html:'<p class="empty">Удалено</p>'};
-  const mine=m.by===chMe(),canEdit=mine&&m.kind==='txt',canDel=mine||!isWorker();
+  const mine=m.by===chMe(),canEdit=mine&&['txt','tpl','img','geo','poll'].includes(m.kind),canDel=mine||!isWorker();
   return {title:'Сообщение',html:`<div class="rx">${REACTS.map(r=>`<button data-s="mR" data-id="${r}" class="${(m.re&&m.re[r]||[]).includes(chMe())?'on':''}">${r}</button>`).join('')}</div>
    <div class="list menu" style="margin-top:12px">
     <button class="li" data-s="mReply"><span>↩</span><span class="t"><b>Ответить</b></span></button>
@@ -3590,12 +3598,34 @@ function msgMenuSheet(id){return ()=>{const m=S.msgs.find(x=>x.id===id);if(!m)re
     const done=()=>{back();setTimeout(()=>chatLive(),120)};
     SS.mR=el=>{const r=el.dataset.id;m.re=m.re||{};const a=m.re[r]=m.re[r]||[],i=a.indexOf(chMe());i<0?a.push(chMe()):a.splice(i,1);put('msgs',m);commit(true);done()};
     SS.mReply=()=>{chatCtx={reply:m.id,edit:null};back();setTimeout(()=>{render();const t=g('chatIn');t&&t.focus()},150)};
-    SS.mEdit=()=>{chatCtx={reply:null,edit:m.id};back();setTimeout(()=>{render();const t=g('chatIn');if(t){t.value=m.text||'';t.focus();t.dispatchEvent(new Event('input'))}},150)};
+    SS.mEdit=()=>{if(m.kind!=='txt'){replaceSheet(m.kind==='tpl'?tplSheet(m.ch,(m.tpl||{}).type||'buy',m.id):msgEditSheet(m.id));return}
+      chatCtx={reply:null,edit:m.id};back();setTimeout(()=>{render();const t=g('chatIn');if(t){t.value=m.text||'';t.focus();t.dispatchEvent(new Event('input'))}},150)};
     SS.mCopy=()=>{const t=m.kind==='geo'?`https://www.google.com/maps/search/?api=1&query=${m.lat},${m.lng}`:msgText(m);navigator.clipboard&&navigator.clipboard.writeText(t).then(()=>toast('Скопировано'),()=>{});back()};
     SS.mShare=()=>{shareText('Сообщение',m.kind==='geo'?`${m.label||'Геопозиция'}: https://www.google.com/maps/search/?api=1&query=${m.lat},${m.lng}`:msgText(m));back()};
     SS.mPin=()=>{const on=!m.pin;S.msgs.filter(x=>x.ch===m.ch&&x.pin&&x.id!==m.id).forEach(x=>{x.pin=false;put('msgs',x)});m.pin=on;put('msgs',m);commit(true);done()};
     SS.mTask=()=>{const t=msgText(m).split('\n')[0].replace(/^\S+\s/,m.kind==='tpl'?'':'$&').slice(0,120);back();setTimeout(()=>openSheet(taskSheet(null,{title:m.kind==='txt'?m.text.slice(0,120):t,objectId:(m.tpl&&m.tpl.objectId)||''})),200)};
     SS.mDel=()=>{if(!confirm('Удалить сообщение у всех?'))return;del('msgs',m.id);if(m.img)idbDel(m.img).catch(()=>{});commit(true);done()};
+  }}}}
+function msgEditSheet(id){return ()=>{const m=S.msgs.find(x=>x.id===id);if(!m)return {title:'Изменить',html:'<p class="empty">Удалено</p>'};
+  let html='';
+  if(m.kind==='img')html=`${F('Подпись',`<textarea id="me_t" rows="2" placeholder="Подпись к фото">${esc(m.text||'')}</textarea>`)}
+    <button class="btn w" style="margin-top:10px" data-s="meDraw">✏️ Дорисовать на фото</button>`;
+  if(m.kind==='geo')html=`${F('Подпись к точке',I('me_t',m.label||'','placeholder="Я здесь"'))}
+    <button class="btn w" style="margin-top:10px" data-s="meHere">📍 Обновить точку — где я сейчас</button>`;
+  if(m.kind==='poll')html=`${F('Вопрос',I('me_q',m.q||''))}${F('Варианты — каждый с новой строки',`<textarea id="me_o" rows="5">${esc((m.opts||[]).map(o=>o.t).join('\n'))}</textarea>`)}
+    <p class="muted sm">Голоса за варианты, которые остались, сохранятся.</p>`;
+  return {title:'Изменить',html:html+`<button class="btn p w" style="margin-top:12px" data-s="meSave">Сохранить</button>`,
+  init(){setTimeout(()=>{const e=g('me_t')||g('me_q');if(e){e.focus();try{e.setSelectionRange(e.value.length,e.value.length)}catch(_){}}},80);
+    const fin=()=>{m.edited=true;put('msgs',m);commit(true);back();setTimeout(chatLive,150);toast('Изменено')};
+    SS.meSave=()=>{
+      if(m.kind==='img')m.text=v('me_t').trim();
+      if(m.kind==='geo')m.label=v('me_t').trim()||'Геопозиция';
+      if(m.kind==='poll'){const q=v('me_q').trim(),o=v('me_o').split('\n').map(x=>x.trim()).filter(Boolean);if(!q||o.length<2)return toast('Вопрос и минимум 2 варианта');
+        const old=Object.fromEntries((m.opts||[]).map(x=>[x.t,x.v||[]]));m.q=q;m.opts=o.map(t=>({t,v:old[t]||[]}))}
+      fin()};
+    SS.meHere=async()=>{toast('Определяю место…');try{const p=await getGeo();Object.assign(m,p);fin()}catch(e){toast('Не удалось получить геопозицию')}};
+    SS.meDraw=async()=>{const cap=v('me_t');let src=await idbGet(m.img).catch(()=>null);if(!src)return toast('Фото ещё не загрузилось');back();await new Promise(r=>setTimeout(r,200));
+      photoEditor({src,cap,onSend:async(d,c,w,h)=>{const pid='p'+uid();await idbPut(pid,d);SY.ph[pid]=1;const old=m.img;m.img=pid;m.w=w;m.h=h;m.text=c||'';m.edited=true;put('msgs',m);commit(true);chatLive();setTimeout(hydratePhotos,50)}})};
   }}}}
 function attachSheet(ch){return ()=>({title:'Отправить',html:`<div class="att">
    <label><span>📷</span>Фото<input type="file" accept="image/*" capture="environment" id="atCam" hidden></label>
@@ -3634,14 +3664,14 @@ function pollSheet(ch){return ()=>({title:'Опрос',html:`${F('Вопрос',
    sendMsg(ch,{kind:'poll',q,opts:o.map(t=>({t,v:[]}))});back();setTimeout(chatLive,150)}}})}
 
 /* ---------- редактор фото / набросок ---------- */
-function photoEditor({src,sketch,onSend,onClose}){
+function photoEditor({src,sketch,onSend,onClose,cap:cap0}){
   const ov=document.createElement('div');ov.className='ped';
   const COLS=['#ff3b30','#ffcc00','#34c759','#0a84ff','#ffffff','#111111'];
   ov.innerHTML=`<div class="pbar"><button class="pb" data-x="close">✕</button><b>${sketch?'Набросок':'Фото'}</b><button class="pb" data-x="undo">↶</button>${sketch?'':'<button class="pb" data-x="rot">⟳</button>'}</div>
    <div class="pcv"><canvas></canvas></div>
    <div class="ptools">${[['pen','✏️'],['line','╱'],['arrow','↗'],['rect','▭'],['circle','◯'],['dim','📏'],['text','T']].map(([k,i])=>`<button data-t="${k}" class="${k==='pen'?'on':''}">${i}</button>`).join('')}</div>
    <div class="pcols">${COLS.map((c,i)=>`<button data-c="${c}" class="${i===(sketch?5:0)?'on':''}" style="background:${c}"></button>`).join('')}<button data-w="1" class="pw">${'●'}</button></div>
-   <div class="psend"><input placeholder="Подпись…" id="pedCap"><button class="ico send" data-x="send"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></button></div>`;
+   <div class="psend"><input placeholder="Подпись…" id="pedCap" value="${esc(cap0||'')}"><button class="ico send" data-x="send"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></button></div>`;
   document.body.appendChild(ov);history.pushState({ped:1},'');
   const cv=ov.querySelector('canvas'),x=cv.getContext('2d'),box=ov.querySelector('.pcv');
   let base=document.createElement('canvas'),ops=[],tool='pen',col=sketch?'#111111':'#ff3b30',wd=1,cur=null,closed=false;
