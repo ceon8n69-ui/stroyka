@@ -1868,7 +1868,7 @@ const IC={
   pay:'<svg viewBox="0 0 24 24"><rect x="3" y="6.5" width="18" height="11" rx="2.5"/><circle cx="12" cy="12" r="2.4"/><path d="M6.5 9.5v5M17.5 9.5v5"/></svg>',
   photo:'<svg viewBox="0 0 24 24"><path d="M4 8.5h3.2L9 6h6l1.8 2.5H20V19H4z"/><circle cx="12" cy="13.3" r="3.3"/></svg>'};
 /* ================= Стройка 2.2: бизнес-функции ================= */
-const APP_VERSION='3.4';
+const APP_VERSION='3.5';
 const LOGC=['work','expenses','payments','est','payplan','cash','objects','tools'];
 const TRASHC=['objects','tasks','work','workers','rates','est','plans','expenses','payments','fuelDays','tools','events','photos','payplan','cash','checks','tpls','team'];
 const STAGES={before:'До',work:'Процесс',after:'После',hidden:'Скрытые'};
@@ -3058,7 +3058,7 @@ Object.assign(CHIP_STATE,{hold:'holder',ost:'status',etype:'etype',tplc:'tpl',el
 
 /* ================= Рабочие: профиль, свои ставки, статистика, архив, объединение ================= */
 const SPECS=['Электрик','Плиточник','Сантехник','Гипсокартонщик','Штукатур','Маляр','Сварщик','Каменщик','Кровельщик','Разнорабочий','Универсал'];
-const wrec=n=>S.workers.find(x=>x.name===n)||null;
+const wrec=n=>S.workers.filter(x=>x.name===n).sort((a,b)=>(b.ts||0)-(a.ts||0))[0]||null;
 const wArch=n=>!!(wrec(n)||{}).archived;
 function workerNames(all){
   const s=new Set(S.workers.map(w=>w.name));S.work.forEach(w=>w.worker&&s.add(w.worker));
@@ -3155,9 +3155,10 @@ function workerSheet(name){
       if(S.settings.lastWorker===from)S.settings.lastWorker=to};
     SS.save=()=>{keep();const n=String(st.name||'').trim();if(!n){toast('Имя');return}
       if(name&&n!==name){if(workerNames(true).includes(n)&&!confirm(`«${n}» уже есть. Объединить записи?`))return;reassign(name,n);if(w0.id)del('workers',w0.id);const p=curPage();if(p&&p.t==='worker')p.id=n}
-      const ex=n!==name&&wrec(n)||{};
+      const ex=n!==name&&wrec(n)||{},rid=(n===name&&w0.id)||ex.id||wid(n);
+      S.workers.filter(x=>x.name===n&&x.id!==rid).forEach(x=>{['phone','card','note','spec','since'].forEach(k=>{if(x[k]&&!st[k])st[k]=x[k]});del('workers',x.id)});
       const rates={};Object.entries(st.rates).forEach(([k,x])=>{if(x!==''&&x!=null)rates[k]=+x});
-      put('workers',{...ex,...st,id:wid(n),name:n,phone:String(st.phone||'').trim(),card:String(st.card||'').trim(),note:String(st.note||'').trim(),share:num(st.share)||0,rates});
+      put('workers',{...ex,...st,id:rid,name:n,phone:String(st.phone||'').trim(),card:String(st.card||'').trim(),note:String(st.note||'').trim(),share:num(st.share)||0,rates});
       commit();back();toast('Сохранено')};
     SS.wkArch=()=>{keep();st.archived=!st.archived;put('workers',{...w0,id:w0.id||wid(name),name,archived:st.archived});commit();back();toast(st.archived?'В архиве':'Вернул из архива')};
     SS.wkMerge=()=>{const to=v('wkm');if(!to){toast('Выбери, с кем объединить');return}
