@@ -357,6 +357,19 @@ input:focus,select:focus,textarea:focus{outline:0;border-color:var(--ink)}
 .edc{border:0;border-radius:22px}
 .ph div,.tile{border-radius:16px}
 
+/* сканер QR */
+.qrscan{position:fixed;inset:0;z-index:70;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;animation:fadeIn .25s}
+.qrscan.out{opacity:0;transition:opacity .2s}
+.qrscan video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.qrscan.nocam video{display:none}
+.qrframe{position:relative;width:min(70vw,280px);aspect-ratio:1;border-radius:28px;box-shadow:0 0 0 100vmax rgba(0,0,0,.55)}
+.qrframe i{position:absolute;width:44px;height:44px;border:4px solid var(--mint)}
+.qrframe i:nth-child(1){top:0;left:0;border-right:0;border-bottom:0;border-radius:26px 0 0 0}.qrframe i:nth-child(2){top:0;right:0;border-left:0;border-bottom:0;border-radius:0 26px 0 0}
+.qrframe i:nth-child(3){bottom:0;left:0;border-right:0;border-top:0;border-radius:0 0 0 26px}.qrframe i:nth-child(4){bottom:0;right:0;border-left:0;border-top:0;border-radius:0 0 26px 0}
+.qrscan p{position:relative;margin:26px 20px 0;font-weight:650;text-align:center}
+.qrbtns{position:absolute;left:16px;right:16px;bottom:calc(24px + env(safe-area-inset-bottom));display:flex;gap:10px}
+.qrbtns .btn{flex:1;display:grid;place-items:center;border-color:#fff;color:#fff}.qrbtns .btn.p{background:#fff;color:#000}
+
 /* ================= анимации ================= */
 @media (prefers-reduced-motion:no-preference){
   @keyframes vin{from{opacity:0;transform:translateY(16px)}}
@@ -1851,7 +1864,7 @@ const IC={
   pay:'<svg viewBox="0 0 24 24"><rect x="3" y="6.5" width="18" height="11" rx="2.5"/><circle cx="12" cy="12" r="2.4"/><path d="M6.5 9.5v5M17.5 9.5v5"/></svg>',
   photo:'<svg viewBox="0 0 24 24"><path d="M4 8.5h3.2L9 6h6l1.8 2.5H20V19H4z"/><circle cx="12" cy="13.3" r="3.3"/></svg>'};
 /* ================= Стройка 2.2: бизнес-функции ================= */
-const APP_VERSION='3.0';
+const APP_VERSION='3.1';
 const LOGC=['work','expenses','payments','est','payplan','cash','objects','tools'];
 const TRASHC=['objects','tasks','work','workers','rates','est','plans','expenses','payments','fuelDays','tools','events','photos','payplan','cash','checks','tpls','team'];
 const STAGES={before:'До',work:'Процесс',after:'После',hidden:'Скрытые'};
@@ -2906,23 +2919,11 @@ function profileSheet(){return ()=>{
   const st=S.settings;
   return {title:'Профиль и вид',html:`${isWorker()?`<p>Вы вошли как рабочий: <b>${esc(SY.pname||'имя не задано')}</b></p>`:F('Моё имя',I('pfn',st.name,'placeholder="Саша"'),'Видно партнёру в записях и задачах')}
    ${isWorker()?'':F('Название фирмы (для смет и актов)',I('pff',st.firm))+F('Телефон фирмы',I('pfp',st.phone,'inputmode="tel"'))}
+   ${isWorker()?'':F('Токен Электронного кабинета ДПС',I('pft',st.taxToken||'','autocomplete="off" placeholder="для позиций из чеков"'),'Кабинет → Налаштування → Токени відкритої частини. Нужен, чтобы при сканировании чека подтягивались позиции.')}
    ${F('Вид',`<div class="chips" id="bigC">${chip('Обычный',!st.big,'big','0','data-s="1"')}${chip('Крупный (перчатки, улица)',!!st.big,'big','1','data-s="1"')}</div>`)}
    <div class="btns"><button class="btn p" data-s="save">Сохранить</button></div>`,
   init(){SS.big=el=>{st.big=el.dataset.id==='1';setChip('bigC',el.dataset.id);applyBig();saveLocal()};
-    SS.save=()=>{if(!isWorker()){st.name=v('pfn').trim();st.firm=v('pff').trim();st.phone=v('pfp').trim()}saveLocal();render();back();toast('Сохранено')}}};
-}}
-function toolsSheet(){return ()=>{
-  const l=S.tools.slice().sort(byDate);
-  return {title:'Мой инструмент',html:`<div class="card"><small class="muted">Потрачено на инструмент</small><div class="big-num">${money(sum(l,'amount'))}</div></div>
-   ${F('Что купил',I('tln','','placeholder="Перфоратор Makita"'))}<div class="two">${F('Цена, ₴',N('tla',''))}${F('Где',I('tls',''))}</div>${holderField()}
-   <button class="btn p w" data-s="add" style="margin-top:10px">Добавить</button>
-   <div class="list" style="margin-top:12px">${l.map(t=>`<div class="li"><span class="t"><b>${esc(t.title)}</b><small>${fdateY(t.date)}${t.store?' · '+esc(t.store):''}${team().length>1?' · '+esc(holderOf(t)):''}</small></span><span class="n">${money(t.amount)}</span><button class="ico" style="font-size:18px;color:var(--bad)" data-s="rm" data-id="${t.id}">✕</button></div>`).join('')||'<p class="empty">Пусто</p>'}</div>`,
-  init(){
-    SS.holder=me();
-    SS.add=()=>{const t=v('tln').trim(),a=num(v('tla'));if(!t||a<=0){toast('Название и цена');return}
-      put('tools',{id:uid(),date:today(),title:t,amount:r2(a),store:v('tls').trim(),note:'',holder:SS.holder});commit();replaceSheet(toolsSheet())};
-    SS.rm=el=>{if(confirm('Удалить?')){del('tools',el.dataset.id);commit();replaceSheet(toolsSheet())}};
-  }};
+    SS.save=()=>{if(!isWorker()){st.taxToken=v('pft').trim();st.name=v('pfn').trim();st.firm=v('pff').trim();st.phone=v('pfp').trim()}saveLocal();render();back();toast('Сохранено')}}};
 }}
 const applyBig=()=>document.body.classList.toggle('big',!!S.settings.big);
 
@@ -3228,6 +3229,136 @@ function animView(){
     const step=t=>{const k=Math.min(1,(t-t0)/D),e=1-Math.pow(1-k,3);el.textContent=nf.format(Math.round(to*e));if(k<1)requestAnimationFrame(step)};el.textContent='0';requestAnimationFrame(step)});
 }
 (()=>{let y0=0;addEventListener('scroll',()=>{const y=scrollY,f=document.getElementById('fab');if(!f)return;if(y>y0+8&&y>120)f.classList.add('hide');else if(y<y0-8||y<120)f.classList.remove('hide');y0=y},{passive:true})})();
+
+/* ================= Сканер QR чеков → «Мой инструмент» ================= */
+const normT=s=>String(s||'').toLowerCase().replace(/[^\p{L}\p{N}]+/gu,' ').trim();
+/* живой сканер камеры; если камера недоступна — фото через системную камеру */
+function scanQR(){return new Promise(async res=>{
+  await loadScript('jsQR.js','jsQR').catch(()=>{});
+  const ov=document.createElement('div');ov.className='qrscan';
+  ov.innerHTML=`<video playsinline muted></video><div class="qrframe"><i></i><i></i><i></i><i></i></div>
+   <p>Наведи камеру на QR-код чека</p><div class="qrbtns"><label class="btn">📷 Фото чека<input type="file" accept="image/*" capture="environment" hidden></label><button class="btn p" data-x>Закрыть</button></div>`;
+  document.body.appendChild(ov);
+  const vid=ov.querySelector('video'),c=document.createElement('canvas'),x=c.getContext('2d',{willReadFrequently:true});let stream=null,done=false,raf=0,last=0;
+  const finish=v=>{if(done)return;done=true;cancelAnimationFrame(raf);if(stream)stream.getTracks().forEach(t=>t.stop());ov.classList.add('out');setTimeout(()=>ov.remove(),220);res(v)};
+  ov.querySelector('[data-x]').onclick=()=>finish(null);
+  ov.querySelector('input').onchange=async e=>{const f=e.target.files[0];if(!f)return;toast('Ищу QR-код…');const s=await qrFromFile(f);if(s)finish(s);else toast('QR не найден — сфотографируй ближе и ровнее')};
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}},audio:false});
+    vid.srcObject=stream;await vid.play();
+    const tick=t=>{if(done)return;raf=requestAnimationFrame(tick);if(t-last<120||!vid.videoWidth)return;last=t;
+      const s=Math.min(1,720/Math.max(vid.videoWidth,vid.videoHeight));c.width=Math.round(vid.videoWidth*s);c.height=Math.round(vid.videoHeight*s);x.drawImage(vid,0,0,c.width,c.height);
+      const q=window.jsQR&&window.jsQR(x.getImageData(0,0,c.width,c.height).data,c.width,c.height,{inversionAttempts:'dontInvert'});
+      if(q&&q.data){if(navigator.vibrate)navigator.vibrate(60);finish(q.data)}};
+    raf=requestAnimationFrame(tick);
+  }catch(e){ov.classList.add('nocam');ov.querySelector('p').textContent='Камера в приложении недоступна — нажми «Фото чека»'}
+})}
+async function qrFromFile(file){
+  await loadScript('jsQR.js','jsQR');const url=URL.createObjectURL(file);
+  try{const img=await new Promise((r,j)=>{const i=new Image();i.onload=()=>r(i);i.onerror=j;i.src=url});
+    for(const max of [1400,1000,700,2000]){const k=Math.min(1,max/Math.max(img.width,img.height)),w=Math.round(img.width*k),h=Math.round(img.height*k);
+      const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');x.drawImage(img,0,0,w,h);
+      const q=window.jsQR(x.getImageData(0,0,w,h).data,w,h,{inversionAttempts:'attemptBoth'});if(q&&q.data)return q.data}
+    return null}catch(e){return null}finally{URL.revokeObjectURL(url)}
+}
+function parseReceipt(raw){
+  const s=String(raw||''),get=k=>{const m=s.match(new RegExp('[?&]'+k+'=([^&#]*)','i'));return m?decodeURIComponent(m[1].replace(/\+/g,' ')):''};
+  let d=get('date'),tm=get('time');
+  if(/^\d{8}$/.test(d))d=d.slice(0,4)+'-'+d.slice(4,6)+'-'+d.slice(6,8);else if(/^\d{2}\.\d{2}\.\d{4}$/.test(d))d=d.slice(6)+'-'+d.slice(3,5)+'-'+d.slice(0,2);else if(!/^\d{4}-\d{2}-\d{2}$/.test(d))d='';
+  if(/^\d{6}$/.test(tm))tm=tm.slice(0,2)+':'+tm.slice(2,4)+':'+tm.slice(4,6);else if(/^\d{4}$/.test(tm))tm=tm.slice(0,2)+':'+tm.slice(2,4)+':00';
+  const id=get('id'),fn=get('fn'),sm=get('sm')||get('sum')||get('s');
+  return {raw:s,id,fn,date:d,time:tm,amount:sm?r2(num(sm)):0,key:fn&&id?fn+'/'+id:'q:'+s.slice(0,200),tax:/tax\.gov\.ua/i.test(s)};
+}
+/* позиции чека из Электронного кабинета ДПС (нужен токен открытой части) */
+async function taxCheckItems(rc){
+  const tok=(S.settings.taxToken||'').trim();if(!tok||!rc.id)return {err:'notoken'};
+  const q=new URLSearchParams({id:rc.id,type:'1',token:tok});if(rc.fn)q.set('fn',rc.fn);if(rc.date)q.set('date',rc.date+' '+(rc.time||'00:00:00'));
+  const url='https://cabinet.tax.gov.ua/ws/api_public/rro/chkAll?'+q;
+  let j=null;
+  try{const H=capP('CapacitorHttp');
+    if(H){const r=await H.request({url,method:'GET',headers:{Accept:'application/json'}});j=typeof r.data==='string'?JSON.parse(r.data):r.data}
+    else{const r=await fetch(url,{headers:{Accept:'application/json'}});j=await r.json()}}
+  catch(e){return {err:'net',msg:String(e&&e.message||e)}}
+  if(!j||!j.check)return {err:'nocheck',msg:j&&(j.resultText||j.message)||''};
+  let txt=String(j.check);
+  if(!/^\s*</.test(txt)){try{const b=Uint8Array.from(atob(txt.replace(/\s/g,'')),c=>c.charCodeAt(0));txt=new TextDecoder('utf-8').decode(b);if(/�/.test(txt))txt=new TextDecoder('windows-1251').decode(b)}catch(e){}}
+  return {shop:j.name||'',addr:j.addressGo||'',items:receiptItemsFromXml(txt),text:txt};
+}
+function receiptItemsFromXml(xml){
+  const out=[];let doc;try{doc=new DOMParser().parseFromString(xml,'text/xml')}catch(e){return out}
+  if(!doc||doc.getElementsByTagName('parsererror').length)return out;
+  const txt=(el,n)=>{const e=el.getElementsByTagName(n)[0];return e?e.textContent.trim():''};
+  /* ПРРО: <ROW><NAME/><AMOUNT/><PRICE/><COST/> */
+  [...doc.getElementsByTagName('ROW')].forEach(r=>{const n=txt(r,'NAME');if(!n)return;const cost=num(txt(r,'COST')),qty=num(txt(r,'AMOUNT'))||1,pr=num(txt(r,'PRICE'));
+    out.push({title:n,qty,price:pr||r2(cost/qty),amount:r2(cost||pr*qty)})});
+  if(out.length)return out;
+  /* РРО: <P NM="" SM="копейки" Q="" PRC="копейки"/> */
+  [...doc.getElementsByTagName('P')].forEach(p=>{const n=p.getAttribute('NM');if(!n)return;const sm=p.getAttribute('SM')||'',pr=p.getAttribute('PRC')||'',qa=p.getAttribute('Q')||'1';
+    const k=v=>/[.,]/.test(v)?num(v):num(v)/100;const amount=r2(k(sm)),price=r2(k(pr));const qty=price?r2(amount/price):(/[.,]/.test(qa)?num(qa):num(qa)/1000||1);
+    out.push({title:n,qty:qty||1,price,amount})});
+  return out;
+}
+function receiptSheet(raw,info){return ()=>{
+  const rc=parseReceipt(raw),dupChk=S.tools.filter(t=>t.chk&&t.chk===rc.key);
+  const isDup=it=>S.tools.some(t=>normT(t.title)===normT(it.title)&&Math.abs((+t.amount||0)-(+it.amount||0))<0.01&&(t.chk===rc.key||(rc.date&&t.date===rc.date)));
+  const items=(info&&info.items&&info.items.length?info.items:[{title:'',qty:1,price:rc.amount,amount:rc.amount,manual:1}]).map(it=>({...it,dup:isDup(it),on:!isDup(it)}));
+  SS._items=items;
+  const why=info&&info.err==='notoken'?'Позиции подтягиваются из налоговой по токену Электронного кабинета (Меню → Профиль). Пока токена нет — впиши, что купил:'
+    :info&&info.err?'Позиции из налоговой не получены'+(info.msg?' ('+esc(info.msg)+')':'')+'. Впиши, что купил:':'';
+  return {title:'Чек'+(rc.date?' от '+fdate(rc.date):''),html:`
+   <div class="kv"><div><small>Сумма чека</small><b class="n">${money(rc.amount)}</b></div><div><small>${info&&info.shop?esc(info.shop):'Дата'}</small><b class="n" style="font-size:16px">${rc.date?fdateY(rc.date):'—'}${rc.time?' '+rc.time.slice(0,5):''}</b></div></div>
+   ${dupChk.length?`<div class="alert warn" style="margin-top:10px"><i></i><span>Этот чек уже сканировали: добавлено ${dupChk.length} поз. Повторы не добавятся.</span></div>`:''}
+   ${why?`<p class="muted sm" style="margin:10px 4px 0">${why}</p>`:''}
+   <div class="list" id="rcl" style="margin-top:10px"></div>
+   <button class="btn w" style="margin-top:8px" data-s="rcAdd">＋ Ещё позиция</button>
+   <div class="row sm" style="margin:10px 4px"><span class="muted">Выбрано</span><b class="n" id="rcs"></b></div>
+   ${F('Где купили',I('rcst',(info&&info.shop)||S.settings.lastStore||'Оптима'))}${holderField()}
+   <button class="btn p w" style="margin-top:12px" data-s="rcSave">Добавить в «Мой инструмент»</button>`,
+  init(){
+    SS.holder=me();$('#toast').classList.remove('on');
+    const draw=()=>{const L=SS._items;g('rcl').innerHTML=L.map((it,i)=>`<div class="li" style="align-items:flex-start;gap:8px">
+       <button class="ck" data-s="rcT" data-id="${i}" style="border:0;background:none;padding:6px 0;font-size:22px">${it.on?'☑':'☐'}</button>
+       <span class="t"><input class="rcf" data-i="${i}" data-k="title" value="${esc(it.title)}" placeholder="Что купили (перфоратор, диск…)" style="min-height:42px;font-size:15px;padding:8px 10px">
+        ${it.dup?'<small class="warn">уже добавлено</small>':it.qty&&it.qty!==1?`<small>${qf(it.qty)} × ${money(it.price)}</small>`:''}</span>
+       <input class="rcf" data-i="${i}" data-k="amount" value="${it.amount||''}" inputmode="decimal" style="width:96px;min-height:42px;text-align:right"></div>`).join('');sumUp()};
+    const sumUp=()=>{const s=SS._items.filter(x=>x.on&&!x.dup).reduce((a,x)=>a+num(x.amount),0),e=g('rcs');if(e)e.textContent=money(s)+(rc.amount&&Math.abs(s-rc.amount)>0.5?` из ${money(rc.amount)}`:'')};
+    draw();
+    SS.input=ev=>{const t=ev.target;if(!t.classList.contains('rcf'))return;const it=SS._items[+t.dataset.i];if(!it)return;it[t.dataset.k]=t.dataset.k==='amount'?num(t.value):t.value;
+      if(t.dataset.k==='title'||t.dataset.k==='amount'){const d=isDup(it);if(d!==it.dup){it.dup=d;it.on=!d;draw()}}sumUp()};
+    SS.rcT=el=>{const it=SS._items[+el.dataset.id];if(it.dup){toast('Такая позиция уже есть');return}it.on=!it.on;draw()};
+    SS.rcAdd=()=>{const left=r2(rc.amount-SS._items.filter(x=>x.on).reduce((a,x)=>a+num(x.amount),0));SS._items.push({title:'',qty:1,price:0,amount:left>0?left:0,on:true});draw();const ins=document.querySelectorAll('.rcf[data-k=title]');ins[ins.length-1].focus()};
+    SS.rcSave=()=>{const store=v('rcst').trim(),add=SS._items.filter(x=>x.on&&!x.dup&&String(x.title).trim()&&num(x.amount)>0);
+      if(!add.length){toast(SS._items.some(x=>x.on&&!x.dup)?'Впиши название и цену':'Нечего добавлять — всё уже есть');return}
+      let n=0;add.forEach(it=>{if(isDup(it))return;put('tools',{id:uid(),date:rc.date||today(),title:String(it.title).trim(),amount:r2(num(it.amount)),qty:it.qty||1,store,note:'',holder:SS.holder,chk:rc.key});n++});
+      S.settings.lastStore=store;commit();toast(`Добавлено: ${n}`);back();setTimeout(()=>{if(sheets.length)replaceSheet(toolsSheet())},300)};
+  }};
+}}
+async function scanToTools(){
+  const raw=await scanQR();if(!raw)return;
+  const rc=parseReceipt(raw);
+  if(!rc.amount&&!rc.tax){toast('Это не похоже на QR фискального чека');}
+  let info=null;
+  if(rc.tax&&rc.id){toast('Загружаю позиции чека…');info=await taxCheckItems(rc)}
+  openSheet(receiptSheet(raw,info));
+}
+function toolsSheet(){return ()=>{
+  const l=S.tools.slice().sort(byDate);
+  return {title:'Мой инструмент',html:`<div class="card"><small class="muted">Потрачено на инструмент</small><div class="big-num">${money(sum(l,'amount'))}</div></div>
+   <button class="btn p w" data-s="scan" style="margin-top:6px;min-height:58px">▣ Сканировать QR чека</button>
+   <p class="muted sm" style="margin:6px 6px 0">Позиции добавятся сами. Повторный чек или такая же позиция не добавится второй раз.</p>
+   <details><summary>Добавить вручную</summary>
+   ${F('Что купил',I('tln','','placeholder="Перфоратор Makita"'))}<div class="two">${F('Цена, ₴',N('tla',''))}${F('Где',I('tls',S.settings.lastStore||''))}</div>${holderField()}
+   <button class="btn w" data-s="add" style="margin-top:10px">Добавить</button></details>
+   <div class="list" style="margin-top:12px">${l.map(t=>`<div class="li"><span class="t"><b>${esc(t.title)}</b><small>${fdateY(t.date)}${t.store?' · '+esc(t.store):''}${t.chk?' · 🧾':''}${team().length>1?' · '+esc(holderOf(t)):''}</small></span><span class="n">${money(t.amount)}</span><button class="ico" style="width:36px;height:36px;font-size:16px;border:0" data-s="rm" data-id="${t.id}" aria-label="Удалить">✕</button></div>`).join('')||'<p class="empty">Пока пусто — отсканируй чек</p>'}</div>`,
+  init(){
+    SS.holder=me();
+    SS.scan=()=>scanToTools();
+    SS.add=()=>{const t=v('tln').trim(),a=num(v('tla'));if(!t||a<=0){toast('Название и цена');return}
+      if(S.tools.some(x=>normT(x.title)===normT(t)&&Math.abs(x.amount-a)<0.01&&x.date===today())&&!confirm('Такая позиция сегодня уже есть. Всё равно добавить?'))return;
+      put('tools',{id:uid(),date:today(),title:t,amount:r2(a),store:v('tls').trim(),note:'',holder:SS.holder});commit();replaceSheet(toolsSheet())};
+    SS.rm=el=>{if(confirm('Удалить?')){del('tools',el.dataset.id);commit();replaceSheet(toolsSheet())}};
+  }};
+}}
 
 /* ================= Чертежи: план, ГОСТ-лист, электрика, сантехника, фигуры, 3D ================= */
 const WT=0.12; // толщина стены, м
