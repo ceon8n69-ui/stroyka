@@ -48,6 +48,8 @@ h2 small{font-weight:500;color:var(--muted);font-size:14px}
 .list{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
 .li{display:flex;align-items:center;gap:10px;width:100%;min-height:56px;padding:9px 14px;border:0;border-bottom:1px solid var(--line);background:none;text-align:left}
 .li:last-child{border-bottom:0}
+.btns a.btn{text-decoration:none;display:inline-flex;align-items:center;justify-content:center;color:inherit;white-space:nowrap}
+.av{width:40px;height:40px;border-radius:50%;background:var(--soft);color:var(--accent);display:grid;place-items:center;font-weight:800;font-size:15px;flex:none}.av.big{width:56px;height:56px;font-size:20px}
 .li:active{background:var(--soft)}
 .li .t{flex:1;min-width:0}
 .li .t b{display:block;font-weight:600;overflow:hidden;text-overflow:ellipsis}
@@ -529,6 +531,7 @@ function workSheet(pre={}){return ()=>{
       SS.keepPrices=true;
     }
     if(!cur&&pre.rateId){const r=S.rates.find(x=>x.id===pre.rateId);if(r)SS.rate={...r}}
+    SS.after=()=>{if(SS.rate&&!SS.editId){g('wp').value=wkPrice(SS.wk,SS.rate)||'';calc();const sm=document.querySelector('#rateBox .sel small');if(sm&&!SS.rate.custom)sm.textContent=SS.rate.unit+' · рабочему '+money(wkPrice(SS.wk,SS.rate))+' · заказчику '+money(SS.rate.client)}else if(!SS.rate&&g('rl'))drawRateList(v('rq')||'')};
     drawRate();
     if(!cur&&pre.qty&&SS.rate){g('wq').value=pre.qty;calc()}
     if(cur){g('wq').value=w.kind==='fixed'||w.kind==='deal'?1:w.qty;g('wp').value=w.rate;g('cp').value=w.cprice||'';calc()}
@@ -539,11 +542,11 @@ function drawRate(){
   const box=g('rateBox');
   if(SS.rate){
     const r=SS.rate;
-    box.innerHTML=`<div class="sel"><span class="t"><b>${esc(r.name)}</b><small class="muted sm" style="display:block">${r.custom?'своя работа':esc(r.unit)+' · рабочему '+money(r.worker)+' · заказчику '+money(r.client)}</small></span><button class="btn" style="min-height:38px" data-s="chRate">Сменить</button></div>
+    box.innerHTML=`<div class="sel"><span class="t"><b>${esc(r.name)}</b><small class="muted sm" style="display:block">${r.custom?'своя работа':esc(r.unit)+' · рабочему '+money(wkPrice(SS.wk,r))+' · заказчику '+money(r.client)}</small></span><button class="btn" style="min-height:38px" data-s="chRate">Сменить</button></div>
      ${r.unit==='м³'?`<div class="two">${F('Площадь стены, м²',N('m3a',''))}${F('Толщина, см',N('m3t',''))}</div><small class="muted sm">Объём посчитается сам: площадь × толщина</small>`:''}
      ${r.custom&&!r.id?`<div class="two">${F('Единица',`<select id="wu">${UNITS.map(u=>`<option ${u===r.unit?'selected':''}>${u}</option>`).join('')}</select>`)}<label class="f"><span>&nbsp;</span><label style="display:flex;gap:8px;align-items:center;min-height:48px"><input type="checkbox" id="toPrice" checked style="width:22px;min-height:22px"> в прайс</label></label></div>`:''}`;
     g('detail').hidden=false;
-    if(!SS.keepPrices){g('wp').value=r.worker||'';g('cp').value=r.client||'';g('wq').value=''}
+    if(!SS.keepPrices){g('wp').value=wkPrice(SS.wk,r)||'';g('cp').value=r.client||'';g('wq').value=''}
     SS.keepPrices=false;
     g('unitH').textContent=r.unit?'Единица: '+r.unit:'';
     calc();
@@ -561,7 +564,7 @@ function rateMatches(q){
 }
 function drawRateList(q){
   const list=rateMatches(q);const rec=new Set(S.settings.recent);
-  g('rl').innerHTML=list.slice(0,60).map(r=>`<button class="li" data-s="pickRate" data-id="${r.id}"><span class="t"><b>${rec.has(r.id)&&!q?'★ ':''}${esc(r.name)}</b><small>за ${esc(r.unit)}${r.mk?' · '+esc(mkHintText(r)):''}</small></span><span class="r"><span class="n">${money(r.worker)}</span><small>заказ. ${money(r.client)}</small></span></button>`).join('')
+  g('rl').innerHTML=list.slice(0,60).map(r=>`<button class="li" data-s="pickRate" data-id="${r.id}"><span class="t"><b>${rec.has(r.id)&&!q?'★ ':''}${esc(r.name)}</b><small>за ${esc(r.unit)}${r.mk?' · '+esc(mkHintText(r)):''}</small></span><span class="r"><span class="n">${money(wkPrice(SS.wk,r))}</span><small>заказ. ${money(r.client)}</small></span></button>`).join('')
    +`<button class="li" data-s="customRate"><span class="t"><b style="color:var(--accent)">＋ ${q.trim()?'Новая работа «'+esc(q.trim())+'»':'Своя работа (нет в прайсе)'}</b></span></button>`;
 }
 function calc(){
@@ -1668,7 +1671,7 @@ function jobSheet(id,init={}){
 function openCalcAny(id){const x=S.calcs.find(q=>q.id===id);if(x&&x.c&&x.c.job&&JOBS[x.c.job])openSheet(jobSheet(x.c.job,{calcId:id}));else openSheet(calcSheet({id}))}
 
 /* ================= Стройка 2.2: бизнес-функции ================= */
-const APP_VERSION='2.8';
+const APP_VERSION='2.9';
 const LOGC=['work','expenses','payments','est','payplan','cash','objects','tools'];
 const TRASHC=['objects','tasks','work','workers','rates','est','plans','expenses','payments','fuelDays','tools','events','photos','payplan','cash','checks','tpls','team'];
 const STAGES={before:'До',work:'Процесс',after:'После',hidden:'Скрытые'};
@@ -1836,7 +1839,7 @@ function alerts(){
     if(s==='lead'&&daysSince(o.created)>=2)out.push({lvl:'warn',t:`Заявка «${o.name}» ждёт ${daysSince(o.created)} дн. — назначь замер`,a:'openObj',id:o.id});
   });
   const late=S.tasks.filter(taskLate);if(late.length)out.push({lvl:'bad',t:`Просрочено задач: ${late.length}`,a:'goTasks'});
-  const owe=workerNames().reduce((s,n)=>s+Math.max(0,workerStat(n).debt),0);if(owe>0)out.push({lvl:'info',t:`Рабочим к выплате ${money(owe)}`,a:'tab',id:'workers'});
+  const owe=workerNames(true).reduce((s,n)=>s+Math.max(0,workerStat(n).debt),0);if(owe>0)out.push({lvl:'info',t:`Рабочим к выплате ${money(owe)}`,a:'tab',id:'workers'});
   const od=S.fuelDays.find(d=>d.end==null&&d.date<T&&(!d.by||d.by===me()));if(od)out.push({lvl:'warn',t:`Не закрыт день авто ${fdate(od.date)}`,a:'tab',id:'car'});
   if(!session&&S.objects.length&&daysSince(S.settings.lastBackup||'2000-01-01')>7)out.push({lvl:'info',t:'Синхронизация выключена — сделай копию в файл',a:'backupNow'});
   if(S.settings.mkAsked!==MARKET_DATE){const n=repriceList().length;if(n)out.push({lvl:'info',t:`Прайс: ${n} цен можно сверить и обновить по рынку (${MARKET_SRC})`,a:'reprice'})}
@@ -2257,14 +2260,14 @@ function payoutBody(name,cur,amt){
          </div><div class="row sm" style="margin-top:4px"><span class="muted">сумма</span><b class="n" id="pls${i}"></b></div></div>`).join('')||'<p class="empty" style="padding:10px">Добавь работы ниже — объём, цена рабочему и дата</p>';
        drawTot()};
      draw();
-     const list=q=>{const b=g('plr');b.hidden=false;b.innerHTML=rateMatches(q).slice(0,30).map(r=>`<button class="li" data-s="pladd" data-id="${r.id}"><span class="t"><b>${esc(r.name)}</b><small>${esc(r.cat||'')} · ${esc(r.unit)}</small></span><span class="n">${money(r.worker)}</span></button>`).join('')||'<p class="empty">Не найдено</p>'};
+     const list=q=>{const b=g('plr');b.hidden=false;b.innerHTML=rateMatches(q).slice(0,30).map(r=>`<button class="li" data-s="pladd" data-id="${r.id}"><span class="t"><b>${esc(r.name)}</b><small>${esc(r.cat||'')} · ${esc(r.unit)}</small></span><span class="n">${money(wkPrice(name,r))}</span></button>`).join('')||'<p class="empty">Не найдено</p>'};
      g('plq').addEventListener('focus',()=>list(v('plq')));
      SS.input=ev=>{const t=ev.target;
        if(t.id==='plq')list(t.value);
        else if(t.id==='pa'){SS.autoAmt=false;drawTot()}
        else if(t.classList.contains('plf')){const l=SS.lines[+t.dataset.i];if(!l)return;l[t.dataset.k]=t.dataset.k==='date'?t.value:num(t.value);drawTot()}};
      SS.pladd=el=>{const r=S.rates.find(x=>x.id===el.dataset.id);if(!r)return;
-       SS.lines.push({rateId:r.id,title:r.name,unit:r.unit,price:+r.worker||0,cprice:+r.client||0,qty:0,date:v('pd')||today()});
+       SS.lines.push({rateId:r.id,title:r.name,unit:r.unit,price:wkPrice(name,r),cprice:+r.client||0,qty:0,date:v('pd')||today()});
        g('plq').value='';g('plr').hidden=true;draw();const q=document.querySelector(`.plf[data-i="${SS.lines.length-1}"][data-k="qty"]`);if(q)q.focus()};
      SS.plx=el=>{SS.lines.splice(+el.dataset.id,1);draw()};
      SS.save=()=>{
@@ -2798,7 +2801,7 @@ function pushWidget(){
   const W=capP('StroykaWidget');if(!W||isWorker())return;clearTimeout(wT);
   wT=setTimeout(()=>{try{
     const T=today(),ev=S.events.filter(e=>e.date===T),tk=S.tasks.filter(t=>!t.done&&t.due&&t.due<=T).length;
-    const owe=workerNames().reduce((s,n)=>s+Math.max(0,workerStat(n).debt),0);
+    const owe=workerNames(true).reduce((s,n)=>s+Math.max(0,workerStat(n).debt),0);
     const debt=S.objects.reduce((s,o)=>s+Math.max(0,objStats(o.id).clientOwes),0);
     const line1=ev.length?'Сегодня: '+ev.slice(0,2).map(e=>oname(e.objectId)).join(', ')+(ev.length>2?' +'+(ev.length-2):''):tk?'Задач на сегодня: '+tk:'Сегодня выходов нет';
     const line2=[ev.length&&tk?'задач: '+tk:'',owe?'рабочим '+money(owe):'',debt?'нам должны '+money(debt):''].filter(Boolean).join(' · ')||fdateY(T);
@@ -2814,7 +2817,7 @@ function nativeInit(){
 
 /* ---------- действия ---------- */
 function bizInit(){
-planInit();
+planInit();workersInit();
 Object.assign(A,{
   tab(el){ui.tab=el.dataset.id;const n=ui.page.length;ui.page=[];if(n)history.go(-n);render();window.scrollTo(0,0)},
   fab(el){const k=el.dataset.k,p=curPage();
@@ -2862,6 +2865,173 @@ Object.assign(A,{
   getUpdate(){if(UPD&&UPD.url){const a=document.createElement('a');a.href=UPD.url;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove()}},
 });
 Object.assign(CHIP_STATE,{hold:'holder',ost:'status',etype:'etype',tplc:'tpl',eline:'eline',emode:'emode',nd:'nd'});
+}
+
+/* ================= Рабочие: профиль, свои ставки, статистика, архив, объединение ================= */
+const SPECS=['Электрик','Плиточник','Сантехник','Гипсокартонщик','Штукатур','Маляр','Сварщик','Каменщик','Кровельщик','Разнорабочий','Универсал'];
+const wrec=n=>S.workers.find(x=>x.name===n)||null;
+const wArch=n=>!!(wrec(n)||{}).archived;
+function workerNames(all){
+  const s=new Set(S.workers.map(w=>w.name));S.work.forEach(w=>w.worker&&s.add(w.worker));
+  const last={};S.work.forEach(w=>{if(w.worker)last[w.worker]=Math.max(last[w.worker]||0,w.ts||0)});
+  return [...s].filter(n=>n&&(all||!wArch(n))).sort((a,b)=>(last[b]||0)-(last[a]||0)||a.localeCompare(b));
+}
+/* цена рабочему: своя цена на работу → свой % от цены заказчику → прайс */
+function wkPrice(name,r){if(!r)return 0;const w=wrec(name);
+  if(w&&r.id&&w.rates&&w.rates[r.id]!=null&&w.rates[r.id]!=='')return +w.rates[r.id];
+  if(w&&+w.share>0&&+r.client>0)return roundP(+r.client*w.share/100);
+  return +r.worker||0}
+const phoneIntl=p=>{let d=String(p||'').replace(/\D/g,'');if(d.length===10&&d[0]==='0')d='38'+d;return d};
+const initials=n=>String(n).trim().split(/\s+/).slice(0,2).map(x=>x[0]||'').join('').toUpperCase();
+function workerInfo(name){
+  const s=workerStat(name),acc=s.rows.filter(x=>x.type!=='payout'),pays=s.rows.filter(x=>x.type==='payout').sort(byDate);
+  const ws=weekStart(),ms=today().slice(0,7),dates=acc.map(x=>x.date).filter(Boolean).sort(),days=new Set(dates).size;
+  const byObj={};acc.forEach(x=>{byObj[x.objectId||'']=(byObj[x.objectId||'']||0)+(+x.amount||0)});
+  const byWork={};acc.forEach(x=>{const k=workTitle(x),o=byWork[k]||(byWork[k]={n:k,q:0,u:x.unit||'',sum:0,cnt:0});o.q+=+x.qty||0;o.sum+=+x.amount||0;o.cnt++});
+  return {...s,acc,pays,week:sum(acc.filter(x=>x.date>=ws),'amount'),month:sum(acc.filter(x=>String(x.date).startsWith(ms)),'amount'),days,perDay:days?s.earned/days:0,
+    objs:Object.entries(byObj).sort((a,b)=>b[1]-a[1]),works:Object.values(byWork).sort((a,b)=>b.sum-a.sum),first:dates[0],last:dates[dates.length-1]};
+}
+const todayObjOf=n=>{const e=S.events.find(e=>e.date===today()&&(e.who||[]).includes(n));return e?oname(e.objectId):''};
+function vWorkers(){
+  const all=workerNames(true);
+  if(!all.length)return `<div class="wrap"><div class="card empty"><p><b>Рабочих пока нет</b></p><p>Нажми «＋ Рабочий» или добавь прямо в форме «+ Работа».</p><button class="btn p" data-a="newWorker">＋ Рабочий</button></div></div>`;
+  const ws=weekStart(),act=all.filter(n=>!wArch(n)),arc=all.filter(wArch);
+  const li=n=>{const s=workerStat(n),w=wrec(n)||{},wk=sum(s.rows.filter(x=>x.type!=='payout'&&x.date>=ws),'amount'),to=todayObjOf(n);
+    const sub=[w.spec,to?'📍 '+to:'',wk?'неделя '+money(wk):''].filter(Boolean).map(esc).join(' · ')||'—';
+    return `<button class="li" data-a="openWorker" data-id="${esc(n)}"><span class="av">${esc(initials(n))}</span><span class="t"><b>${esc(n)}</b><small>${sub}</small></span><span class="r"><span class="n ${s.debt>0?'warn':''}">${money(Math.abs(s.debt))}</span><small>${s.debt>0?'к выплате':s.debt<0?'переплата':'рассчитан'}</small></span></button>`};
+  const total=all.reduce((s,n)=>s+Math.max(0,workerStat(n).debt),0);
+  return `<div class="wrap"><div class="kv"><div class="wide"><small>Всего к выплате рабочим</small><b class="n warn">${money(total)}</b></div></div>
+  <h2>Рабочие <small>${act.length}</small> <button class="chip add" data-a="newWorker">＋ Рабочий</button></h2><div class="list">${act.map(li).join('')||'<p class="empty">Все в архиве</p>'}</div>
+  ${arc.length?`<details style="margin-top:12px"><summary class="muted">Архив (${arc.length})</summary><div class="list" style="margin-top:8px">${arc.map(li).join('')}</div></details>`:''}</div>`;
+}
+function vWorker(name){
+  const w=wrec(name)||{},i=workerInfo(name),ph=phoneIntl(w.phone),nOv=Object.values(w.rates||{}).filter(x=>x!==''&&x!=null).length;
+  const showAll=ui.wkAll===name,hist=i.acc.slice().sort(byDate),shown=showAll?hist:hist.slice(0,25);
+  return `<div class="wrap">
+   <div class="card" style="display:flex;gap:12px;align-items:center"><span class="av big">${esc(initials(name))}</span><div style="flex:1;min-width:0">
+     <b style="font-size:19px">${esc(name)}</b>${w.archived?' <span class="muted sm">· в архиве</span>':''}
+     <div class="muted sm">${[w.spec,w.since?'с '+fdateY(w.since):i.first?'первая работа '+fdateY(i.first):''].filter(Boolean).map(esc).join(' · ')||'нажми ✎, чтобы заполнить карточку'}</div>
+     ${+w.share>0||nOv?`<div class="sm" style="margin-top:2px">💰 ${+w.share>0?`${qf(w.share)}% от цены заказчику`:'ставки по прайсу'}${nOv?` · своих цен: ${nOv}`:''}</div>`:''}</div>
+     <button class="ico" data-a="editWorker" data-id="${esc(name)}" aria-label="Изменить">✎</button></div>
+   ${ph||w.card?`<div class="btns" style="margin-top:8px">${ph?`<a class="btn" href="tel:+${ph}">📞</a><a class="btn" href="viber://chat?number=%2B${ph}">Viber</a><a class="btn" href="https://t.me/+${ph}">Telegram</a>`:''}${w.card?`<button class="btn" data-a="copyCard" data-id="${esc(name)}">💳 *${esc(String(w.card).replace(/\s/g,'').slice(-4))}</button>`:''}</div>`:''}
+   ${w.note?`<div class="card sm" style="margin-top:8px;white-space:pre-wrap">📝 ${esc(w.note)}</div>`:''}
+   <div class="kv" style="margin-top:8px"><div class="wide"><small>${i.debt>=0?'К выплате':'Переплата (аванс)'}</small><b class="big-num ${i.debt>0?'warn':''}">${money(Math.abs(i.debt))}</b></div>
+   <div><small>Начислено всего</small><b class="n">${money(i.earned)}</b></div><div><small>Выплачено</small><b class="n">${money(i.paid)}</b></div>
+   <div><small>Эта неделя</small><b class="n">${money(i.week)}</b></div><div><small>Этот месяц</small><b class="n">${money(i.month)}</b></div>
+   <div><small>Дней отработал</small><b class="n">${i.days}</b></div><div><small>В среднем за день</small><b class="n">${money(i.perDay)}</b></div></div>
+   <div class="btns"><button class="btn p" data-a="payout" data-id="${esc(name)}">Выплатить</button>${i.debt>0?`<button class="btn" data-a="payAll" data-id="${esc(name)}">Весь долг ${money(i.debt)}</button>`:''}</div>
+   <div class="btns" style="margin-top:8px"><button class="btn" data-a="wkPeriod" data-id="${esc(name)}">📄 Расчёт за период</button><button class="btn" data-a="workerReport" data-id="${esc(name)}">Отправить всё</button></div>
+   ${i.objs.length?`<h2>Объекты <small>${i.objs.length}</small></h2><div class="list">${i.objs.slice(0,8).map(([oid,s])=>oid&&S.objects.find(o=>o.id===oid)?LI('🏠 '+esc(oname(oid)),'',money(s),'openObj',oid,'заработал'):`<div class="li"><span class="t"><b>${esc(oname(oid)||'Без объекта')}</b></span><span class="n">${money(s)}</span></div>`).join('')}</div>`:''}
+   ${i.works.length?`<h2>Чаще всего делает</h2><div class="list">${i.works.slice(0,5).map(x=>`<div class="li"><span class="t"><b>${esc(x.n)}</b><small>${x.q?qf(r2(x.q))+' '+esc(x.u)+' · ':''}${x.cnt} раз</small></span><span class="n">${money(x.sum)}</span></div>`).join('')}</div>`:''}
+   <h2>Выплаты <small>${i.pays.length} · ${money(i.paid)}</small></h2><div class="list">${i.pays.slice(0,20).map(r=>workLi(r,true)).join('')||'<p class="empty">Выплат не было</p>'}</div>
+   <h2>Работы <small>${hist.length}</small></h2><div class="list">${shown.map(r=>workLi(r,true)).join('')||'<p class="empty">Записей нет</p>'}${hist.length>shown.length?`<button class="li" data-a="wkAll" data-id="${esc(name)}"><span class="t muted sm">Показать все (${hist.length})</span></button>`:''}</div></div>`;
+}
+function workerSheet(name){
+  const w0=wrec(name)||{name:'',phone:''};
+  const st={...w0,rates:{...(w0.rates||{})}};
+  return ()=>{
+  const others=workerNames(true).filter(n=>n!==name),cnt=name?S.work.filter(x=>x.worker===name).length:0;
+  const spec=String(st.spec||'');
+  return {title:name?'Карточка рабочего':'Новый рабочий',html:`${F('Имя',I('wkn',st.name||name))}
+   <div class="two">${F('Телефон',I('wkp',st.phone,'inputmode="tel" placeholder="067 123 45 67"'))}${F('Работает с',`<input id="wks" type="date" value="${st.since||''}">`)}</div>
+   <div class="f"><span>Специализация</span><div class="chips" style="flex-wrap:wrap" id="wkspC">${SPECS.map(s=>`<button class="chip ${spec.split(', ').includes(s)?'on':''}" data-s="wkSpec" data-id="${s}">${s}</button>`).join('')}</div></div>
+   ${F('Карта для выплат',I('wkc',st.card,'inputmode="numeric" placeholder="5168 …" autocomplete="off"'),'Видно только вам с партнёром. На карточке — кнопка «Скопировать».')}
+   ${F('Заметка',`<textarea id="wkno" rows="2" placeholder="есть свой перфоратор, не работает по субботам…">${esc(st.note||'')}</textarea>`)}
+   <h2>Ставка</h2>
+   <div class="two">${F('% от цены заказчику',N('wksh',st.share||'','placeholder="как в прайсе"'),'Пусто — берётся «рабочему» из прайса')}<div></div></div>
+   <div class="f"><span>Свои цены на работы</span><div class="list" id="wkrl"></div>
+    <input id="wkrq" placeholder="＋ Работа со своей ценой для него…" autocomplete="off" style="margin-top:8px"><div class="rl" id="wkrr" hidden></div></div>
+   <div class="btns" style="margin-top:12px"><button class="btn p" data-s="save">Сохранить</button></div>
+   ${name?`<h2>Управление</h2>
+   <div class="btns"><button class="btn" data-s="wkArch">${st.archived?'↩ Вернуть из архива':'🗄 В архив'}</button></div>
+   <p class="muted sm">Архив: рабочий пропадает из списков и выбора, история и деньги остаются.</p>
+   ${others.length?`<div class="f"><span>Объединить с другим рабочим</span><div style="display:flex;gap:8px"><select id="wkm"><option value="">— выбери —</option>${others.map(n=>`<option>${esc(n)}</option>`).join('')}</select><button class="btn" data-s="wkMerge">Объединить</button></div><small class="muted sm">Все записи «${esc(name)}» (${cnt}) перейдут выбранному, эта карточка исчезнет. Для дублей вроде «Костя» и «Костян».</small></div>`:''}
+   <div class="btns" style="margin-top:10px"><button class="btn bad" data-s="wkDel">Удалить рабочего${cnt?` и ${cnt} записей`:''}</button></div>`:''}`,
+  init(){
+    if(!name)setTimeout(()=>g('wkn').focus(),80);
+    const keep=()=>{st.name=v('wkn');st.phone=v('wkp');st.since=v('wks');st.card=v('wkc');st.note=v('wkno');st.share=v('wksh')};
+    const drawR=()=>{const ks=Object.keys(st.rates).filter(k=>S.rates.find(r=>r.id===k));
+      g('wkrl').innerHTML=ks.map(k=>{const r=S.rates.find(x=>x.id===k);return `<div class="li"><span class="t"><b>${esc(r.name)}</b><small>по прайсу ${money(r.worker)} за ${esc(r.unit)}</small></span><input class="wkr" data-id="${k}" value="${st.rates[k]}" inputmode="decimal" style="width:96px;min-height:40px"><button class="x" style="border:0;background:none;color:var(--bad);font-size:18px" data-s="wkrx" data-id="${k}">✕</button></div>`}).join('')||'<p class="muted sm" style="margin:4px 2px">Нет — везде цена из прайса или %</p>'};
+    drawR();
+    const list=q=>{const b=g('wkrr');b.hidden=false;b.innerHTML=rateMatches(q).slice(0,25).map(r=>`<button class="li" data-s="wkra" data-id="${r.id}"><span class="t"><b>${esc(r.name)}</b><small>${esc(r.unit)}</small></span><span class="n">${money(r.worker)}</span></button>`).join('')||'<p class="empty">Не найдено</p>'};
+    g('wkrq').addEventListener('focus',()=>list(v('wkrq')));
+    SS.input=ev=>{const t=ev.target;if(t.id==='wkrq')list(t.value);else if(t.classList.contains('wkr'))st.rates[t.dataset.id]=t.value===''?'':num(t.value)};
+    SS.wkra=el=>{const r=S.rates.find(x=>x.id===el.dataset.id);if(!r)return;st.rates[r.id]=+r.worker||0;g('wkrq').value='';g('wkrr').hidden=true;drawR();const i=document.querySelector(`.wkr[data-id="${r.id}"]`);if(i){i.focus();i.select()}};
+    SS.wkrx=el=>{delete st.rates[el.dataset.id];drawR()};
+    SS.wkSpec=el=>{const set=new Set(String(st.spec||'').split(', ').filter(Boolean)),s=el.dataset.id;set.has(s)?set.delete(s):set.add(s);st.spec=[...set].join(', ');el.classList.toggle('on',set.has(s))};
+    const reassign=(from,to)=>{
+      S.work.filter(x=>x.worker===from).forEach(x=>{x.worker=to;put('work',x)});
+      S.tasks.filter(x=>x.who===from).forEach(x=>{x.who=to;put('tasks',x)});
+      S.events.filter(e=>(e.who||[]).includes(from)).forEach(e=>{e.who=[...new Set(e.who.map(n=>n===from?to:n).filter(Boolean))];put('events',e)});
+      if(S.settings.lastWorker===from)S.settings.lastWorker=to};
+    SS.save=()=>{keep();const n=String(st.name||'').trim();if(!n){toast('Имя');return}
+      if(name&&n!==name){if(workerNames(true).includes(n)&&!confirm(`«${n}» уже есть. Объединить записи?`))return;reassign(name,n);if(w0.id)del('workers',w0.id);const p=curPage();if(p&&p.t==='worker')p.id=n}
+      const ex=n!==name&&wrec(n)||{};
+      const rates={};Object.entries(st.rates).forEach(([k,x])=>{if(x!==''&&x!=null)rates[k]=+x});
+      put('workers',{...ex,...st,id:wid(n),name:n,phone:String(st.phone||'').trim(),card:String(st.card||'').trim(),note:String(st.note||'').trim(),share:num(st.share)||0,rates});
+      commit();back();toast('Сохранено')};
+    SS.wkArch=()=>{keep();st.archived=!st.archived;put('workers',{...w0,id:w0.id||wid(name),name,archived:st.archived});commit();back();toast(st.archived?'В архиве':'Вернул из архива')};
+    SS.wkMerge=()=>{const to=v('wkm');if(!to){toast('Выбери, с кем объединить');return}
+      if(!confirm(`Перенести все записи «${name}» на «${to}» и удалить карточку «${name}»?`))return;
+      reassign(name,to);const t=wrec(to);
+      if(w0.id){const add={};['phone','card','note','spec','since'].forEach(k=>{if(w0[k]&&!(t&&t[k]))add[k]=w0[k]});if(Object.keys(add).length)put('workers',{...(t||{id:wid(to),name:to}),...add});del('workers',w0.id)}
+      commit();closeAllSheets();setTimeout(()=>{const p=curPage();if(p&&p.t==='worker'){p.id=to;render()}toast('Объединено с «'+to+'»')},200)};
+    SS.wkDel=()=>{
+      if(!confirm(cnt?`Удалить «${name}» и все его записи (${cnt}: работы и выплаты)? Они попадут в корзину на 30 дней.\n\nЕсли нужно сохранить историю — лучше «В архив».`:`Удалить «${name}»?`))return;
+      S.work.filter(x=>x.worker===name).forEach(x=>del('work',x.id));
+      S.tasks.filter(x=>x.who===name).forEach(x=>{x.who='';put('tasks',x)});
+      S.events.filter(e=>(e.who||[]).includes(name)).forEach(e=>{e.who=e.who.filter(n=>n!==name);put('events',e)});
+      if(w0.id)del('workers',w0.id);commit();closeAllSheets();
+      setTimeout(()=>{const p=curPage();if(p&&p.t==='worker'&&p.id===name)back();toast('Удалено')},200)};
+  }};
+}}
+function periodRange(k){const d=new Date(),f=x=>x.getFullYear()+'-'+pad(x.getMonth()+1)+'-'+pad(x.getDate());
+  if(k==='week')return [weekStart(),today()];
+  if(k==='pweek'){const a=new Date(weekStart());a.setDate(a.getDate()-7);const b=new Date(a);b.setDate(b.getDate()+6);return [f(a),f(b)]}
+  if(k==='month')return [today().slice(0,7)+'-01',today()];
+  if(k==='pmonth'){const a=new Date(d.getFullYear(),d.getMonth()-1,1),b=new Date(d.getFullYear(),d.getMonth(),0);return [f(a),f(b)]}
+  return ['2000-01-01',today()]}
+function wkPeriodData(name,a,b){
+  const all=S.work.filter(x=>x.worker===name),inP=all.filter(x=>x.date>=a&&x.date<=b).sort((p,q)=>String(p.date).localeCompare(String(q.date)));
+  const bal=rows=>sum(rows.filter(x=>x.type!=='payout'),'amount')-sum(rows.filter(x=>x.type==='payout'),'amount');
+  const start=bal(all.filter(x=>x.date<a)),acc=inP.filter(x=>x.type!=='payout'),pays=inP.filter(x=>x.type==='payout');
+  return {acc,pays,start,earned:sum(acc,'amount'),paid:sum(pays,'amount'),end:start+sum(acc,'amount')-sum(pays,'amount')};
+}
+function wkPeriodSheet(name){let k='week',ab=periodRange('week');return ()=>({title:'Расчёт: '+name,html:`
+  <div class="chips" style="flex-wrap:wrap" id="wpC">${[['week','Эта неделя'],['pweek','Прошлая неделя'],['month','Этот месяц'],['pmonth','Прошлый месяц'],['all','Всё время']].map(([x,t])=>`<button class="chip ${x===k?'on':''}" data-s="wpK" data-id="${x}">${t}</button>`).join('')}</div>
+  <div class="two">${F('С',`<input id="wpa" type="date" value="${ab[0]}">`)}${F('По',`<input id="wpb" type="date" value="${ab[1]}">`)}</div>
+  <div id="wpr"></div>
+  <div class="btns" style="margin-top:10px"><button class="btn" data-s="wpTxt">Отправить текстом</button><button class="btn p" data-s="wpPdf">PDF</button></div>`,
+ init(){
+  const txt=d=>`${name} — расчёт ${fdateY(ab[0])} — ${fdateY(ab[1])}\n\n`+(d.start?`Долг на начало: ${money(d.start)}\n\n`:'')
+    +(d.acc.length?'РАБОТЫ:\n'+d.acc.map(r=>`${fdate(r.date)} ${workTitle(r)}${r.qty&&r.kind==='piece'?' '+qf(r.qty)+' '+(r.unit||''):''} — ${money(r.amount)} (${oname(r.objectId)})`).join('\n')+`\nИтого: ${money(d.earned)}\n\n`:'Работ в периоде нет\n\n')
+    +(d.pays.length?'ВЫПЛАТЫ:\n'+d.pays.map(r=>`${fdate(r.date)} — ${money(r.amount)}${r.note?' ('+r.note+')':''}`).join('\n')+`\nИтого: ${money(d.paid)}\n\n`:'')
+    +(d.end>=0?`К ВЫПЛАТЕ: ${money(d.end)}`:`ПЕРЕПЛАТА: ${money(-d.end)}`);
+  const draw=()=>{ab=[v('wpa'),v('wpb')];const d=wkPeriodData(name,ab[0],ab[1]);SS.d=d;
+    g('wpr').innerHTML=`<div class="kv" style="margin-top:10px">${d.start?`<div class="wide"><small>Долг на начало периода</small><b class="n">${money(d.start)}</b></div>`:''}
+     <div><small>Начислено</small><b class="n">${money(d.earned)}</b><small>${d.acc.length} работ</small></div><div><small>Выплачено</small><b class="n">${money(d.paid)}</b><small>${d.pays.length} выплат</small></div>
+     <div class="wide"><small>${d.end>=0?'К выплате на конец':'Переплата на конец'}</small><b class="big-num ${d.end>0?'warn':''}">${money(Math.abs(d.end))}</b></div></div>
+     <div class="list" style="margin-top:8px">${[...d.acc,...d.pays].sort(byDate).map(r=>workLi(r,true)).join('')||'<p class="empty">Пусто</p>'}</div>`};
+  draw();
+  SS.wpK=el=>{k=el.dataset.id;ab=periodRange(k);g('wpa').value=ab[0];g('wpb').value=ab[1];setChip('wpC',k);draw()};
+  SS.change=ev=>{if(ev.target.id==='wpa'||ev.target.id==='wpb'){setChip('wpC','');draw()}};
+  SS.wpTxt=()=>shareText('Расчёт: '+name,txt(SS.d));
+  SS.wpPdf=async()=>{const d=SS.d;toast('Готовлю PDF…');
+    const rows=d.acc.map(r=>[fdate(r.date),`${workTitle(r)} · ${oname(r.objectId)}`,r.qty&&r.kind==='piece'?qf(r.qty)+' '+(r.unit||''):'',money(r.amount)]);
+    d.pays.forEach(r=>rows.push([fdate(r.date),'Выплата'+(r.note?' ('+r.note+')':''),'','−'+money(r.amount)]));
+    const pages=renderDoc({firm:[S.settings.firm,S.settings.phone].filter(Boolean).join(' · '),date:fdateY(today()),title:'РАСЧЁТ С РАБОЧИМ',sub:[`Рабочий: ${name}`,`Период: ${fdateY(ab[0])} — ${fdateY(ab[1])}`],
+      tables:[{cols:[{t:'Дата',w:.14},{t:'Работа / объект',w:.5},{t:'Объём',w:.16,r:1},{t:'Сумма',w:.2,r:1}],rows}],
+      totals:[...(d.start?[['Долг на начало',money(d.start)]]:[]),['Начислено',money(d.earned)],['Выплачено',money(d.paid)],[d.end>=0?'К ВЫПЛАТЕ':'ПЕРЕПЛАТА',money(Math.abs(d.end)),1]],sign:true});
+    await saveFile(`Расчёт_${fileSafe(name)}_${ab[0]}_${ab[1]}.pdf`,pdfFromCanvases(pages))};
+ }})}
+function workersInit(){
+  Object.assign(A,{
+    copyCard(el){const w=wrec(el.dataset.id);if(!w||!w.card)return;const c=String(w.card).replace(/\s/g,'');
+      if(navigator.clipboard)navigator.clipboard.writeText(c).then(()=>toast('Номер карты скопирован'),()=>toast(c));else toast(c)},
+    payAll(el){const n=el.dataset.id,d=workerStat(n).debt;openSheet(()=>payoutBody(n,null,r2(d)))},
+    wkPeriod(el){openSheet(wkPeriodSheet(el.dataset.id))},
+    wkAll(el){ui.wkAll=el.dataset.id;render()},
+  });
 }
 
 /* ================= Чертежи: план, ГОСТ-лист, электрика, сантехника, фигуры, 3D ================= */
