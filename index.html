@@ -1394,7 +1394,7 @@ const defCalc=()=>({name:'',objectId:'',L:'',W:'',H:'2.7',ops:[],on:[true,true,t
 function calcGeom(c){
   if(c.planId){
     const pl=S.plans.find(x=>x.id===c.planId),r=pl&&pl.rooms.find(x=>x.id===c.roomId);
-    if(r){const b=PG.bbox([r]);return {plan:true,room:r,walls:r.pts.map((_,i)=>{const e=PG.edge(r,i);return {L:e.L,H:+r.h,ops:edgeOps(pl,r,i).map(o=>({t:o.t,w:+o.w,h:+o.h,sill:+o.sill||0}))}}),
+    if(r){const b=PG.bbox([r]);return {plan:true,room:r,walls:r.pts.map((_,i)=>{const e=PG.edge(r,i);return {L:e.L,H:+r.h,ops:edgeOps(pl,r,i).map(o=>({t:o.t,w:+o.w,h:+o.h,sill:+o.sill||0,ghost:!!o.ghost}))}}),
       A:Math.abs(PG.area(r.pts)),P:r.pts.reduce((s,_,i)=>s+PG.edge(r,i).L,0),a:Math.max(b.x1-b.x0,b.y1-b.y0),b:Math.min(b.x1-b.x0,b.y1-b.y0),H:+r.h}}
   }
   const L=num(c.L),Wd=num(c.W),H=num(c.H)||2.7;
@@ -1409,7 +1409,7 @@ function runCalc(c){
   const opA=w=>w.ops.reduce((s,o)=>s+o.w*Math.min(o.h,w.H),0);
   const net=w=>Math.max(0,w.L*w.H-opA(w));
   const wallsNet=W.reduce((s,w)=>s+net(w),0),doorsW=g.walls.reduce((s,w)=>s+w.ops.filter(o=>o.t==='door').reduce((t,o)=>t+o.w,0),0);
-  const slopes=W.reduce((s,w)=>s+w.ops.reduce((t,o)=>t+2*o.h+o.w,0),0);
+  const slopes=W.reduce((s,w)=>s+w.ops.filter(o=>o.t==='window'&&!o.ghost).reduce((t,o)=>t+2*o.h+o.w,0),0);
   const sys=new Set(c.sys);
   const gk=(H)=>{const tall=p.sheet==='3000'||H>2.55&&p.sheet==='auto';const moist=p.gtype==='gklv';return (moist?'gklv':'gkl')+(tall?'3':'')};
   const seams=a=>{add('fug',a*0.35);add('serp',a*1.0);add('primer',a*0.15)};
@@ -1427,9 +1427,9 @@ function runCalc(c){
     if(slopes)work('Откосы из гипсокартона',slopes);
   }
   if(sys.has('gklc')&&g.A>0){
-    const cnt=Math.max(1,ceilE(g.b/0.6)-1),per=Math.max(2,ceilE(g.a/0.9)-1),hang=cnt*per;
-    add('pp',cnt*ceilE(g.a/3));add('ext',cnt*(ceilE(g.a/3)-1));add('pn',ceilE(g.P*1.05/3));add('hang',hang);
-    const sk=gk(0);add(sk,g.A*k);add('s25',ceilE(g.A*k/matOf(sk).pack)*40);add('klop',hang*2+cnt*4);add('dowel',ceilE(g.P/0.5)+hang);add('tape',g.P);seams(g.A);
+    const fill=g.a*g.b>0?Math.min(1,g.A/(g.a*g.b)):1,cnt=Math.max(1,ceilE(g.b/0.6)-1),per=Math.max(2,ceilE(g.a/0.9)-1),hang=ceilE(cnt*per*fill);
+    add('pp',ceilE(cnt*ceilE(g.a/3)*fill));add('ext',ceilE(cnt*(ceilE(g.a/3)-1)*fill));add('pn',ceilE(g.P*1.05/3));add('hang',hang);
+    const sk=gk(0);add(sk,g.A*k);add('s25',ceilE(g.A*k/matOf(sk).pack)*40);add('klop',hang*2+ceilE(cnt*fill)*4);add('dowel',ceilE(g.P/0.5)+hang);add('tape',g.P);seams(g.A);
     if(p.ceilWool==='1'){add('wool50',g.A*1.05);work('Утепление минватой за гипсокартоном',g.A)}
     work('Монтаж гипсокартона на потолок',g.A);
   }
@@ -1458,7 +1458,7 @@ function runCalc(c){
   if(sys.has('tilef')&&g.A>0){add('tile',g.A*k);add('tglue',g.A*5);add('grout',g.A*0.4);add('cross',g.A*15);add('primer',g.A*0.15);work('Укладка плитки на пол',g.A);work('Затирка швов плитки (стандартная)',g.A)}
   if(sys.has('screed')&&g.A>0){const t=num(p.scT)||5;add('screed',g.A*t*20*1.05);add('tape',g.P);add('film',g.A*1.15);work(t>5?'Цементно-песчаная стяжка 5–10 см':'Цементно-песчаная стяжка до 5 см',g.A)}
   if(sys.has('lam')&&g.A>0){add('lam',g.A*1.07);add('under',g.A*1.1);add('skirt',ceilE((g.P-doorsW)*1.05/2.5));work('Укладка ламината',g.A);work('Подложка под ламинат',g.A);work('Установка пластикового плинтуса',g.P-doorsW)}
-  if(sys.has('wproof')&&g.A>0){const a=g.A+g.P*0.2;add('wmast',a*1.6);add('wtape',g.P+0.5);add('primer',a*0.15);work('Гидроизоляция санузла',a)}
+  if(sys.has('wproof')&&g.A>0){const a=g.A+g.P*0.2;add('wmast',a*2.5);add('wtape',g.P+0.5);add('primer',a*0.15);work('Гидроизоляция санузла',a)}
   if(sys.has('self')&&g.A>0){const t=num(p.slT)||10;add('selflev',g.A*t*1.6);add('primer',g.A*0.15);add('tape',g.P);work('Самовыравнивающийся пол',g.A)}
   if(sys.has('linol')&&g.A>0){add('linol',g.A*1.1);add('skirt',ceilE((g.P-doorsW)*1.05/2.5));work('Укладка линолеума без клея',g.A);work('Установка пластикового плинтуса',g.P-doorsW)}
   if(sys.has('block')&&W.length){const t=(+p.blT||300)/1000,vol=wallsNet*t,bv=0.6*0.2*t;add('block'+p.blT,ceilE(vol/bv*1.05));add('bglue',vol*28);work('Кладка стен из газоблока или пеноблока',vol)}
@@ -1533,7 +1533,7 @@ function calcSheetBody(c){
    <div id="cpar"></div>
    <div id="cres"></div>
    <div class="btns"><button class="btn" data-s="share">Отправить список</button><button class="btn p" data-s="toEst">В смету</button></div>
-   <div class="btns" style="margin-top:8px"><button class="btn" data-s="saveC">Сохранить расчёт</button>${fromPlan?'':'<button class="btn" data-s="to3d">Открыть в 3D-плане</button>'}</div>`,
+   <div class="btns" style="margin-top:8px"><button class="btn" data-s="saveC">Сохранить расчёт</button>${fromPlan?'':'<button class="btn" data-s="to3d">Открыть как чертёж</button>'}</div>`,
   init(){
     SS.c=c;
     const pch=(k,opts,lab)=>`<div class="f"><span>${lab}</span><div class="chips">${opts.map(([v,t])=>`<button class="chip ${c.p[k]===v?'on':''}" data-s="cset" data-k="${k}" data-id="${v}">${t}</button>`).join('')}</div></div>`;
@@ -1545,7 +1545,7 @@ function calcSheetBody(c){
        <label class="f" style="margin:0"><span>Стена</span><select class="cop" data-i="${i}" data-k="wall" style="min-height:42px;padding:4px">${[1,2,3,4].map(n=>`<option ${+o.wall===n?'selected':''}>${n}</option>`).join('')}</select></label>
        <button class="x" style="border:0;background:none;color:var(--bad);font-size:18px;padding-bottom:10px" data-s="rmOp" data-id="${i}">✕</button></div>`).join('')||'<p class="muted sm" style="margin:4px 2px">Проёмов нет</p>'};
     const drawWalls=()=>{const gg=calcGeom(c);g('cwalls').innerHTML=gg.walls.map((w,i)=>`<button class="chip ${c.on[i]!==false?'on':''}" data-s="cwall" data-id="${i}">${i+1}: ${qf(r2(w.L))} м${w.ops.length?' '+w.ops.map(o=>o.t==='door'?'🚪':'🪟').join(''):''}</button>`).join('');
-      if(fromPlan){const b=g('cplan');if(b)b.innerHTML=gg.room?`Из 3D-плана: <b>${esc(gg.room.name)}</b> · пол ${fA(gg.A)} м² · периметр ${fA(gg.P)} м · высота ${qf(gg.H)} м · проёмов ${gg.walls.reduce((s,w)=>s+w.ops.length,0)}`:'Комната не найдена'}};
+      if(fromPlan){const b=g('cplan');if(b)b.innerHTML=gg.room?`Из чертежа: <b>${esc(gg.room.name)}</b> · пол ${fA(gg.A)} м² · периметр ${fA(gg.P)} м · высота ${qf(gg.H)} м · проёмов ${gg.walls.reduce((s,w)=>s+w.ops.length,0)}`:'Комната не найдена'}};
     const drawPar=()=>{const s=new Set(c.sys);let h='';
       if(s.has('gklw')||s.has('gklc')||s.has('part'))h+=pch('gtype',[['gkl','Обычный'],['gklv','Влагостойкий']],'Гипсокартон')+pch('sheet',[['2500','Лист 2,5 м'],['3000','Лист 3 м']],'Длина листа');
       if(s.has('gklw'))h+=pch('wool',[['0','Без ваты'],['50','Вата 50 мм'],['100','Вата 100 мм']],'ГКЛ на стены: утепление')+pch('layers',[['1','1 слой'],['2','2 слоя']],'Слоёв ГКЛ')+pch('step',[['0.6','Стойки через 60 см'],['0.4','через 40 см']],'Шаг стоек');
@@ -1560,7 +1560,7 @@ function calcSheetBody(c){
       h+=pch('waste',[['5','Запас 5%'],['10','10%'],['15','15%']],'Запас на подрезку');
       g('cpar').innerHTML=h};
     const drawRes=()=>{const res=runCalc(c),rows=calcRows(res);SS.res=res;SS.rows=rows;const gg=res.g;
-      g('cres').innerHTML=`<div class="kv" style="margin-top:12px"><div><small>Стены без проёмов</small><b class="n">${fA(res.wallsNet)} м²</b></div><div><small>Пол / потолок</small><b class="n">${fA(gg.A)} м²</b></div><div><small>Периметр</small><b class="n">${fA(gg.P)} м</b></div><div><small>Откосы</small><b class="n">${fA(res.slopes)} м</b></div></div>
+      g('cres').innerHTML=`<div class="kv" style="margin-top:12px"><div><small>Стены без проёмов</small><b class="n">${fA(res.wallsNet)} м²</b></div><div><small>Пол / потолок</small><b class="n">${fA(gg.A)} м²</b></div><div><small>Периметр</small><b class="n">${fA(gg.P)} м</b></div><div><small>Откосы окон</small><b class="n">${fA(res.slopes)} м</b></div></div>
        ${calcMoneyHtml(rows,res)}`};
     SS.redraw=()=>{drawWalls();drawRes()};
     drawOps();drawWalls();drawPar();drawRes();
@@ -1864,7 +1864,7 @@ const IC={
   pay:'<svg viewBox="0 0 24 24"><rect x="3" y="6.5" width="18" height="11" rx="2.5"/><circle cx="12" cy="12" r="2.4"/><path d="M6.5 9.5v5M17.5 9.5v5"/></svg>',
   photo:'<svg viewBox="0 0 24 24"><path d="M4 8.5h3.2L9 6h6l1.8 2.5H20V19H4z"/><circle cx="12" cy="13.3" r="3.3"/></svg>'};
 /* ================= Стройка 2.2: бизнес-функции ================= */
-const APP_VERSION='3.1';
+const APP_VERSION='3.2';
 const LOGC=['work','expenses','payments','est','payplan','cash','objects','tools'];
 const TRASHC=['objects','tasks','work','workers','rates','est','plans','expenses','payments','fuelDays','tools','events','photos','payplan','cash','checks','tpls','team'];
 const STAGES={before:'До',work:'Процесс',after:'После',hidden:'Скрытые'};
