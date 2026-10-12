@@ -608,11 +608,13 @@ function objStats(id){
   const hired=acc.filter(w=>!isPartner(w.worker)),own=acc.filter(w=>isPartner(w.worker));
   const wages=sum(hired,'amount'),paidOut=sum(wk.filter(w=>w.type==='payout'&&!isPartner(w.worker)),'amount');
   const done=sum(acc,'client')||0,ownDone=sum(own,'client');
-  const received=receivedWork+receivedMat,spent=mat+fuel+other,cost=wages+spent;
+  const received=receivedWork+receivedMat,spent=fuel+other,cost=wages+spent;
+  /* материалы — за счёт заказчика: в прибыль не входят, считаются отдельно */
+  const matBal=receivedMat-mat,matOwes=Math.max(0,-matBal);
   const taken=sum(S.cash.filter(c=>c.type==='take'&&c.objectId===id),'amount')+sum(wk.filter(w=>w.type==='payout'&&isPartner(w.worker)),'amount');
-  const profit=received-cost,profitDone=Math.max(done,receivedWork)+receivedMat-cost;
+  const profit=receivedWork-cost,profitDone=Math.max(done,receivedWork)-cost;
   return {receivedWork,receivedMat,received,mat,fuel,other,spent,wages,paidOut,done,ownDone,cost,taken,
-    profit,profitDone,left:profit-taken,clientOwes:done-receivedWork,matBal:receivedMat-mat};
+    profit,profitDone,left:profit-taken-matOwes,clientOwes:done-receivedWork,matBal,matOwes};
 }
 function workerNames(){
   const s=new Set(S.workers.map(w=>w.name));S.work.forEach(w=>w.worker&&s.add(w.worker));
@@ -1969,7 +1971,7 @@ const IC={
   pay:'<svg viewBox="0 0 24 24"><rect x="3" y="6.5" width="18" height="11" rx="2.5"/><circle cx="12" cy="12" r="2.4"/><path d="M6.5 9.5v5M17.5 9.5v5"/></svg>',
   photo:'<svg viewBox="0 0 24 24"><path d="M4 8.5h3.2L9 6h6l1.8 2.5H20V19H4z"/><circle cx="12" cy="13.3" r="3.3"/></svg>'};
 /* ================= Стройка 2.2: бизнес-функции ================= */
-const APP_VERSION='3.10';
+const APP_VERSION='3.10.1';
 const LOGC=['work','expenses','payments','est','payplan','cash','objects','tools'];
 const TRASHC=['objects','tasks','work','workers','rates','est','plans','expenses','payments','fuelDays','tools','events','photos','payplan','cash','checks','tpls','team'];
 const STAGES={before:'До',work:'Процесс',after:'После',hidden:'Скрытые'};
@@ -2108,11 +2110,11 @@ function monthStats(m){
     done:sum(acc,'client'),wages:sum(hired,'amount'),ownDone:sum(acc.filter(w=>isPartner(w.worker)),'client'),paidOut:sum(work.filter(w=>w.type==='payout'&&!isPartner(w.worker)),'amount'),
     mat:sum(ex.filter(e=>MAT_CATS.includes(e.category)),'amount'),fuel:sum(ex.filter(e=>e.category==='Топливо'),'amount'),
     other:sum(ex.filter(e=>!MAT_CATS.includes(e.category)&&e.category!=='Топливо'),'amount'),tools:sum(tools,'amount')};
-  r.profit=r.recWork+r.recMat-r.mat-r.wages-r.fuel-r.other;r.profitDone=Math.max(r.done,r.recWork)+r.recMat-r.mat-r.wages-r.fuel-r.other;
+  r.profit=r.recWork-r.wages-r.fuel-r.other;r.profitDone=Math.max(r.done,r.recWork)-r.wages-r.fuel-r.other;
   const ids=new Set([...pays,...work,...ex].map(x=>x.objectId).filter(Boolean));
   r.objs=[...ids].map(id=>{const P=pays.filter(p=>p.objectId===id),W=acc.filter(w=>w.objectId===id),E=ex.filter(e=>e.objectId===id);
-    const rec=sum(P,'amount'),wg=sum(W.filter(w=>!isPartner(w.worker)),'amount'),mt=sum(E.filter(e=>MAT_CATS.includes(e.category)),'amount'),oth=sum(E.filter(e=>!MAT_CATS.includes(e.category)),'amount');
-    return {id,name:oname(id),rec,done:sum(W,'client'),wages:wg,mat:mt,other:oth,profit:rec-wg-mt-oth}}).sort((a,b)=>b.rec-a.rec);
+    const rec=sum(P.filter(p=>p.kind!=='material'),'amount'),wg=sum(W.filter(w=>!isPartner(w.worker)),'amount'),mt=sum(E.filter(e=>MAT_CATS.includes(e.category)),'amount'),oth=sum(E.filter(e=>!MAT_CATS.includes(e.category)),'amount');
+    return {id,name:oname(id),rec,done:sum(W,'client'),wages:wg,mat:mt,other:oth,profit:rec-wg-oth}}).sort((a,b)=>b.rec-a.rec);
   const created=S.objects.filter(o=>inM(o.created));
   r.leads=created.length;r.won=created.filter(o=>['active','done'].includes(objStatus(o))).length;r.lost=created.filter(o=>o.status==='lost').length;
   r.pays=pays;r.work=work;r.ex=ex;
@@ -2794,11 +2796,11 @@ function reportSheet(m){return ()=>{
     <div><small>Наёмным рабочим</small><b class="n">${money(r.wages)}</b><small>выплачено ${money(r.paidOut)}</small></div>${r.ownDone?`<div><small>Сделали сами (партнёры)</small><b class="n">${money(r.ownDone)}</b><small>это ваша доля, не расход</small></div>`:''}
     <div><small>Материалы</small><b class="n">${money(r.mat)}</b></div>
     <div><small>Топливо</small><b class="n">${money(r.fuel)}</b></div><div><small>Прочие расходы</small><b class="n">${money(r.other)}</b></div>
-    <div class="wide row"><span><small>Осталось вам (пришло − расходы − наёмным)</small><b class="n ${r.profit<0?'neg':'pos'}">${money(r.profit)}</b></span><span style="text-align:right"><small>Если всё оплатят</small><b class="n">${money(r.profitDone)}</b></span></div>
+    <div class="wide row"><span><small>Осталось вам (за работу − наёмным − расходы)</small><b class="n ${r.profit<0?'neg':'pos'}">${money(r.profit)}</b></span><span style="text-align:right"><small>Если всё оплатят</small><b class="n">${money(r.profitDone)}</b></span></div>
     <div><small>Инструмент куплен</small><b class="n">${money(r.tools)}</b></div>
     <div><small>Заявки → объекты</small><b class="n">${r.leads} → ${r.won}</b><small>${r.leads?Math.round(r.won/r.leads*100)+'% конверсия':''}${r.lost?' · отказ '+r.lost:''}</small></div>
    </div>
-   <h2>По объектам</h2><div class="list">${r.objs.map(x=>LI(esc(x.name),`пришло ${money(x.rec)} · наёмным ${money(x.wages)} · расходы ${money(x.mat+x.other)}`,money(x.profit),'openObj',x.id,'осталось вам',x.profit<0?'neg':'pos')).join('')||'<p class="empty">Нет движения</p>'}</div>
+   <h2>По объектам</h2><div class="list">${r.objs.map(x=>LI(esc(x.name),`за работу ${money(x.rec)} · наёмным ${money(x.wages)} · расходы ${money(x.other)}`,money(x.profit),'openObj',x.id,'осталось вам',x.profit<0?'neg':'pos')).join('')||'<p class="empty">Нет движения</p>'}</div>
    <div class="btns"><button class="btn p" data-s="xls">Скачать Excel</button></div>`,
   init(){SS.mo=el=>replaceSheet(reportSheet(el.dataset.id));SS.xls=()=>exportXlsx(m,r)}};
 }}
@@ -3994,18 +3996,19 @@ function moneyCard(o,st){
   const tk=partnerTakes(o.id);
   return `<div class="card mcardx">
    ${mr('Сделано работ',money(st.done),'',ei.total?'по смете '+money(ei.total):'')}
-   ${mr('Заказчик заплатил',money(st.received),'pos',st.receivedMat?`за работу ${money(st.receivedWork)} · на материалы ${money(st.receivedMat)}`:'')}
+   ${mr('Заказчик заплатил за работу',money(st.receivedWork),'pos')}
    ${st.clientOwes>0.5?mr('Заказчик ещё должен',money(st.clientOwes),'warn','за уже сделанное'):''}
    ${st.spent||st.wages?'<hr>':''}
-   ${st.mat?mr('− Материалы',money(st.mat)):''}
    ${st.fuel+st.other?mr('− Бензин и прочее',money(st.fuel+st.other)):''}
    ${st.wages?mr('− Наёмным рабочим',money(st.wages),'',st.wages-st.paidOut>0.5?'ещё не выплачено '+money(st.wages-st.paidOut):'выплачено всё'):''}
    <hr>
    ${mr('Остаётся вам сейчас',money(st.profit),'big '+(st.profit<0?'neg':'pos'))}
    ${st.taken?mr('Уже забрали себе',money(st.taken),'',tk.map(([n,a])=>esc(n)+' '+money(a)).join(' · ')):''}
-   ${st.taken?mr(st.left>=0?'Ещё можно забрать':'Забрали больше, чем пришло',money(Math.abs(st.left)),st.left<0?'warn':''):''}
+   ${st.taken||st.matOwes?mr(st.left>=0?'Можно забрать сейчас':'Забрали больше, чем есть',money(Math.abs(st.left)),st.left<0?'warn':'',st.matOwes?'минус '+money(st.matOwes)+', которые вложили в материалы':''):''}
    ${st.clientOwes>0.5?`<p class="muted sm" style="margin:6px 0 0">Когда заказчик доплатит, останется <b>${money(st.profitDone)}</b></p>`:''}
-   ${st.profit<0?`<p class="sm warn" style="margin:6px 0 0">Минус — потому что ${st.wages>st.received?'наёмным начислено больше, чем пришло денег':'потратили больше, чем пришло'}. ${st.clientOwes>0.5?'Это закроется оплатой заказчика.':''}</p>`:''}
+   ${st.profit<0?`<p class="sm warn" style="margin:6px 0 0">Минус — потому что ${st.wages>st.receivedWork?'наёмным начислено больше, чем заказчик заплатил за работу':'расходы больше, чем пришло за работу'}. ${st.clientOwes>0.5?'Это закроется оплатой заказчика.':''}</p>`:''}
+   ${st.mat||st.receivedMat?`<hr><div class="mrow"><span>🧱 Материалы — за счёт заказчика<small>дал на материалы ${money(st.receivedMat)} · потрачено ${money(st.mat)}</small></span><b class="n ${st.matBal<-0.5?'warn':''}">${Math.abs(st.matBal)<0.5?'в расчёте':money(Math.abs(st.matBal))}</b></div>
+     <p class="muted sm" style="margin:0">${st.matBal<-0.5?`Вы докупили своими — заказчик должен вернуть ${money(-st.matBal)}. Это не ваш доход, но и не убыток.`:st.matBal>0.5?`Остаток денег заказчика на материалы — не ваш доход.`:'В «Остаётся вам» материалы не входят.'}</p>`:''}
    ${own?`<p class="muted sm" style="margin:6px 0 0">Ваша с партнёром работа (${money(own)}) — не зарплата, а ваша доля из «Остаётся вам».</p>`:''}
    ${st.profit-st.taken>0.5||st.taken?`<button class="btn p w" style="margin-top:10px" data-a="splitObj" data-id="${o.id}">💰 ${st.taken?'Забрали ещё / поделить':'Поделить между партнёрами'}</button>`:''}
   </div>`;
@@ -4019,7 +4022,7 @@ function splitSheet(oid){return ()=>{
   const last=S.payments.filter(p=>p.objectId===oid).sort(byDate)[0],hold=last?holderOf(last):me();
   const prev=S.cash.filter(c=>c.type==='take'&&c.objectId===oid).sort(byDate);
   return {title:'Делим: '+(o?o.name:''),html:`
-   <div class="kv"><div class="wide"><small>Можно забрать сейчас</small><b class="big-num pos">${money(left)}</b><small>осталось вам ${money(st.profit)}${st.taken?' − уже забрали '+money(st.taken):''}</small></div></div>
+   <div class="kv"><div class="wide"><small>Можно забрать сейчас</small><b class="big-num pos">${money(left)}</b><small>осталось вам ${money(st.profit)}${st.taken?' − уже забрали '+money(st.taken):''}${st.matOwes?' − вложено в материалы '+money(st.matOwes):''}</small></div></div>
    ${T.length>1?F('Деньги сейчас у кого',`<div class="chips" id="spHC">${T.map(n=>chip(esc(n),n===hold,'spH',n,'data-s="1"')).join('')}</div>`,'Если деньги у одного, а забирает другой — это учтётся в кассе'):''}
    <div class="f"><span>Кто сколько забирает${has?' (по долям)':' (поровну)'}</span>
     ${T.map((n,i)=>`<div class="row" style="gap:10px;margin-top:6px"><b style="flex:1">${esc(n)}${has?` <small class="muted">${qf(shOf(n))}%</small>`:''}</b><input class="spa" data-n="${esc(n)}" inputmode="decimal" value="${part(n)||''}" style="max-width:150px;text-align:right;font-weight:700"></div>`).join('')}</div>
@@ -4027,7 +4030,7 @@ function splitSheet(oid){return ()=>{
    ${F('Дата',`<input id="spd" type="date" value="${today()}">`)}
    <button class="btn p w" style="margin-top:12px" data-s="spGo">Записать: забрали себе</button>
    ${prev.length?`<h2>Уже забирали с этого объекта</h2><div class="list">${prev.map(c=>LI(esc(c.from),fdate(c.date)+(c.src&&c.src!==c.from?' · из денег '+esc(c.src):''),money(c.amount),'editCash',c.id)).join('')}</div>`:''}
-   <p class="muted sm" style="margin-top:12px">Деньги на материалы и наёмным рабочим уже вычтены — забирая эту сумму, вы не уходите в минус.</p>`,
+   <p class="muted sm" style="margin-top:12px">Наёмным рабочим и расходы уже вычтены, деньги заказчика на материалы сюда не входят — забирая эту сумму, вы не уходите в минус.</p>`,
   init(){SS.spH=el=>{SS.hold=el.dataset.id;setChip('spHC',SS.hold)};SS.hold=hold;
     const fill=k=>document.querySelectorAll('.spa').forEach(e=>{e.value=k?part(e.dataset.n)||'':''});
     SS.spAll=()=>fill(1);SS.spNone=()=>fill(0);
