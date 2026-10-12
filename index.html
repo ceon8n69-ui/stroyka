@@ -1962,7 +1962,7 @@ const IC={
   pay:'<svg viewBox="0 0 24 24"><rect x="3" y="6.5" width="18" height="11" rx="2.5"/><circle cx="12" cy="12" r="2.4"/><path d="M6.5 9.5v5M17.5 9.5v5"/></svg>',
   photo:'<svg viewBox="0 0 24 24"><path d="M4 8.5h3.2L9 6h6l1.8 2.5H20V19H4z"/><circle cx="12" cy="13.3" r="3.3"/></svg>'};
 /* ================= Стройка 2.2: бизнес-функции ================= */
-const APP_VERSION='3.9.1';
+const APP_VERSION='3.9.2';
 const LOGC=['work','expenses','payments','est','payplan','cash','objects','tools'];
 const TRASHC=['objects','tasks','work','workers','rates','est','plans','expenses','payments','fuelDays','tools','events','photos','payplan','cash','checks','tpls','team'];
 const STAGES={before:'До',work:'Процесс',after:'После',hidden:'Скрытые'};
@@ -2505,33 +2505,51 @@ function paySheet(id,pre={}){return ()=>{
     SS.del=()=>{if(confirm('Удалить оплату?')){del('payments',id);commit();back()}};
   }};
 }}
-function payoutBody(name,cur,amt){
-  const s=workerStat(name);const names=workerNames();
+/* ---------- выплата рабочему ----------
+   Просто: «должны столько → платим столько → что останется». Какие работы закрывает выплата — видно сразу (старые первыми). */
+function unpaidWorks(name,exceptPay){
+  const r=S.work.filter(x=>x.worker===name),acc=r.filter(x=>x.type!=='payout').sort((a,b)=>String(a.date).localeCompare(String(b.date))||(a.ts||0)-(b.ts||0));
+  let paid=sum(r.filter(x=>x.type==='payout'&&x.id!==exceptPay),'amount');
+  return acc.map(w=>{const a=+w.amount||0,c=Math.min(a,Math.max(0,paid));paid-=c;return {w,left:r2(a-c)}}).filter(x=>x.left>0.004);
+}
+function payoutBody(name,cur,amt,opt={}){
+  name=cur?cur.worker:name;
+  const s=workerStat(name),debt0=r2(s.debt+(cur?+cur.amount:0)),unp=unpaidWorks(name,cur&&cur.id);
   const linked=cur?S.work.filter(w=>w.payId===cur.id&&w.type!=='payout'):[];
-  return {title:cur?'Выплата: '+cur.worker:'Выплата: '+name,html:`
-   ${cur?'':`<div class="card"><small class="muted">К выплате сейчас</small><div class="big-num">${money(Math.max(0,s.debt))}</div></div>`}
-   ${F('Сумма выплаты, ₴',N('pa',cur?cur.amount:(amt||''),'style="font-size:24px;font-weight:700"'))}
-   <div class="f"><span>За какие работы</span>
-     <div class="list" id="plines"></div>
-     <input id="plq" placeholder="＋ Добавить работу: штроба, плитка, забор…" autocomplete="off" style="margin-top:8px"><div class="rl" id="plr" hidden></div>
-     <div class="res" id="pltot" hidden></div>
-   </div>
-   ${F('Объект',`<select id="po"><option value="">—</option>${S.objects.map(o=>`<option value="${o.id}" ${(cur?cur.objectId:lastObjFor())===o.id?'selected':''}>${esc(o.name)}</option>`).join('')}</select>`,'К нему привяжутся работы из списка')}
-   <details><summary>Дата выплаты, заметка${team().length>1?', кто платил':''}${cur?', рабочий':''}</summary>
-     ${cur?F('Рабочий',`<select id="pw">${names.map(n=>`<option ${n===cur.worker?'selected':''}>${esc(n)}</option>`).join('')}</select>`):''}
-     <div class="two">${F('Дата выплаты',`<input id="pd" type="date" value="${cur?cur.date:today()}">`)}${F('Заметка',I('pn',cur?cur.note:'','placeholder="аванс, расчёт…"'))}</div>
-     ${holderField(cur&&(cur.holder||cur.by))}
+  const T=today(),Y=dAdd(T,-1),d0=cur?cur.date:T;
+  const chips=[[debt0>0?'Весь долг':'',debt0],[debt0>=400?'Половина':'',r2(Math.round(debt0/2/50)*50)],['',500],['',1000],['',2000]].filter(([l,v])=>v>0).filter((x,i,a)=>a.findIndex(y=>y[1]===x[1])===i).slice(0,5);
+  return {title:cur?'Выплата · '+name:'Выплатить: '+name,html:`
+   <div class="kv"><div class="wide"><small>${debt0>=0?(cur?'Долг до этой выплаты':'Сейчас должны'):'Выдано наперёд (аванс)'}</small><b class="big-num ${debt0>0?'warn':''}">${money(Math.abs(debt0))}</b>
+     <small>начислено ${money(s.earned)} · выплачено ${money(s.paid-(cur?+cur.amount:0))}</small></div></div>
+   ${F('Сколько платим, ₴',N('pa',cur?cur.amount:(amt||''),'style="font-size:30px;font-weight:800;text-align:center"'))}
+   <div class="chips" style="flex-wrap:wrap;margin-top:6px">${chips.map(([l,v])=>`<button class="chip" data-s="paQ" data-id="${v}">${l?l+' · ':''}${money(v)}</button>`).join('')}</div>
+   <div id="paRes" class="card sm" style="margin-top:10px"></div>
+   <div id="paCov"></div>
+   ${holderField(cur&&(cur.holder||cur.by))?holderField(cur&&(cur.holder||cur.by)).replace('Деньги у кого','Кто платил'):''}
+   <div class="f"><span>Когда</span><div class="chips" id="pdC">${chip('Сегодня',d0===T,'pdq',T,'data-s="1"')}${chip('Вчера',d0===Y,'pdq',Y,'data-s="1"')}<input id="pd" type="date" value="${d0}" style="width:auto;min-height:38px;padding:4px 10px"></div></div>
+   ${F('Заметка',I('pn',cur?cur.note:(opt.note||''),'placeholder="расчёт за неделю, аванс…"'))}
+   <details ${linked.length?'open':''} style="margin-top:12px"><summary>Записать работы вместе с выплатой <small class="muted">— если их ещё нет в записях</small></summary>
+     <div class="list" id="plines" style="margin-top:8px"></div>
+     <input id="plq" placeholder="＋ Работа: штроба, плитка, забор…" autocomplete="off" style="margin-top:8px"><div class="rl" id="plr" hidden></div>
+     ${F('Объект',`<select id="po"><option value="">—</option>${S.objects.map(o=>`<option value="${o.id}" ${(cur?cur.objectId:'')===o.id?'selected':''}>${esc(o.name)}</option>`).join('')}</select>`)}
+     ${cur?F('Рабочий',`<select id="pw">${workerNames(true).map(n=>`<option ${n===cur.worker?'selected':''}>${esc(n)}</option>`).join('')}</select>`):''}
    </details>
-   <div class="btns">${delBtn(!!cur)}<button class="btn p" data-s="save">Сохранить</button></div>`,
+   <div class="btns" style="margin-top:14px">${delBtn(!!cur)}<button class="btn p" data-s="save" id="paGo">Сохранить</button></div>`,
    init(){
      SS.holder=(cur&&(cur.holder||cur.by))||me();
      SS.lines=linked.map(w=>({wid:w.id,rateId:w.rateId||null,title:workTitle(w),unit:w.unit||'',price:+w.rate||0,cprice:+w.cprice||0,qty:+w.qty||0,date:w.date}));
-     SS.autoAmt=!cur&&!amt;
-     const tot=()=>SS.lines.reduce((t,l)=>t+(+l.qty||0)*(+l.price||0),0);
-     const drawTot=()=>{const t=tot(),a=num(v('pa')),b=g('pltot');b.hidden=!SS.lines.length;
-       if(SS.autoAmt&&SS.lines.length)g('pa').value=r2(t)||'';
-       const d=r2(num(v('pa'))-t);
-       b.innerHTML=`<div class="main"><small>Работ на</small><b class="n">${money(t)}</b></div><div><small>Выплата</small><b class="n">${money(num(v('pa')))}</b></div><div><small>${d>0?'Аванс сверху':d<0?'Остаётся долг':'Разница'}</small><b class="n ${d<0?'warn':''}">${money(Math.abs(d))}</b></div>`;
+     const ltot=()=>SS.lines.reduce((t,l)=>t+(+l.qty||0)*(+l.price||0),0);
+     const upd=()=>{const a=num(v('pa')),newW=cur?0:ltot(),dbt=r2(debt0+newW-(cur?ltot()-sum(linked,'amount'):0)),after=r2(dbt-a);
+       const b=g('paRes');
+       b.innerHTML=!a?'<span class="muted">Введи сумму или нажми кнопку выше</span>'
+         :after>0.004?`После выплаты останется долг <b class="warn">${money(after)}</b>`
+         :after<-0.004?`Долг закрыт ✅ и <b>${money(-after)}</b> — аванс наперёд. Он вычтется из следующих работ.`
+         :'Долг закрыт полностью ✅';
+       let left=a;const cov=unp.map(x=>{const c=Math.min(x.left,Math.max(0,left));left-=c;return {...x,c}});
+       const shown=cov.filter(x=>x.c>0);
+       g('paCov').innerHTML=a&&unp.length?`<h2>Эта выплата закроет <small>по порядку</small></h2><div class="list">${shown.slice(0,8).map(x=>`<div class="li"><span>${x.c>=x.left-0.004?'✅':'🟠'}</span><span class="t"><b>${esc(workTitle(x.w))}</b><small>${fdate(x.w.date)}${x.w.qty&&x.w.kind==='piece'?' · '+qf(x.w.qty)+' '+esc(x.w.unit||''):''} · ${esc(oname(x.w.objectId)||'')}</small></span><span class="r"><span class="n">${money(x.c)}</span>${x.c<x.left-0.004?`<small>из ${money(x.left)}</small>`:''}</span></div>`).join('')}${shown.length>8?`<div class="li"><span class="t muted sm">и ещё ${shown.length-8}</span></div>`:''}</div>`
+         +(cov.length>shown.length?`<p class="muted sm" style="margin:6px 4px">Не оплачено после этого: ${cov.length-shown.length+(shown.length&&shown[shown.length-1].c<shown[shown.length-1].left-0.004?1:0)} работ</p>`:''):'';
+       g('paGo').textContent=a?`${cur?'Сохранить':'Выплатить'} ${money(a)}`:'Сохранить';
        SS.lines.forEach((l,i)=>{const e=g('pls'+i);if(e)e.textContent=money((+l.qty||0)*(+l.price||0))})};
      const draw=()=>{
        g('plines').innerHTML=SS.lines.map((l,i)=>`<div style="padding:10px 12px;border-bottom:1px solid var(--line)">
@@ -2540,15 +2558,19 @@ function payoutBody(name,cur,amt){
            <label class="f" style="margin:0"><span>Объём, ${esc(l.unit)}</span><input class="plf" data-i="${i}" data-k="qty" inputmode="decimal" value="${l.qty||''}" style="min-height:42px"></label>
            <label class="f" style="margin:0"><span>Цена, ₴</span><input class="plf" data-i="${i}" data-k="price" inputmode="decimal" value="${l.price||''}" style="min-height:42px"></label>
            <label class="f" style="margin:0"><span>Когда сделал</span><input class="plf" data-i="${i}" data-k="date" type="date" value="${l.date}" style="min-height:42px;padding:6px"></label>
-         </div><div class="row sm" style="margin-top:4px"><span class="muted">сумма</span><b class="n" id="pls${i}"></b></div></div>`).join('')||'<p class="empty" style="padding:10px">Добавь работы ниже — объём, цена рабочему и дата</p>';
-       drawTot()};
+         </div><div class="row sm" style="margin-top:4px"><span class="muted">сумма</span><b class="n" id="pls${i}"></b></div></div>`).join('');
+       upd()};
      draw();
+     if(!cur&&!amt)setTimeout(()=>{const e=g('pa');e&&e.focus()},120);
      const list=q=>{const b=g('plr');b.hidden=false;b.innerHTML=rateMatches(q).slice(0,30).map(r=>`<button class="li" data-s="pladd" data-id="${r.id}"><span class="t"><b>${esc(r.name)}</b><small>${esc(r.cat||'')} · ${esc(r.unit)}</small></span><span class="n">${money(wkPrice(name,r))}</span></button>`).join('')||'<p class="empty">Не найдено</p>'};
      g('plq').addEventListener('focus',()=>list(v('plq')));
+     SS.paQ=el=>{g('pa').value=el.dataset.id;upd()};
+     SS.pdq=el=>{g('pd').value=el.dataset.id;setChip('pdC',el.dataset.id)};
+     SS.change=ev=>{if(ev.target.id==='pd')setChip('pdC',ev.target.value)};
      SS.input=ev=>{const t=ev.target;
        if(t.id==='plq')list(t.value);
-       else if(t.id==='pa'){SS.autoAmt=false;drawTot()}
-       else if(t.classList.contains('plf')){const l=SS.lines[+t.dataset.i];if(!l)return;l[t.dataset.k]=t.dataset.k==='date'?t.value:num(t.value);drawTot()}};
+       else if(t.id==='pa')upd();
+       else if(t.classList.contains('plf')){const l=SS.lines[+t.dataset.i];if(!l)return;l[t.dataset.k]=t.dataset.k==='date'?t.value:num(t.value);upd()}};
      SS.pladd=el=>{const r=S.rates.find(x=>x.id===el.dataset.id);if(!r)return;
        SS.lines.push({rateId:r.id,title:r.name,unit:r.unit,price:wkPrice(name,r),cprice:+r.client||0,qty:0,date:v('pd')||today()});
        g('plq').value='';g('plr').hidden=true;draw();const q=document.querySelector(`.plf[data-i="${SS.lines.length-1}"][data-k="qty"]`);if(q)q.focus()};
@@ -2556,14 +2578,17 @@ function payoutBody(name,cur,amt){
      SS.save=()=>{
        const lines=SS.lines.filter(l=>(+l.qty||0)>0);
        if(SS.lines.length>lines.length){toast('Укажи объём у каждой работы или удали лишнюю');return}
-       let a=num(v('pa'));if(a<=0&&lines.length)a=tot();if(a<=0){toast('Укажи сумму');return}
-       const worker=cur?v('pw'):name,oid=v('po'),pid=cur?cur.id:uid();
+       let a=num(v('pa'));if(a<=0&&lines.length)a=ltot();if(a<=0){toast('Укажи сумму');g('pa').focus();return}
+       const worker=cur&&g('pw')?v('pw'):name,pid=cur?cur.id:uid();
+       let oid=v('po');
+       if(!oid&&!lines.length){let left=a;const objs=new Set();unp.forEach(x=>{if(left>0.004){objs.add(x.w.objectId||'');left-=x.left}});if(objs.size===1)oid=[...objs][0]}
        const keep=new Set();
        lines.forEach(l=>{const id=l.wid||uid();keep.add(id);const old=S.work.find(x=>x.id===id)||{};
          put('work',{...old,id,type:'accrual',kind:'piece',payId:pid,objectId:oid,worker,date:l.date||today(),rateId:l.rateId,title:l.title,unit:l.unit,qty:+l.qty,rate:+l.price,amount:r2(l.qty*l.price),cprice:l.cprice||0,client:r2(l.qty*(l.cprice||0)),note:'по выплате'})});
        linked.forEach(w=>{if(!keep.has(w.id))del('work',w.id)});
-       put('work',{...(cur||{}),id:pid,type:'payout',worker,objectId:oid,date:v('pd')||today(),amount:r2(a),note:v('pn').trim(),holder:SS.holder,items:[...keep]});
-       commit();toast(lines.length?`Выплата ${money(a)} · работ: ${lines.length}`:'Выплата записана');back()};
+       put('work',{...(cur||{}),id:pid,type:'payout',worker,objectId:oid||'',date:v('pd')||today(),amount:r2(a),note:v('pn').trim(),holder:SS.holder,items:[...keep]});
+       commit();const left=r2(workerStat(worker).debt);
+       toast(`${worker}: выплачено ${money(a)} · ${left>0?'осталось '+money(left):left<0?'аванс '+money(-left):'долга нет'}`);back()};
      SS.del=()=>{if(!confirm(linked.length?`Удалить выплату и ${linked.length} работ(ы) в ней?`:'Удалить выплату?'))return;linked.forEach(w=>del('work',w.id));del('work',cur.id);commit();back()};
    }};
 }
@@ -2814,11 +2839,32 @@ function cashOpSheet(id,type){return ()=>{
     SS.save=()=>{const a=num(v('ca'));if(a<=0){toast('Сумма');return}put('cash',{...x,id:id||uid(),amount:r2(a),from:SS.from,to:SS.to,date:v('cd')||today(),note:v('cn').trim()});commit();back()};
     SS.del=()=>{del('cash',id);commit();back()}}};
 }}
-function teamSheet(){return ()=>({title:'Партнёры и доли',html:`<p class="muted sm">Имена должны совпадать с «Моё имя» на телефонах партнёров. Доля пустая — делим поровну.</p>
-  <div class="list">${S.team.map(t=>`<div class="li"><span class="t"><b>${esc(t.name)}</b><small>${t.share?'доля '+t.share+'%':'поровну'}</small></span><button class="ico" style="color:var(--bad);font-size:18px" data-s="rm" data-id="${t.id}">✕</button></div>`).join('')||'<p class="empty">Добавь себя и партнёра</p>'}</div>
-  <div class="two">${F('Имя',I('tmn',S.team.length?'':me()))}${F('Доля, % (необяз.)',N('tms',''))}</div><button class="btn p w" style="margin-top:8px" data-s="add">Добавить</button>`,
-  init(){SS.add=()=>{const n=v('tmn').trim();if(!n)return;put('team',{id:uid(),name:n,share:num(v('tms'))||0});commit(true);replaceSheet(teamSheet())};
-    SS.rm=el=>{del('team',el.dataset.id);commit(true);replaceSheet(teamSheet())}}})}
+function teamSheet(){let ed=null;return ()=>{
+  const sh=S.team.reduce((t,x)=>t+(+x.share||0),0),dup=S.team.length-new Set(S.team.map(x=>String(x.name).trim().toLowerCase())).size;
+  const row=t=>ed===t.id?`<div class="li" style="flex-wrap:wrap;gap:8px"><input id="te_n" value="${esc(t.name)}" style="flex:2;min-width:120px"><input id="te_s" inputmode="decimal" value="${t.share||''}" placeholder="доля %" style="flex:1;min-width:80px">
+      <div class="btns" style="width:100%;margin:0"><button class="btn bad" data-s="rm" data-id="${t.id}">Удалить</button><button class="btn" data-s="cancel">Отмена</button><button class="btn p" data-s="ok" data-id="${t.id}">Сохранить</button></div></div>`
+    :`<button class="li" data-s="edit" data-id="${t.id}"><span class="av">${esc(initials(t.name))}</span><span class="t"><b>${esc(t.name)}${t.name===me()?' <small class="muted">· это вы</small>':''}</b><small>${+t.share?'доля '+qf(t.share)+'%':'поровну'}</small></span><span class="muted">✎</span></button>`;
+  return {title:'Партнёры и доли',html:`<p class="muted sm">Нажми на партнёра, чтобы изменить имя или долю. Имена должны совпадать с «Моё имя» на телефонах партнёров. Доли пустые — прибыль делится поровну.</p>
+  ${dup?`<div class="alert warn"><i></i><span>Есть повторы имён (${dup}). <button class="link" data-s="dedup">Убрать повторы</button></span></div>`:''}
+  ${(()=>{const no=S.team.filter(x=>!+x.share);return sh&&no.length?`<div class="alert warn"><i></i><span>Доля не указана у: ${no.map(x=>esc(x.name)).join(', ')}. Укажи доли всем (в сумме 100%) или оставь всем пустыми — тогда поровну.</span></div>`:sh&&Math.abs(sh-100)>0.01?`<div class="alert warn"><i></i><span>Сумма долей ${qf(sh)}%, а должна быть 100%</span></div>`:''})()}
+  <div class="list">${S.team.map(row).join('')||'<p class="empty">Добавь себя и партнёра</p>'}</div>
+  <h2>Добавить партнёра</h2>
+  <div class="two">${F('Имя',I('tmn',S.team.some(x=>x.name===me())?'':me()))}${F('Доля, % (необяз.)',N('tms',''))}</div><button class="btn p w" style="margin-top:8px" data-s="add">Добавить</button>
+  ${S.team.length?`<button class="btn w bad" style="margin-top:18px" data-s="clear">Очистить список партнёров</button>`:''}`,
+  init(){
+    const re=()=>replaceSheet(sheets[sheets.length-1]);
+    SS.add=()=>{const n=v('tmn').trim();if(!n)return toast('Впиши имя');if(S.team.some(x=>x.name.trim().toLowerCase()===n.toLowerCase()))return toast('Такой партнёр уже есть');put('team',{id:uid(),name:n,share:num(v('tms'))||0});commit(true);re()};
+    SS.edit=el=>{ed=el.dataset.id;re();setTimeout(()=>{const e=g('te_n');e&&e.focus()},60)};
+    SS.cancel=()=>{ed=null;re()};
+    SS.ok=el=>{const t=S.team.find(x=>x.id===el.dataset.id);if(!t)return;const n=v('te_n').trim();if(!n)return toast('Имя пустое');const old=t.name;
+      t.name=n;t.share=num(v('te_s'))||0;put('team',t);
+      if(old!==n&&confirm(`Переименовать «${old}» → «${n}» и в старых записях (кто платил, у кого деньги, касса)?`)){
+        ['payments','expenses','work','tools','cash'].forEach(c=>(S[c]||[]).forEach(r=>{let ch=false;['holder','by','from','to'].forEach(k=>{if(r[k]===old){r[k]=n;ch=true}});if(ch)put(c,r)}))}
+      ed=null;commit(true);re();toast('Сохранено')};
+    SS.rm=el=>{const t=S.team.find(x=>x.id===el.dataset.id);if(!t||!confirm(`Убрать «${t.name}» из партнёров? Записи останутся.`))return;del('team',t.id);ed=null;commit(true);re()};
+    SS.dedup=()=>{const seen=new Set();S.team.slice().forEach(t=>{const k=String(t.name).trim().toLowerCase();if(seen.has(k))del('team',t.id);else seen.add(k)});commit(true);re();toast('Повторы убраны')};
+    SS.clear=()=>{if(!confirm('Удалить всех партнёров из списка? Записи об оплатах и расходах останутся.'))return;S.team.slice().forEach(t=>del('team',t.id));commit(true);re()};
+  }}}}
 
 /* ---------- поиск ---------- */
 function searchSheet(){return ()=>({title:'Поиск',html:`<input id="sq" placeholder="Объект, заказчик, телефон, работа, сумма…" autocomplete="off"><div id="sres" style="margin-top:8px"></div>`,
@@ -3195,7 +3241,8 @@ function vWorker(name){
    <div><small>Начислено всего</small><b class="n">${money(i.earned)}</b></div><div><small>Выплачено</small><b class="n">${money(i.paid)}</b></div>
    <div><small>Эта неделя</small><b class="n">${money(i.week)}</b></div><div><small>Этот месяц</small><b class="n">${money(i.month)}</b></div>
    <div><small>Дней отработал</small><b class="n">${i.days}</b></div><div><small>В среднем за день</small><b class="n">${money(i.perDay)}</b></div></div>
-   <div class="btns"><button class="btn p" data-a="payout" data-id="${esc(name)}">Выплатить</button>${i.debt>0?`<button class="btn" data-a="payAll" data-id="${esc(name)}">Весь долг ${money(i.debt)}</button>`:''}</div>
+   ${i.debt>0?`<button class="btn p big w" style="margin-top:10px" data-a="payAll" data-id="${esc(name)}">💸 Выплатить ${money(i.debt)}</button>`:`<p class="muted sm" style="margin:10px 4px 0">✅ Долга нет — всё выплачено</p>`}
+   <div class="btns" style="margin-top:8px"><button class="btn" data-a="payout" data-id="${esc(name)}">${i.debt>0?'Другая сумма':'Дать аванс'}</button><button class="btn" data-a="newWorkFor" data-id="${esc(name)}">＋ Работа</button></div>
    <div class="btns" style="margin-top:8px"><button class="btn" data-a="wkPeriod" data-id="${esc(name)}">📄 Расчёт за период</button><button class="btn" data-a="workerReport" data-id="${esc(name)}">Отправить всё</button></div>
    ${i.objs.length?`<h2>Объекты <small>${i.objs.length}</small></h2><div class="list">${i.objs.slice(0,8).map(([oid,s])=>oid&&S.objects.find(o=>o.id===oid)?LI('🏠 '+esc(oname(oid)),'',money(s),'openObj',oid,'заработал'):`<div class="li"><span class="t"><b>${esc(oname(oid)||'Без объекта')}</b></span><span class="n">${money(s)}</span></div>`).join('')}</div>`:''}
    ${i.works.length?`<h2>Чаще всего делает</h2><div class="list">${i.works.slice(0,5).map(x=>`<div class="li"><span class="t"><b>${esc(x.n)}</b><small>${x.q?qf(r2(x.q))+' '+esc(x.u)+' · ':''}${x.cnt} раз</small></span><span class="n">${money(x.sum)}</span></div>`).join('')}</div>`:''}
@@ -3306,6 +3353,7 @@ function workersInit(){
     copyCard(el){const w=wrec(el.dataset.id);if(!w||!w.card)return;const c=String(w.card).replace(/\s/g,'');
       if(navigator.clipboard)navigator.clipboard.writeText(c).then(()=>toast('Номер карты скопирован'),()=>toast(c));else toast(c)},
     payAll(el){const n=el.dataset.id,d=workerStat(n).debt;openSheet(()=>payoutBody(n,null,r2(d)))},
+    newWorkFor(el){openSheet(workSheet({worker:el.dataset.id}))},
     wkPeriod(el){openSheet(wkPeriodSheet(el.dataset.id))},
     wkAll(el){ui.wkAll=el.dataset.id;render()},
   });
