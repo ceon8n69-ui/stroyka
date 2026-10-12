@@ -461,6 +461,7 @@ body.chatpg #app{padding-bottom:calc(96px + env(safe-area-inset-bottom))}
 
 .cstrip .cx{width:40px;height:40px;margin:-6px -8px -6px 0;border-radius:50%;font-size:18px;flex:none;color:var(--ink);touch-action:manipulation;cursor:pointer}.cstrip .cx:active{background:var(--line)}
 .mgeo .chip{cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:rgba(0,0,0,.15)}.mgeo .chip:active{background:var(--mint);color:#0b0c0e}
+body.wk [data-s=toEst],body.wk [data-e=toEst],body.wk .adm{display:none!important}
 
 </style>
 </head>
@@ -976,6 +977,7 @@ function subscribe(){
     try{
       if(p.eventType==='DELETE'){const k=p.old&&p.old.id;if(!k||SY.pend[k]||k.startsWith('img/'))return;const i=k.indexOf('/'),c=k.slice(0,i),id=k.slice(i+1);if(S[c]){S[c]=S[c].filter(x=>x.id!==id);saveLocal();softRender()}return}
       const r=p.new;if(!r||!r.data||SY.pend[r.id]||r.col==='img')return;const c=r.col;S[c]=S[c]||[];
+      if(SY.role==='worker'&&typeof wkKeep==='function'){const d=wkKeep(c,r.data);if(!d){const j=S[c].findIndex(x=>x.id===r.data.id);if(j>=0){S[c].splice(j,1);saveLocal();softRender()}return}r.data=d}
       const i=S[c].findIndex(x=>x.id===r.data.id);i<0?S[c].push(r.data):S[c][i]=r.data;
       if(c==='objects'&&r.data.tasks&&r.data.tasks.length)setTimeout(()=>{if(migrate())commit()},300);
       saveLocal();if(c==='msgs'&&typeof onMsg==='function')onMsg(r.data,i<0);softRender();
@@ -984,7 +986,7 @@ function subscribe(){
 }
 function unsubscribe(){if(chan&&sb){sb.removeChannel(chan)}chan=null}
 async function push(){
-  if(SY.role==='worker')Object.keys(SY.pend).forEach(k=>{if(!k.startsWith('tasks/')&&!k.startsWith('expenses/')&&!k.startsWith('msgs/'))delete SY.pend[k]});
+  if(SY.role==='worker'){Object.keys(SY.pend).forEach(k=>{const c=k.slice(0,k.indexOf('/'));if(!['tasks','expenses','msgs','photos'].includes(c)||(SY.deny||{})[c])delete SY.pend[k]});return pushWorker()}
   const keys=Object.keys(SY.pend);if(!keys.length)return;
   const snap={...SY.pend},ups=[],ins=[],dels=[];
   for(const k of keys){const i=k.indexOf('/'),c=k.slice(0,i),id=k.slice(i+1);const r=(S[c]||[]).find(x=>x.id===id);
@@ -994,6 +996,22 @@ async function push(){
   for(let i=0;i<dels.length;i+=200){const {error}=await sb.from('records').delete().in('id',dels.slice(i,i+200));if(error)throw error}
   for(const k of keys)if(SY.pend[k]===snap[k])delete SY.pend[k];
   saveSync();
+}
+/* рабочий: отправляем по разделам, чтобы запрет сервера на один раздел не блокировал остальные */
+async function pushWorker(){
+  const keys=Object.keys(SY.pend);if(!keys.length)return;const snap={...SY.pend},by={};
+  keys.forEach(k=>{const c=k.slice(0,k.indexOf('/'));(by[c]=by[c]||[]).push(k)});
+  let fail=null;
+  for(const c in by){const ups=[],dels=[];
+    for(const k of by[c]){const id=k.slice(c.length+1),r=(S[c]||[]).find(x=>x.id===id);r?ups.push({id:k,col:c,data:r,updated_at:Date.now()}):dels.push(k)}
+    try{
+      if(ups.length){const {error}=await sb.from('records').upsert(ups,{onConflict:'id'});if(error)throw error}
+      if(dels.length){const {error}=await sb.from('records').delete().in('id',dels);if(error)throw error}
+      by[c].forEach(k=>{if(SY.pend[k]===snap[k])delete SY.pend[k]});
+    }catch(e){const m=(e&&(e.message||e.code))||String(e);
+      if(/row-level|security|permission|42501|denied|policy/i.test(m)){SY.deny=SY.deny||{};SY.deny[c]=1;by[c].forEach(k=>delete SY.pend[k])}else fail=e}
+  }
+  saveSync();if(fail)throw fail;
 }
 async function pull(){
   const rows=[];
@@ -1005,6 +1023,7 @@ async function pull(){
     const local=(S[c]||[]).filter(x=>pendIds.has(x.id));
     S[c]=(by[c]||[]).filter(x=>!pendIds.has(x.id)).concat(local);
   }
+  if(SY.role==='worker'&&typeof wkPrune==='function')wkPrune();
   saveLocal();
 }
 async function pushPhotos(){
@@ -1560,6 +1579,9 @@ function calcListText(head,rows){
 function calcMoneyHtml(rows,res){
   if(!rows.mats.length&&!rows.works.length)return '<p class="empty">Введи размеры и выбери, что делаем</p>';
   const inc=rows.workTot-rows.wTot;
+  if(typeof isWorker==='function'&&isWorker())return `${(res.notes||[]).map(n=>`<p class="muted sm" style="margin:8px 2px 0">${esc(n)}</p>`).join('')}
+   ${rows.mats.length?`<h2>Материалы</h2><div class="list">${rows.mats.map(x=>`<div class="li"><span class="t"><b>${esc(x.mt.n)}</b><small>нужно ${qf(r2(x.q))} ${esc(x.mt.u)}</small></span><span class="r"><b class="n">${qf(x.buy)}</b><small>${esc(x.unitBuy||x.mt.u)}</small></span></div>`).join('')}</div>`:''}
+   ${rows.works.length?`<h2>Работы</h2><div class="list">${rows.works.map(x=>`<div class="li"><span class="t"><b>${esc(x.title)}</b><small>${qf(x.q)} ${esc(x.unit)}</small></span>${x.wsum?`<span class="r"><span class="n">${money(x.wsum)}</span><small>вам</small></span>`:''}</div>`).join('')}</div>`:''}`;
   return `${(res.notes||[]).map(n=>`<p class="${/Ошибка|укажи/.test(n)?'warn':'muted'} sm" style="margin:8px 2px 0">${esc(n)}</p>`).join('')}
    <div class="kv" style="margin-top:12px"><div><small>Материалы</small><b class="n">${rows.refN?'≈ ':''}${money(rows.matTot)}</b></div><div><small>Работы</small><b class="n">${money(rows.workTot)}</b></div>
     <div class="wide row"><span><small>Итого заказчику</small><b class="n" style="font-size:24px;color:var(--accent)">${money(rows.matTot+rows.workTot)}</b></span></div>
@@ -1936,7 +1958,7 @@ const IC={
   pay:'<svg viewBox="0 0 24 24"><rect x="3" y="6.5" width="18" height="11" rx="2.5"/><circle cx="12" cy="12" r="2.4"/><path d="M6.5 9.5v5M17.5 9.5v5"/></svg>',
   photo:'<svg viewBox="0 0 24 24"><path d="M4 8.5h3.2L9 6h6l1.8 2.5H20V19H4z"/><circle cx="12" cy="13.3" r="3.3"/></svg>'};
 /* ================= Стройка 2.2: бизнес-функции ================= */
-const APP_VERSION='3.8.4';
+const APP_VERSION='3.9';
 const LOGC=['work','expenses','payments','est','payplan','cash','objects','tools'];
 const TRASHC=['objects','tasks','work','workers','rates','est','plans','expenses','payments','fuelDays','tools','events','photos','payplan','cash','checks','tpls','team'];
 const STAGES={before:'До',work:'Процесс',after:'После',hidden:'Скрытые'};
@@ -2127,7 +2149,8 @@ function vToday(){
   if(isWorker()){
     const s=workerStat(me()),ws=weekStart(),wk=sum(s.rows.filter(x=>x.type!=='payout'&&x.date>=ws),'amount');
     const all=S.tasks.filter(t=>!t.done&&t.who===me()).sort(taskSort);
-    return `<div class="wrap"><h2>Привет${me()?', '+esc(me()):''}!</h2>
+    const DN={tasks:'отметки задач',expenses:'расходы',msgs:'сообщения в чат',photos:'фото объектов'},dn=Object.keys(SY.deny||{}).map(k=>DN[k]||k);
+    return `<div class="wrap">${dn.length?`<div class="alert warn"><i></i><span>Сервер не принимает от рабочих: ${dn.join(', ')}. Это остаётся только на вашем телефоне — скажите администратору.</span></div>`:''}${!SY.pname?`<div class="alert warn"><i></i><span>Администратор ещё не указал ваше имя — заработок и задачи появятся после этого.</span></div>`:''}<h2>Привет${me()?', '+esc(me()):''}!</h2>
      <div class="kv"><div><small>Заработал за неделю</small><b class="n">${money(wk)}</b></div><div><small>К выплате</small><b class="n warn">${money(Math.max(0,s.debt))}</b></div></div>
      <button class="btn big" style="margin-top:10px" data-a="newExp">🧾 Добавить расход</button>
      <h2>Сегодня <small>${wdName(T)} ${fdate(T)}</small></h2>${evT.map(e=>evCard(e)).join('')||'<p class="muted sm">Выходов не запланировано</p>'}
@@ -2948,11 +2971,12 @@ async function fetchRole(){
   if(!sb||!session)return;
   try{
     const {data,error}=await sb.from('profiles').select('role,name').eq('id',session.user.id).maybeSingle();
-    if(error||!data){SY.role='admin';SY.pname=''}else{SY.role=data.role==='worker'?'worker':'admin';SY.pname=data.name||''}
-    saveSync();render();
+    if(error){if(!/no rows|not found/i.test(error.message||''))return}
+    if(!data){SY.role='admin';SY.pname=''}else{SY.role=data.role==='worker'?'worker':'admin';SY.pname=data.name||''}
+    if(SY.role==='worker')wkPrune();saveSync();render();
   }catch(e){}
 }
-function peopleSheet(){return ()=>({title:'Люди и доступ',html:`<p class="muted sm">Как в первой версии: аккаунты создаются в Supabase → Authentication → Users. Рабочий видит только свои задачи, выходы, заработок и может добавлять расходы. Имя рабочего должно совпадать с именем в разделе «Рабочие».</p>
+function peopleSheet(){return ()=>({title:'Люди и доступ',html:`<p class="muted sm">Как в первой версии: аккаунты создаются в Supabase → Authentication → Users. Рабочий видит все вкладки, но на его телефон не попадают деньги заказчика: оплаты, сметы, цены для заказчика, прибыль и заработки других рабочих. Он видит свои начисления, выплаты и долг, может отмечать задачи, писать в чат, добавлять расходы и фото. Имя рабочего должно совпадать с именем в разделе «Рабочие».</p>
   <div id="ppl"><p class="empty">Загрузка…</p></div>`,
   init(){
     const load=async()=>{const b=g('ppl');if(!sb||!session){b.innerHTML='<p class="empty">Сначала войди в синхронизацию</p>';return}
@@ -2979,7 +3003,7 @@ async function checkUpdate(){
 function moreSheet(){return ()=>{
   const row=([i,t,k,s])=>`<button class="li" data-s="go" data-id="${k}"><span>${i}</span><span class="t"><b>${t}</b>${s?`<small>${s}</small>`:''}</span></button>`;
   const grp=(h,items)=>`<div class="menu-h">${h}</div><div class="list menu">${items.map(row).join('')}</div>`;
-  if(isWorker())return {title:'Меню',html:grp('',[['🔄','Синхронизация','sync'],['👤','Профиль и вид','profile']]),init(){SS.go=el=>{const k=el.dataset.id;if(k==='sync')openSheet(syncSheet());if(k==='profile')openSheet(profileSheet())}}};
+  if(isWorker())return {title:'Меню',html:grp('Работа',[['💰','Мой заработок','money','начисления, выплаты, долг'],['🧮','Калькуляторы работ','calc','сколько материала нужно'],['🏷','Цены материалов','mprices']])+grp('Настройки',[['🔄','Синхронизация','sync'],['👤','Профиль и вид','profile']])+`<p class="muted sm" style="text-align:center;margin-top:16px">Стройка ${APP_VERSION} · режим рабочего</p>`,init(){SS.go=el=>{const k=el.dataset.id;if(k==='money'){closeAllSheets();ui.page=[];ui.tab='workers';render();return}const m={calc:()=>calcPickSheet(''),mprices:matPricesSheet,sync:syncSheet,profile:profileSheet};if(m[k])openSheet(m[k]())}}};
   return {title:'Меню',html:grp('Работа',[['📊','Отчёт за месяц','report','доходы, расходы, прибыль, Excel'],['💰','Касса и партнёры','cash','у кого деньги, кто кому должен'],['🔨','Прайс работ','rates'],['📋','Шаблоны объектов','tpls'],['🧾','Все расходы','allExp'],['🧰','Мой инструмент','tools']])
    +grp('Материалы',[['🧮','Калькуляторы работ','calc','комната, электрика, сантехника, фундамент, кровля, забор, септик…'],['🏷','Цены материалов','mprices','вводятся один раз, магазин «Оптима»']])
    +grp('Данные',[['🔄','Синхронизация с партнёром','sync'],['👥','Люди и доступ','people','роли: админ / рабочий'],['🕓','История изменений','hist'],['🗑','Корзина','trash',S.trash.length?S.trash.length+' шт.':''],['💾','Резервные копии','backups']])
@@ -3013,23 +3037,25 @@ function render(){
   if(ED){ED.destroy();ED=null}
   document.body.classList.remove('ed');
   const W=isWorker();
-  if(W&&!['today','sched'].includes(ui.tab))ui.tab='today';
   let title,html,fab=null;
   try{
     if(p&&p.t==='chat'){title=p.id?chatTitle(p.id):'Чат';html=p.id?vChat(p.id):vChats()}
+    else if(p&&p.t==='obj'&&W){const o=S.objects.find(x=>x.id===p.id);if(!o){ui.page.pop();return render()}title=o.name;html=vObjectW(o)}
+    else if(p&&p.t==='worker'&&W){title='Мой заработок';html=vMyMoney()}
     else if(p&&p.t==='obj'&&!W){const o=S.objects.find(x=>x.id===p.id);if(!o){ui.page.pop();return render()}title=o.name;html=vObject(o);fab='work'}
     else if(p&&p.t==='worker'&&!W){title=p.id;html=vWorker(p.id);fab='work'}
     else if(ui.tab==='today'){title=W?'Мой день':'Сегодня';html=vToday();fab=W?null:'work'}
-    else if(ui.tab==='objects'){title='Объекты';html=vObjects();fab='work'}
+    else if(ui.tab==='objects'){title='Объекты';html=W?vObjectsW():vObjects();fab='work'}
     else if(ui.tab==='sched'){title='График';html=vSched();fab=W?null:(ui.schedMode==='tasks'?'task':'event')}
-    else if(ui.tab==='workers'){title='Рабочие';html=vWorkers();fab='work'}
+    else if(ui.tab==='workers'){title=W?'Мой заработок':'Рабочие';html=W?vMyMoney():vWorkers();fab=W?null:'work'}
     else if(ui.tab==='plans'){title='Чертежи';html=vPlans();fab='plan'}
     else {title='Авто';html=vCar()}
   }catch(e){html=`<div class="card"><b class="neg">Ошибка</b><pre>${esc(e.stack||e)}</pre></div>`;console.error(e)}
   document.body.classList.toggle('chatpg',!!(p&&p.t==='chat'&&p.id));
   $('#title').textContent=title;view.innerHTML=html;animView();if(p&&p.t==='chat'&&p.id)chatAfter();chatBadge();
   $('#backBtn').hidden=!p;
-  document.querySelectorAll('.tabs button').forEach(b=>{b.classList.toggle('on',b.dataset.id===ui.tab);b.hidden=W&&!['today','sched'].includes(b.dataset.id)});
+  document.querySelectorAll('.tabs button').forEach(b=>{b.classList.toggle('on',b.dataset.id===ui.tab);b.hidden=false;wkTabLabel(b,W)});
+  if(W)fab=null;
   const f=$('#fab');f.hidden=!fab;f.dataset.k=fab||'';f.textContent=fab==='plan'?'+ Чертёж':fab==='task'?'+ Задача':fab==='event'?'+ Выход':'+ Работа';
   const open=S.tasks.filter(t=>!t.done&&(!W||t.who===me())).length,bd=$('#tbd');bd.hidden=!open;bd.textContent=open;
   const al=W?0:alerts().filter(a=>a.lvl==='bad').length,ab=$('#abd');if(ab){ab.hidden=!al;ab.textContent=al}
@@ -3076,7 +3102,7 @@ function nativeInit(){
 
 /* ---------- действия ---------- */
 function bizInit(){
-planInit();workersInit();chatInit();chatInit2();
+planInit();workersInit();chatInit();chatInit2();wkInit();
 Object.assign(A,{
   tab(el){ui.tab=el.dataset.id;const n=ui.page.length;ui.page=[];if(n)history.go(-n);render();window.scrollTo(0,0)},
   fab(el){const k=el.dataset.k,p=curPage();
@@ -3441,12 +3467,13 @@ const dmCh=n=>'dm:'+[chMe(),n].sort().join('|');
 const chMembers=ch=>ch.startsWith('dm:')?ch.slice(3).split('|'):null;
 const chVisible=ch=>ch==='all'||(chMembers(ch)||[]).includes(chMe());
 function chatTitle(ch){if(ch==='all')return 'Общий чат';const m=chMembers(ch);return m?(m.find(x=>x!==chMe())||m[0]):'Чат'}
-const chatMsgs=ch=>S.msgs.filter(m=>m.ch===ch).sort((a,b)=>(a.at||a.ts||0)-(b.at||b.ts||0));
+const chatMsgs=ch=>S.msgs.filter(m=>m.ch===ch&&(!isWorker()||wkMsgOk(m))).sort((a,b)=>(a.at||a.ts||0)-(b.at||b.ts||0));
 let chatRead={};try{chatRead=JSON.parse(localStorage.getItem('stroyka.read')||'{}')}catch(e){}
 const markRead=ch=>{const l=chatMsgs(ch).pop();if(!l)return;chatRead[ch]=Math.max(chatRead[ch]||0,l.at||l.ts||0);try{localStorage.setItem('stroyka.read',JSON.stringify(chatRead))}catch(e){}};
 const unreadIn=ch=>S.msgs.filter(m=>m.ch===ch&&m.by!==chMe()&&(m.at||m.ts||0)>(chatRead[ch]||0)).length;
 function chatBadge(){const b=$('#cbd');if(!b)return;const n=[...new Set(S.msgs.map(m=>m.ch))].filter(chVisible).reduce((s,ch)=>s+unreadIn(ch),0);b.hidden=!n;b.textContent=n>99?'99+':n}
 const TPL={buy:['🛒','Закупка'],pay:['💸','Выплата'],got:['💰','Получили оплату'],rep:['📊','Отчёт по объекту'],job:['📋','Задание']};
+const tplTypes=()=>Object.entries(TPL).filter(([k])=>!isWorker()||['buy','job'].includes(k));
 function msgText(m){
   if(m.kind!=='tpl')return m.text||'';const t=m.tpl||{},T=TPL[t.type]||['',''];
   return [`${T[0]} ${T[1]}${t.objectId?' — '+oname(t.objectId):''}`,...(t.rows||[]).map(([l,v])=>`${l}: ${v}`),...(t.items||[]).map(i=>`${i.done?'✅':'▫️'} ${i.t}`),t.note||''].filter(Boolean).join('\n');
@@ -3511,7 +3538,7 @@ function tplSheet(ch,type='buy',eid,st0){let st={type,objectId:lastObjFor()||'',
   if(st0)st={...st0,type};
   return ()=>{
   const objs=activeObjs(),wk=workerNames().concat(team()).filter((x,i,a)=>x&&a.indexOf(x)===i);
-  const typ=Object.entries(TPL).map(([k,[i,t]])=>`<button class="chip ${st.type===k?'on':''}" data-s="tpT" data-id="${k}">${i} ${t}</button>`).join('');
+  const typ=tplTypes().map(([k,[i,t]])=>`<button class="chip ${st.type===k?'on':''}" data-s="tpT" data-id="${k}">${i} ${t}</button>`).join('');
   const objSel=`<select id="tpo"><option value="">— без объекта —</option>${objs.map(o=>`<option value="${o.id}" ${o.id===st.objectId?'selected':''}>${esc(o.name)}</option>`).join('')}</select>`;
   const whoCh=`<div class="chips" style="flex-wrap:wrap">${wk.map(n=>`<button class="chip ${st.who===n?'on':''}" data-s="tpW" data-id="${esc(n)}">${esc(n)}</button>`).join('')}</div>`;
   let body='';
@@ -3641,7 +3668,7 @@ function attachSheet(ch){return ()=>({title:'Отправить',html:`<div clas
    <button data-s="atGeo"><span>📍</span>Где я</button>
    <button data-s="atHere"><span>🏠</span>Я на объекте</button>
    <button data-s="atPoll"><span>📊</span>Опрос</button></div>
-  <div class="menu-h">Шаблоны</div><div class="att">${Object.entries(TPL).map(([k,[i,t]])=>`<button data-s="atTpl" data-id="${k}"><span>${i}</span>${t}</button>`).join('')}</div>`,
+  <div class="menu-h">Шаблоны</div><div class="att">${tplTypes().map(([k,[i,t]])=>`<button data-s="atTpl" data-id="${k}"><span>${i}</span>${t}</button>`).join('')}</div>`,
  init(){
   SS.change=async ev=>{const f=ev.target.files&&ev.target.files[0];if(!f)return;await backP();
     const url=URL.createObjectURL(f);photoEditor({src:url,onSend:(d,cap,w,h)=>sendImg(ch,d,cap,w,h),onClose:()=>URL.revokeObjectURL(url)})};
@@ -3782,6 +3809,104 @@ function chatInit2(){
     chatCtxX(){chatCtx={reply:null,edit:null};const s2=document.querySelector('.cstrip');if(s2)s2.remove();const t=g('chatIn');if(t&&!t.value.trim())t.value=''},
     notifyOn(){askNotify()},
   });
+}
+
+/* ================= режим рабочего =================
+   Рабочий видит все вкладки, но на его телефоне не хранятся деньги заказчика:
+   оплаты, сметы, цены для заказчика, прибыль и чужие заработки. */
+const WK_DROP=['payments','payplan','cash','est','estv','log','trash','tpls','mprice_hist'];
+function wkMsgOk(m){if(!m)return false;if(m.kind==='tpl'){const t=m.tpl||{};if(t.type==='got'||t.type==='rep')return false;if(t.type==='pay')return t.who===me()}return true}
+function wkKeep(c,r){const n=me();
+  if(WK_DROP.includes(c))return null;
+  if(c==='work'){if(r.worker!==n)return null;const {client,cprice,...x}=r;return x}
+  if(c==='rates'){const {client,...x}=r;return x}
+  if(c==='workers')return r.name===n?r:null;
+  if(c==='expenses')return (r.by||r.holder)===n?r:null;
+  if(c==='msgs')return wkMsgOk(r)?r:null;
+  if(c==='objects'){const {budget,price,sum:_s,contract,...x}=r;return x}
+  return r}
+function wkPrune(){if(!isWorker())return;
+  for(const c of Object.keys(S)){if(!Array.isArray(S[c]))continue;
+    const pend=new Set(Object.keys(SY.pend).filter(k=>k.startsWith(c+'/')).map(k=>k.slice(c.length+1)));
+    S[c]=S[c].map(r=>pend.has(r.id)?r:wkKeep(c,r)).filter(Boolean)}}
+function wkTabLabel(b,W){const t=[...b.childNodes].find(x=>x.nodeType===3&&x.textContent.trim());if(!t)return;
+  if(!b.dataset.l)b.dataset.l=t.textContent;const L={workers:'Заработок'};t.textContent=W&&L[b.dataset.id]?L[b.dataset.id]:b.dataset.l;
+  document.body.classList.toggle('wk',W)}
+/* объекты рабочего: где у него задачи, выходы или работы; плюс все активные */
+function wkObjIds(){const n=me(),s=new Set();
+  S.tasks.forEach(t=>{if(t.who===n&&t.objectId)s.add(t.objectId)});
+  S.events.forEach(e=>{if((e.who||[]).includes(n)&&e.objectId)s.add(e.objectId)});
+  S.work.forEach(w=>{if(w.worker===n&&w.objectId)s.add(w.objectId)});return s}
+const wkEarnObj=oid=>sum(S.work.filter(w=>w.objectId===oid&&w.worker===me()&&w.type!=='payout'),'amount');
+function vObjectsW(){
+  const mine=wkObjIds(),f=ui.objFW||'mine',T=today();
+  const list=S.objects.filter(o=>f==='all'?true:f==='active'?['active','measure'].includes(objStatus(o)):mine.has(o.id)&&objStatus(o)!=='lost')
+    .sort((a,b)=>(mine.has(b.id)-mine.has(a.id))||String(a.name).localeCompare(b.name));
+  const nx=oid=>S.events.filter(e=>e.objectId===oid&&e.date>=T&&(e.who||[]).includes(me())).map(e=>e.date).sort()[0];
+  return `<div class="wrap"><div class="chips">${[['mine','Мои'],['active','В работе'],['all','Все']].map(([k,t])=>chip(t,f===k,'objFW',k)).join('')}</div>
+   ${list.map(o=>{const tk=S.tasks.filter(t=>t.objectId===o.id&&!t.done&&t.who===me()).length,e=wkEarnObj(o.id),d=nx(o.id);
+     return `<button class="card obj ${['done','lost'].includes(objStatus(o))?'done':''}" data-a="openObj" data-id="${o.id}">
+      <div class="row"><b>${esc(o.name)}</b>${e?`<span class="n">${money(e)}</span>`:''}</div>
+      <div class="row muted sm"><span>${esc(o.address||'адрес не указан')}</span><span>${e?'мой заработок':''}</span></div>
+      <div class="row sm" style="margin-top:6px"><span>${tk?`<span class="tag">мои задачи: ${tk}</span>`:'<span class="muted">задач нет</span>'}</span><span class="muted">${d?'выход '+(d===T?'сегодня':fdate(d)):''}</span></div></button>`}).join('')||'<p class="empty">Здесь пусто. Объекты появятся, когда вас назначат на выход или дадут задачу.</p>'}</div>`;
+}
+function vObjectW(o){
+  const tab=ui.objTab==='work'||ui.objTab==='photo'||ui.objTab==='plans'?ui.objTab:'main',T=today(),n=me();
+  const nPh=S.photos.filter(p=>p.objectId===o.id).length,plans=S.plans.filter(x=>x.objectId===o.id);
+  const myW=S.work.filter(w=>w.objectId===o.id&&w.worker===n).sort(byDate),earn=sum(myW.filter(w=>w.type!=='payout'),'amount');
+  const tabs=[['main','Обзор'],['work','Мои работы'],['photo','Фото'+(nPh?' '+nPh:'')],['plans','Чертежи'+(plans.length?' '+plans.length:'')]];
+  let body='';
+  if(tab==='main'){
+    const tasks=S.tasks.filter(t=>t.objectId===o.id&&!t.done).sort(taskSort),mineT=tasks.filter(t=>t.who===n),other=tasks.filter(t=>t.who!==n);
+    const ev=S.events.filter(e=>e.objectId===o.id&&e.date>=T).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,5);
+    const buy=S.msgs.filter(m=>m.kind==='tpl'&&m.tpl&&m.tpl.type==='buy'&&m.tpl.objectId===o.id&&(m.tpl.items||[]).some(i=>!i.done));
+    body=`<div class="kv" style="margin-top:8px"><div><small>Заработал здесь</small><b class="n">${money(earn)}</b></div><div><small>Работ записано</small><b class="n">${myW.filter(w=>w.type!=='payout').length}</b></div></div>
+     <h2>Мои задачи <small>${mineT.length}</small></h2><div class="list">${mineT.map(t=>taskRow(t)).join('')||'<p class="empty">Задач нет</p>'}</div>
+     ${other.length?`<details style="margin-top:8px"><summary class="muted">Остальные задачи по объекту (${other.length})</summary><div class="list" style="margin-top:8px">${other.map(t=>taskRow(t)).join('')}</div></details>`:''}
+     <h2>Выходы</h2>${ev.map(e=>evCard(e,true)).join('')||'<p class="muted sm" style="margin:2px">Не запланировано</p>'}
+     ${buy.length?`<h2>Купить</h2>${buy.map(m=>`<div class="card sm">${(m.tpl.items||[]).map(i=>`<div>${i.done?'✅':'▫️'} ${esc(i.t)}</div>`).join('')}<small class="muted">${esc(m.by||'')} · ${chatTime(m)}</small></div>`).join('')}`:''}
+     ${o.note?`<h2>Заметки</h2><div class="card sm" style="white-space:pre-wrap">${esc(o.note)}</div>`:''}`}
+  else if(tab==='work')body=`<h2>Мои работы <small>${money(earn)}</small></h2><div class="list">${myW.map(w=>workLi(w,false)).join('')||'<p class="empty">По этому объекту записей нет</p>'}</div>`;
+  else if(tab==='photo')body=vObjPhoto(o);
+  else body=`<div class="list" style="margin-top:8px">${plans.map(pl=>{const c=planCalc(pl);return LI('📐 '+esc(pl.name),`${pl.rooms.length} комн. · стены ${fA(c.walls)} м² · периметр ${fA(c.per)} м`,fA(c.floor)+' м²','openPlan',pl.id,'пол')}).join('')||'<p class="empty">Чертежей нет</p>'}</div>`;
+  const q=encodeURIComponent(o.address||'');
+  return `<div class="wrap">
+   <div class="card sm"><b>${esc(o.address||'Адрес не указан')}</b>${o.client?`<div class="muted">Заказчик: ${esc(o.client)}</div>`:''}
+    ${o.address||o.geo?`<div class="chips" style="margin-top:8px;flex-wrap:wrap"><button class="chip" data-a="objMap" data-id="${o.id}" data-u="g">Google Карты</button>${isIOS()?`<button class="chip" data-a="objMap" data-id="${o.id}" data-u="a">Apple Карты</button>`:''}<button class="chip" data-a="objMap" data-id="${o.id}" data-u="w">Waze</button></div>`:''}</div>
+   <div class="acts">
+     <button class="p" data-a="wkHere" data-id="${o.id}"><span>📍</span>Я на месте</button>
+     <button data-a="newExp" data-id="${o.id}"><span>${IC.exp}</span>Расход</button>
+     <label class="actlbl"><span>${IC.photo}</span>Фото<input type="file" accept="image/*" capture="environment" id="objPhIn" data-id="${o.id}" hidden></label>
+     <button data-a="chat"><span>💬</span>Чат</button>
+   </div>
+   <div class="chips subtabs">${tabs.map(([k,t])=>chip(t,tab===k,'objTab',k)).join('')}</div>${body}</div>`;
+}
+function vMyMoney(){
+  const n=me();if(!n)return `<div class="wrap"><p class="empty">Имя не задано — попросите администратора указать ваше имя в «Люди и доступ»</p></div>`;
+  const i=workerInfo(n),hist=i.acc.slice().sort(byDate),showAll=ui.wkAll===n,shown=showAll?hist:hist.slice(0,30);
+  return `<div class="wrap">
+   <div class="kv"><div class="wide"><small>${i.debt>=0?'Вам должны':'Аванс (выдано больше)'}</small><b class="big-num ${i.debt>0?'warn':''}">${money(Math.abs(i.debt))}</b></div>
+    <div><small>Эта неделя</small><b class="n">${money(i.week)}</b></div><div><small>Этот месяц</small><b class="n">${money(i.month)}</b></div>
+    <div><small>Начислено всего</small><b class="n">${money(i.earned)}</b></div><div><small>Выплачено</small><b class="n">${money(i.paid)}</b></div>
+    <div><small>Дней отработал</small><b class="n">${i.days}</b></div><div><small>В среднем за день</small><b class="n">${money(i.perDay)}</b></div></div>
+   ${i.objs.length?`<h2>По объектам</h2><div class="list">${i.objs.slice(0,10).map(([oid,s2])=>LI('🏠 '+esc(oname(oid)||'Без объекта'),'',money(s2),oid?'openObj':'',oid||'','заработал')).join('')}</div>`:''}
+   <h2>Выплаты <small>${i.pays.length} · ${money(i.paid)}</small></h2><div class="list">${i.pays.slice(0,30).map(r=>workLi(r,true)).join('')||'<p class="empty">Выплат не было</p>'}</div>
+   <h2>Работы <small>${hist.length}</small></h2><div class="list">${shown.map(r=>workLi(r,true)).join('')||'<p class="empty">Записей нет</p>'}${hist.length>shown.length?`<button class="li" data-a="wkAll" data-id="${esc(n)}"><span class="t muted sm">Показать все (${hist.length})</span></button>`:''}</div>
+   <p class="muted sm" style="margin-top:12px">Если что-то не сходится — напишите в чат, администратор поправит.</p></div>`;
+}
+function wkInit(){
+  Object.assign(A,{
+    objFW(el){ui.objFW=el.dataset.id;render()},
+    objMap(el){const o=S.objects.find(x=>x.id===el.dataset.id);if(!o)return;
+      if(o.geo)return openMapApp({lat:o.geo.lat,lng:o.geo.lng,label:o.name},el.dataset.u);
+      const q=encodeURIComponent(o.address||o.name),k=el.dataset.u;
+      if(isNative())return openExt(k==='w'?`https://waze.com/ul?q=${q}&navigate=yes`:`geo:0,0?q=${q}`);
+      if(isIOS()&&k==='a'){location.href=`maps://?q=${q}`;return}
+      openExt(k==='w'?`https://waze.com/ul?q=${q}&navigate=yes`:k==='a'?`https://maps.apple.com/?q=${q}`:`https://www.google.com/maps/search/?api=1&query=${q}`)},
+    async wkHere(el){const o=S.objects.find(x=>x.id===el.dataset.id);if(!o)return;const d=new Date();
+      const p=await sendGeo('all',`${chMe()} на объекте «${o.name}» · ${pad(d.getHours())}:${pad(d.getMinutes())}`,{objectId:o.id});if(p)toast('Отправлено в общий чат')},
+  });
+  if(isWorker())wkPrune();
 }
 
 /* ================= Чертежи: план, ГОСТ-лист, электрика, сантехника, фигуры, 3D ================= */
