@@ -2070,7 +2070,7 @@ const IC={
   pay:'<svg viewBox="0 0 24 24"><rect x="3" y="6.5" width="18" height="11" rx="2.5"/><circle cx="12" cy="12" r="2.4"/><path d="M6.5 9.5v5M17.5 9.5v5"/></svg>',
   photo:'<svg viewBox="0 0 24 24"><path d="M4 8.5h3.2L9 6h6l1.8 2.5H20V19H4z"/><circle cx="12" cy="13.3" r="3.3"/></svg>'};
 /* ================= Стройка 2.2: бизнес-функции ================= */
-const APP_VERSION='3.11';
+const APP_VERSION='3.12';
 const LOGC=['work','expenses','payments','est','payplan','cash','objects','tools'];
 const TRASHC=['objects','tasks','work','workers','rates','est','plans','expenses','payments','fuelDays','tools','events','photos','payplan','cash','checks','tpls','team'];
 const STAGES={before:'До',work:'Процесс',after:'После',hidden:'Скрытые'};
@@ -3176,6 +3176,7 @@ function render(){
   if(ED){ED.destroy();ED=null}
   document.body.classList.remove('ed');
   const W=isWorker();
+  if(W&&ui.tab==='car')ui.tab='today';
   let title,html,fab=null;
   try{
     if(p&&p.t==='chat'){title=p.id?chatTitle(p.id):'Чат';html=p.id?vChat(p.id):vChats()}
@@ -3193,7 +3194,7 @@ function render(){
   document.body.classList.toggle('chatpg',!!(p&&p.t==='chat'&&p.id));
   $('#title').textContent=title;view.innerHTML=html;animView();if(p&&p.t==='chat'&&p.id)chatAfter();chatBadge();
   $('#backBtn').hidden=!p;
-  document.querySelectorAll('.tabs button').forEach(b=>{b.classList.toggle('on',b.dataset.id===ui.tab);b.hidden=false;wkTabLabel(b,W)});
+  document.querySelectorAll('.tabs button').forEach(b=>{b.classList.toggle('on',b.dataset.id===ui.tab);b.hidden=W&&b.dataset.id==='car';wkTabLabel(b,W)});
   if(W)fab=null;
   const f=$('#fab');f.hidden=!fab;f.dataset.k=fab||'';f.textContent=fab==='plan'?'+ Чертёж':fab==='task'?'+ Задача':fab==='event'?'+ Выход':'+ Работа';
   const open=S.tasks.filter(t=>!t.done&&(!W||t.who===me())).length,bd=$('#tbd');bd.hidden=!open;bd.textContent=open;
@@ -3992,12 +3993,14 @@ function chatInit2(){
 /* ================= режим рабочего =================
    Рабочий видит все вкладки, но на его телефоне не хранятся деньги заказчика:
    оплаты, сметы, цены для заказчика, прибыль и чужие заработки. */
-const WK_DROP=['payments','payplan','cash','est','estv','log','trash','tpls','mprice_hist','rates'];
+const WK_DROP=['payments','payplan','cash','estv','log','trash','tpls','mprice_hist','rates'];
 function wkMsgOk(m){if(!m)return false;if(m.kind==='tpl'){const t=m.tpl||{};if(t.type==='got'||t.type==='rep')return false;if(t.type==='pay')return t.who===me()}return true}
 function wkKeep(c,r){const n=me();
   if(WK_DROP.includes(c))return null;
   if(c==='work'){if(r.worker!==n)return null;const {client,cprice,...x}=r;return x}
   if(c==='workers')return r.name===n?r:null;
+  if(c==='est'){const {price,sum:_s,cprice,client,...x}=r;return x}
+  if(c==='calcs'){const {money:_m,...x}=r;return x}
   if(c==='expenses')return (r.by||r.holder)===n?r:null;
   if(c==='msgs')return wkMsgOk(r)?r:null;
   if(c==='objects'){const {budget,price,sum:_s,contract,...x}=r;return x}
@@ -4028,24 +4031,28 @@ function vObjectsW(){
       <div class="row sm" style="margin-top:6px"><span>${tk?`<span class="tag">мои задачи: ${tk}</span>`:'<span class="muted">задач нет</span>'}</span><span class="muted">${d?'выход '+(d===T?'сегодня':fdate(d)):''}</span></div></button>`}).join('')||'<p class="empty">Здесь пусто. Объекты появятся, когда вас назначат на выход или дадут задачу.</p>'}</div>`;
 }
 function vObjectW(o){
-  const tab=ui.objTab==='work'||ui.objTab==='photo'||ui.objTab==='plans'?ui.objTab:'main',T=today(),n=me();
+  const tab=['work','photo','plans','scope','mat'].includes(ui.objTab)?ui.objTab:'main',T=today(),n=me();
   const nPh=S.photos.filter(p=>p.objectId===o.id).length,plans=S.plans.filter(x=>x.objectId===o.id);
   const myW=S.work.filter(w=>w.objectId===o.id&&w.worker===n).sort(byDate),earn=sum(myW.filter(w=>w.type!=='payout'),'amount');
-  const tabs=[['main','Обзор'],['work','Мои работы'],['photo','Фото'+(nPh?' '+nPh:'')],['plans','Чертежи'+(plans.length?' '+plans.length:'')]];
+  const tabs=[['main','Обзор'],['scope','Что делаем'],['mat','Материалы'],['plans','Чертежи'+(plans.length?' '+plans.length:'')],['photo','Фото'+(nPh?' '+nPh:'')],['work','Мои работы']];
   let body='';
   if(tab==='main'){
     const tasks=S.tasks.filter(t=>t.objectId===o.id&&!t.done).sort(taskSort),mineT=tasks.filter(t=>t.who===n),other=tasks.filter(t=>t.who!==n);
     const ev=S.events.filter(e=>e.objectId===o.id&&e.date>=T).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,5);
     const buy=S.msgs.filter(m=>m.kind==='tpl'&&m.tpl&&m.tpl.type==='buy'&&m.tpl.objectId===o.id&&(m.tpl.items||[]).some(i=>!i.done));
     body=`<div class="kv" style="margin-top:8px"><div><small>Заработал здесь</small><b class="n">${money(earn)}</b></div><div><small>Работ записано</small><b class="n">${myW.filter(w=>w.type!=='payout').length}</b></div></div>
-     <h2>Мои задачи <small>${mineT.length}</small></h2><div class="list">${mineT.map(t=>taskRow(t)).join('')||'<p class="empty">Задач нет</p>'}</div>
+     <h2>Мои задачи <small>${mineT.length}</small></h2><div class="list">
+       <div class="qadd"><input id="qTask" placeholder="Новая задача…" enterkeyhint="done" data-enter="qTask" data-id="${o.id}"><button class="btn p" data-a="qTask" data-id="${o.id}">＋</button></div>
+       ${mineT.map(t=>taskRow(t)).join('')||'<p class="empty">Задач нет</p>'}</div>
      ${other.length?`<details style="margin-top:8px"><summary class="muted">Остальные задачи по объекту (${other.length})</summary><div class="list" style="margin-top:8px">${other.map(t=>taskRow(t)).join('')}</div></details>`:''}
      <h2>Выходы</h2>${ev.map(e=>evCard(e,true)).join('')||'<p class="muted sm" style="margin:2px">Не запланировано</p>'}
      ${buy.length?`<h2>Купить</h2>${buy.map(m=>`<div class="card sm">${(m.tpl.items||[]).map(i=>`<div>${i.done?'✅':'▫️'} ${esc(i.t)}</div>`).join('')}<small class="muted">${esc(m.by||'')} · ${chatTime(m)}</small></div>`).join('')}`:''}
      ${o.note?`<h2>Заметки</h2><div class="card sm" style="white-space:pre-wrap">${esc(o.note)}</div>`:''}`}
+  else if(tab==='scope')body=wkScope(o);
+  else if(tab==='mat')body=wkMats(o);
   else if(tab==='work')body=`<h2>Мои работы <small>${money(earn)}</small></h2><div class="list">${myW.map(w=>workLi(w,false)).join('')||'<p class="empty">По этому объекту записей нет</p>'}</div>`;
   else if(tab==='photo')body=vObjPhoto(o);
-  else body=`<div class="list" style="margin-top:8px">${plans.map(pl=>{const c=planCalc(pl);return LI('📐 '+esc(pl.name),`${pl.rooms.length} комн. · стены ${fA(c.walls)} м² · периметр ${fA(c.per)} м`,fA(c.floor)+' м²','openPlan',pl.id,'пол')}).join('')||'<p class="empty">Чертежей нет</p>'}</div>`;
+  else body=`<div class="list" style="margin-top:8px">${plans.map(pl=>{const c=safePC(pl);return LI('📐 '+esc(pl.name),`${pl.rooms.length} комн. · стены ${fA(c.walls)} м² · периметр ${fA(c.per)} м`,fA(c.floor)+' м²','openPlan',pl.id,'пол')}).join('')||'<p class="empty">Чертежей нет</p>'}</div>`;
   const q=encodeURIComponent(o.address||'');
   return `<div class="wrap">
    <div class="card sm"><b>${esc(o.address||'Адрес не указан')}</b>${o.client?`<div class="muted">Заказчик: ${esc(o.client)}</div>`:''}
@@ -4080,8 +4087,38 @@ function wkWorkSheet(id){return ()=>{const w=S.work.find(x=>x.id===id);if(!w)ret
    <p class="muted sm" style="margin-top:10px">Записи меняет администратор. Если что-то не так — напишите в чат.</p>
    <button class="btn w" style="margin-top:8px" data-s="ask">💬 Написать про эту запись</button>`,
   init(){SS.ask=()=>{back();setTimeout(()=>{openPage({t:'chat',id:dmCh(team()[0]||'all')});setTimeout(()=>{const t=g('chatIn');if(t){t.value=`По записи «${po?'Выплата':workTitle(w)}» от ${fdate(w.date)} (${money(w.amount)}): `;t.focus()}},200)},200)}}}}}
+const safePC=pl=>{try{return planCalc(pl)}catch(e){return {floor:0,walls:0,per:0}}};
+function wkScope(o){const L=S.est.filter(e=>e.objectId===o.id),W=L.filter(e=>(e.kind||'work')==='work'),X=L.filter(e=>e.kind==='extra'&&e.ok);
+  const row=e=>`<div class="li"><span class="t"><b>${esc(e.title)}</b>${e.note?`<small>${esc(e.note)}</small>`:''}</span><span class="r"><b class="n">${qf(r2(+e.qty||0))}</b><small>${esc(e.unit||'')}</small></span></div>`;
+  const mine=S.tasks.filter(t=>t.objectId===o.id);
+  return `${W.length?`<h2>Работы по смете <small>${W.length}</small></h2><div class="list">${W.map(row).join('')}</div>`:'<p class="empty" style="margin-top:12px">Смета по объекту ещё не составлена — задачи смотри на «Обзоре»</p>'}
+   ${X.length?`<h2>Доп. работы <small>согласованы</small></h2><div class="list">${X.map(row).join('')}</div>`:''}
+   ${mine.length?`<h2>Задачи по объекту <small>${mine.filter(t=>t.done).length}/${mine.length} готово</small></h2><div class="list">${mine.sort(taskSort).map(t=>taskRow(t)).join('')}</div>`:''}`}
+function wkMats(o){
+  const est=S.est.filter(e=>e.objectId===o.id&&e.kind==='mat'),cs=S.calcs.filter(x=>x.objectId===o.id);
+  const buy=S.msgs.filter(m=>m.kind==='tpl'&&m.tpl&&m.tpl.type==='buy'&&m.tpl.objectId===o.id).sort((a,b)=>(b.at||0)-(a.at||0));
+  const exp=S.expenses.filter(e=>e.objectId===o.id&&MAT_CATS.includes(e.category));
+  let calcHtml='';cs.forEach(x=>{try{const rows=calcRows(calcRun(x.c));if(rows.mats.length)calcHtml+=`<h2>🧮 ${esc(x.name)}</h2><div class="list">${rows.mats.map(m=>`<div class="li"><span class="t"><b>${esc(m.mt.n)}</b><small>нужно ${qf(r2(m.q))} ${esc(m.mt.u)}</small></span><span class="r"><b class="n">${qf(m.buy)}</b><small>${esc(m.unitBuy||m.mt.u)}</small></span></div>`).join('')}</div>`}catch(e){}});
+  const body=(buy.length?`<h2>Купить <small>из чата</small></h2>${buy.slice(0,6).map(m=>`<div class="card sm" style="margin-bottom:6px">${(m.tpl.items||[]).map((it,i)=>`<button class="mitem ${it.done?'done':''}" data-a="msgItem" data-id="${m.id}" data-i="${i}"><i>${it.done?'✓':''}</i><span>${esc(it.t)}</span></button>`).join('')}<small class="muted">${esc(m.by||'')} · ${chatTime(m)}</small></div>`).join('')}`:'')
+    +(est.length?`<h2>Материалы по смете</h2><div class="list">${est.map(e=>`<div class="li"><span class="t"><b>${esc(e.title)}</b></span><span class="r"><b class="n">${qf(r2(+e.qty||0))}</b><small>${esc(e.unit||'')}</small></span></div>`).join('')}</div>`:'')
+    +calcHtml
+    +(exp.length?`<h2>Мои покупки</h2><div class="list">${exp.map(e=>`<div class="li"><span class="t"><b>${esc(e.title||e.category)}</b><small>${fdate(e.date)}</small></span><span class="n">${money(e.amount)}</span></div>`).join('')}</div>`:'');
+  return (body||'<p class="empty" style="margin-top:12px">Пока ничего — администратор добавит материалы в смету или расчёт</p>')
+    +`<button class="btn w" style="margin-top:12px" data-a="newExp" data-id="${o.id}">🧾 Купил материал — добавить расход</button>`}
+/* чертёж для рабочего: просмотр и PDF, без редактирования */
+function wkPlanSheet(id){return ()=>{const pl=S.plans.find(x=>x.id===id);if(!pl)return {title:'Чертёж',html:'<p class="empty">Нет чертежа</p>'};const c=safePC(pl);
+  return {title:'📐 '+pl.name,html:`<div id="wkpv" class="card" style="padding:6px;min-height:200px;display:grid;place-items:center"><span class="muted">Рисую…</span></div>
+   <div class="kv" style="margin-top:8px"><div><small>Пол</small><b class="n">${fA(c.floor)} м²</b></div><div><small>Стены</small><b class="n">${fA(c.walls)} м²</b></div><div><small>Периметр</small><b class="n">${fA(c.per)} м</b></div><div><small>Комнат</small><b class="n">${pl.rooms.length}</b></div></div>
+   ${pl.rooms.length?`<div class="list" style="margin-top:8px">${pl.rooms.map(r=>{const rc=safePC({...pl,rooms:[r]});return `<div class="li"><span class="t"><b>${esc(r.name||'Комната')}</b><small>стены ${fA(rc.walls)} м² · периметр ${fA(rc.per)} м</small></span><span class="n">${fA(rc.floor)} м²</span></div>`}).join('')}</div>`:''}
+   <div class="btns" style="margin-top:10px"><button class="btn p" data-s="pdf">📄 PDF</button><button class="btn" data-s="big">🔍 Крупно</button></div>
+   <p class="muted sm" style="margin-top:8px">Чертежи меняет администратор.</p>`,
+  init(){let pages=[];setTimeout(()=>{try{pages=gostPages(pl,{fmt:'A4'});const b=g('wkpv');if(b&&pages[0]){const im=new Image();im.src=pages[0].toDataURL('image/png');im.style.cssText='width:100%;border-radius:12px;background:#fff';b.innerHTML='';b.appendChild(im)}}catch(e){const b=g('wkpv');if(b)b.innerHTML='<span class="muted">Не удалось нарисовать</span>'}},30);
+    SS.pdf=async()=>{try{toast('Готовлю PDF…');await saveFile(`Чертёж_${fileSafe(pl.name)}.pdf`,pdfFromCanvases(pages.length?pages:gostPages(pl,{fmt:'A4'})))}catch(e){toast('Не удалось')}};
+    SS.big=()=>{if(pages[0])viewPhoto(pages[0].toDataURL('image/png'))}}}}}
 function wkInit(){
-  const _ew=A.editWork,_nw=A.newWork;
+  const _ew=A.editWork,_nw=A.newWork,_op=A.openPlan,_qt=A.qTask;
+  A.openPlan=(el,ev)=>isWorker()?openSheet(wkPlanSheet(el.dataset.id)):_op(el,ev);
+  A.qTask=(el,ev)=>{if(!isWorker())return _qt(el,ev);const i=g('qTask'),t=i&&i.value.trim();if(!t){i&&i.focus();return}put('tasks',{id:uid(),objectId:el.dataset.id,title:t,done:false,who:me(),due:'',by:me()});commit(true);setTimeout(()=>{const n=g('qTask');n&&n.focus()},30)};
   A.editWork=(el,ev)=>isWorker()?openSheet(wkWorkSheet(el.dataset.id)):_ew(el,ev);
   A.newWork=(el,ev)=>isWorker()?toast('Работы записывает администратор'):_nw(el,ev);
   Object.assign(A,{
