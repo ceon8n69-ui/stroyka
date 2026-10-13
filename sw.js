@@ -1,4 +1,4 @@
-const C='stroyka-3.12',F=["./", "index.html", "supabase.js", "three.min.js", "jsQR.js", "xlsx.full.min.js", "manifest.webmanifest", "icon-180.png", "icon-192.png", "icon-512.png"];
+const C='stroyka-3.13',F=["./", "index.html", "supabase.js", "three.min.js", "jsQR.js", "xlsx.full.min.js", "manifest.webmanifest", "icon-180.png", "icon-192.png", "icon-512.png"];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(F)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C).map(x=>caches.delete(x)))).then(()=>self.clients.claim()))});
 self.addEventListener('fetch',e=>{const r=e.request,u=new URL(r.url);if(r.method!=='GET'||u.origin!==location.origin)return;

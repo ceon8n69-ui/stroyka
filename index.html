@@ -477,6 +477,9 @@ body.wk [data-s=toEst],body.wk [data-e=toEst],body.wk .adm{display:none!importan
 .dg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
 .dres{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-top:10px;padding-top:8px;border-top:1px dashed var(--line)}.dres span{color:var(--muted);font-size:12px}.dres b{font-size:20px;white-space:nowrap}
 .dl{display:flex;flex-direction:column;gap:3px;min-width:0}.dl small{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.dhead{margin-top:0;font-size:11px;color:var(--muted)}.dhead span:first-child{flex:1}
+.pcsend{white-space:nowrap;position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom));z-index:40;min-height:54px;padding:0 26px;border-radius:28px;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.mplan{background:var(--card);border-radius:20px;overflow:hidden;width:min(78vw,320px)}.mplan img{display:block;width:100%;background:#fff;object-fit:contain}.mplan .gi{padding:10px 12px}.mplan .gi b{display:block;font-size:15px}.mplan .gi small{color:var(--muted);font-size:12px}
+.mplan .chip{height:34px;font-size:13px;background:var(--bg);color:var(--ink)}
 
 </style>
 </head>
@@ -1007,7 +1010,7 @@ function subscribe(){
 }
 function unsubscribe(){if(chan&&sb){sb.removeChannel(chan)}chan=null}
 async function push(){
-  if(SY.role==='worker'){Object.keys(SY.pend).forEach(k=>{const c=k.slice(0,k.indexOf('/'));if(!['tasks','expenses','msgs','photos'].includes(c)||(SY.deny||{})[c])delete SY.pend[k]});return pushWorker()}
+  if(SY.role==='worker'){Object.keys(SY.pend).forEach(k=>{const c=k.slice(0,k.indexOf('/'));if(!['tasks','expenses','msgs','photos','plans'].includes(c)||(SY.deny||{})[c])delete SY.pend[k]});return pushWorker()}
   const keys=Object.keys(SY.pend);if(!keys.length)return;
   const snap={...SY.pend},ups=[],ins=[],dels=[];
   for(const k of keys){const i=k.indexOf('/'),c=k.slice(0,i),id=k.slice(i+1);const r=(S[c]||[]).find(x=>x.id===id);
@@ -1041,7 +1044,8 @@ async function pull(){
   const cols=new Set([...COLS,...Object.keys(by)]);
   for(const c of cols){
     const pendIds=new Set(Object.keys(SY.pend).filter(k=>k.startsWith(c+'/')).map(k=>k.slice(c.length+1)));
-    const local=(S[c]||[]).filter(x=>pendIds.has(x.id));
+    const srv=new Set((by[c]||[]).map(x=>x.id));
+    const local=(S[c]||[]).filter(x=>pendIds.has(x.id)||(x._loc&&!srv.has(x.id)));
     S[c]=(by[c]||[]).filter(x=>!pendIds.has(x.id)).concat(local);
   }
   if(SY.role==='worker'&&typeof wkPrune==='function')wkPrune();
@@ -1089,6 +1093,7 @@ function syncSheet(){return ()=>{
    ${F('Email',I('ye',SY.email,'type="email" autocapitalize="off"'))}
    ${F('Пароль',I('yp','','type="password"'))}
    <div class="btns"><button class="btn p" data-s="login">Войти</button></div>`}
+   ${logged?`<button class="btn w" style="margin-top:8px" data-s="acc">Проверить доступ к разделам</button><div id="accB"></div>`:''}
    <p class="muted sm" style="margin-top:14px">Используется ваш текущий проект Supabase — тот же, что в первой версии приложения. Ничего менять в нём не нужно.</p>`,
   init(){
     SS.syncView=()=>{const b=g('syv');if(!b)return;const n=Object.keys(SY.pend).length,ph=Object.keys(SY.ph).length;
@@ -1097,7 +1102,7 @@ function syncSheet(){return ()=>{
        Не отправлено: <b>${n}</b> записей${ph?`, <b>${ph}</b> фото`:''}${!online?'<br><b class="warn">Нет интернета — отправится автоматически</b>':''}
        ${SY.err?`<br><b class="neg">Ошибка: ${esc(SY.err)}</b>`:''}${SY.phErr?`<br><span class="warn">Фото: ${esc(SY.phErr)}</span>`:''}</div>`};
     SS.syncView();
-    SS.now=()=>syncNow();
+    SS.now=()=>syncNow();SS.acc=()=>accessCheck('accB');
     SS.out=async()=>{if(!confirm('Выйти? Данные на телефоне останутся.'))return;try{await sb.auth.signOut()}catch(e){}session=null;SY.role='admin';SY.pname='';saveSync();replaceSheet(syncSheet());setStatus()};
     SS.login=async()=>{
       const url=v('yu').trim().replace(/\/+$/,''),key=v('yk').trim(),email=v('ye').trim(),pass=v('yp');
@@ -2070,7 +2075,7 @@ const IC={
   pay:'<svg viewBox="0 0 24 24"><rect x="3" y="6.5" width="18" height="11" rx="2.5"/><circle cx="12" cy="12" r="2.4"/><path d="M6.5 9.5v5M17.5 9.5v5"/></svg>',
   photo:'<svg viewBox="0 0 24 24"><path d="M4 8.5h3.2L9 6h6l1.8 2.5H20V19H4z"/><circle cx="12" cy="13.3" r="3.3"/></svg>'};
 /* ================= Стройка 2.2: бизнес-функции ================= */
-const APP_VERSION='3.12';
+const APP_VERSION='3.13';
 const LOGC=['work','expenses','payments','est','payplan','cash','objects','tools'];
 const TRASHC=['objects','tasks','work','workers','rates','est','plans','expenses','payments','fuelDays','tools','events','photos','payplan','cash','checks','tpls','team'];
 const STAGES={before:'До',work:'Процесс',after:'После',hidden:'Скрытые'};
@@ -3116,6 +3121,7 @@ async function fetchRole(){
   }catch(e){}
 }
 function peopleSheet(){return ()=>({title:'Люди и доступ',html:`<p class="muted sm">Как в первой версии: аккаунты создаются в Supabase → Authentication → Users. Рабочий видит все вкладки, но на его телефон не попадают деньги заказчика: оплаты, сметы, цены для заказчика, прибыль и заработки других рабочих. Он видит свои начисления, выплаты и долг, может отмечать задачи, писать в чат, добавлять расходы и фото. Имя рабочего должно совпадать с именем в разделе «Рабочие».</p>
+  <button class="btn w" style="margin:4px 0 10px" data-s="rls">🔧 Чат и чертежи у рабочих не работают? Настроить</button>
   <div id="ppl"><p class="empty">Загрузка…</p></div>`,
   init(){
     const load=async()=>{const b=g('ppl');if(!sb||!session){b.innerHTML='<p class="empty">Сначала войди в синхронизацию</p>';return}
@@ -3126,6 +3132,7 @@ function peopleSheet(){return ()=>({title:'Люди и доступ',html:`<p cl
         ${p.id===session.user.id?'<small class="muted">это вы</small>':`<span class="chips" style="width:100%">${chip('Админ',p.role!=='worker','x','admin',`data-s="role" data-u="${p.id}"`)}${chip('Рабочий',p.role==='worker','x','worker',`data-s="role" data-u="${p.id}"`)}
         <select data-u="${p.id}" class="pname" style="min-height:40px;width:auto"><option value="">имя рабочего…</option>${names.map(n=>`<option ${n===p.name?'selected':''}>${esc(n)}</option>`).join('')}</select></span>`}</div>`).join('')}</div>`};
     load();
+    SS.rls=()=>openSheet(rlsSheet());
     SS.role=async el=>{const {error}=await sb.from('profiles').update({role:el.dataset.id}).eq('id',el.dataset.u);toast(error?'Ошибка: '+error.message:'Сохранено');load()};
     SS.change=async ev=>{if(!ev.target.classList.contains('pname'))return;const {error}=await sb.from('profiles').update({name:ev.target.value||null}).eq('id',ev.target.dataset.u);toast(error?'Ошибка: '+error.message:'Имя сохранено');load()};
   }})}
@@ -3170,10 +3177,11 @@ function render(){
     const pl=S.plans.find(x=>x.id===p.id);
     if(!pl){if(ED){ED.destroy();ED=null}ui.page.pop();return render()}
     document.body.classList.add('ed');$('#title').textContent=pl.name;$('#backBtn').hidden=false;
-    if(!ED||ED.id!==pl.id){if(ED)ED.destroy();view.innerHTML=vPlanSkeleton();ED=mountEditor(pl.id)}else ED.sync();
+    if(!ED||ED.id!==pl.id){if(ED)ED.destroy();view.innerHTML=vPlanSkeleton();ED=mountEditor(pl.id);planPageExtras(pl)}else ED.sync();
     setStatus();return;
   }
   if(ED){ED.destroy();ED=null}
+  {const pc=g('pcSend');if(pc)pc.remove()}
   document.body.classList.remove('ed');
   const W=isWorker();
   if(W&&ui.tab==='car')ui.tab='today';
@@ -3195,7 +3203,7 @@ function render(){
   $('#title').textContent=title;view.innerHTML=html;animView();if(p&&p.t==='chat'&&p.id)chatAfter();chatBadge();
   $('#backBtn').hidden=!p;
   document.querySelectorAll('.tabs button').forEach(b=>{b.classList.toggle('on',b.dataset.id===ui.tab);b.hidden=W&&b.dataset.id==='car';wkTabLabel(b,W)});
-  if(W)fab=null;
+  if(W&&fab!=='plan')fab=null;
   const f=$('#fab');f.hidden=!fab;f.dataset.k=fab||'';f.textContent=fab==='plan'?'+ Чертёж':fab==='task'?'+ Задача':fab==='event'?'+ Выход':'+ Работа';
   const open=S.tasks.filter(t=>!t.done&&(!W||t.who===me())).length,bd=$('#tbd');bd.hidden=!open;bd.textContent=open;
   const al=W?0:alerts().filter(a=>a.lvl==='bad').length,ab=$('#abd');if(ab){ab.hidden=!al;ab.textContent=al}
@@ -3242,7 +3250,7 @@ function nativeInit(){
 
 /* ---------- действия ---------- */
 function bizInit(){
-planInit();workersInit();chatInit();chatInit2();wkInit();acctInit();
+planInit();workersInit();chatInit();chatInit2();wkInit();acctInit();plansInit2();
 Object.assign(A,{
   tab(el){ui.tab=el.dataset.id;const n=ui.page.length;ui.page=[];if(n)history.go(-n);render();window.scrollTo(0,0)},
   fab(el){const k=el.dataset.k,p=curPage();
@@ -3654,6 +3662,7 @@ function chatBadge(){const b=$('#cbd');if(!b)return;const n=[...new Set(S.msgs.m
 const TPL={buy:['🛒','Закупка'],pay:['💸','Выплата'],got:['💰','Получили оплату'],rep:['📊','Отчёт по объекту'],job:['📋','Задание']};
 const tplTypes=()=>Object.entries(TPL).filter(([k])=>!isWorker()||['buy','job'].includes(k));
 function msgText(m){
+  if(m.kind==='plan')return `📐 Чертёж «${m.name||''}»${m.objectId?' — '+oname(m.objectId):''}`;
   if(m.kind!=='tpl')return m.text||'';const t=m.tpl||{},T=TPL[t.type]||['',''];
   return [`${T[0]} ${T[1]}${t.objectId?' — '+oname(t.objectId):''}`,...(t.rows||[]).map(([l,v])=>`${l}: ${v}`),...(t.items||[]).map(i=>`${i.done?'✅':'▫️'} ${i.t}`),t.note||''].filter(Boolean).join('\n');
 }
@@ -3790,6 +3799,10 @@ function msgExtra(m){
     return wrap(`<div class="mgeo"><div class="map"><img src="https://tile.openstreetmap.org/${z}/${tx}/${ty}.png" alt="" onerror="this.style.display='none'"><i style="left:${px}%;top:${py}%"></i></div>
       <div class="gi"><b>${esc(m.label||'Геопозиция')}</b><small>${m.lat.toFixed(5)}, ${m.lng.toFixed(5)}${m.acc?' · ±'+Math.round(m.acc)+' м':''}</small>
       <div class="chips" style="margin-top:6px;flex-wrap:wrap"><button class="chip" data-a="openMap" data-id="${m.id}" data-u="g">Google Карты</button>${isIOS()?`<button class="chip" data-a="openMap" data-id="${m.id}" data-u="a">Apple Карты</button>`:''}<button class="chip" data-a="openMap" data-id="${m.id}" data-u="w">Waze</button><button class="chip" data-a="copyGeo" data-id="${m.id}">⧉ Координаты</button></div></div></div>`)}
+  if(m.kind==='plan'){const sm=m.sum||{},has=S.plans.some(p=>p.id===m.planId);
+    return wrap(`<div class="mplan">${m.img?`<img data-ph="${m.img}" data-a="msgPlan" data-id="${m.id}" alt="" style="aspect-ratio:${m.w||4}/${m.h||3}">`:''}
+      <div class="gi"><b>📐 ${esc(m.name||'Чертёж')}</b><small>${m.objectId?'🏠 '+esc(oname(m.objectId))+' · ':'без объекта · '}${fA(sm.floor||0)} м² · ${sm.rooms||0} комн.</small>
+      <div class="chips" style="margin-top:6px;flex-wrap:wrap"><button class="chip" data-a="msgPlan" data-id="${m.id}">${has&&canEditPlan(S.plans.find(p=>p.id===m.planId))?'✏️ Открыть':'Открыть'}</button>${!has&&!isWorker()?`<button class="chip" data-a="msgPlanSave" data-id="${m.id}">💾 В чертежи объекта</button>`:''}<button class="chip" data-a="msgPlanPdf" data-id="${m.id}">PDF</button></div></div></div>`)}
   if(m.kind==='poll'){const tot=(m.opts||[]).reduce((s,o)=>s+(o.v||[]).length,0);
     return wrap(`<div class="mcard"><div class="mh"><span>📊</span><b>${esc(m.q||'Опрос')}</b></div><div class="mpoll">${(m.opts||[]).map((o,i)=>{const n=(o.v||[]).length,me2=(o.v||[]).includes(chMe());
       return `<button class="${me2?'on':''}" data-a="msgVote" data-id="${m.id}" data-i="${i}"><span class="pvb" style="width:${tot?n/tot*100:0}%"></span><span class="pt">${me2?'✓ ':''}${esc(o.t)}</span><b>${n||''}</b>${n?`<small>${esc((o.v||[]).join(', '))}</small>`:''}</button>`}).join('')}</div><small class="muted sm">Голосов: ${tot}</small></div>`)}
@@ -3844,6 +3857,7 @@ function attachSheet(ch){return ()=>({title:'Отправить',html:`<div clas
    <label><span>📷</span>Фото<input type="file" accept="image/*" capture="environment" id="atCam" hidden></label>
    <label><span>🖼</span>Галерея<input type="file" accept="image/*" id="atGal" hidden></label>
    <button data-s="atSk"><span>✏️</span>Набросок</button>
+   <button data-s="atPlan"><span>📐</span>Чертёж</button>
    <button data-s="atGeo"><span>📍</span>Где я</button>
    <button data-s="atHere"><span>🏠</span>Я на объекте</button>
    <button data-s="atPoll"><span>📊</span>Опрос</button></div>
@@ -3855,6 +3869,7 @@ function attachSheet(ch){return ()=>({title:'Отправить',html:`<div clas
   SS.atGeo=()=>{back();setTimeout(()=>sendGeo(ch,''),200)};
   SS.atHere=()=>replaceSheet(hereSheet(ch));
   SS.atPoll=()=>replaceSheet(pollSheet(ch));
+  SS.atPlan=()=>replaceSheet(planChatSheet(ch));
   SS.atTpl=el=>replaceSheet(tplSheet(ch,el.dataset.id));
  }})}
 async function sendImg(ch,dataUrl,cap,w,h){const pid='p'+uid();await idbPut(pid,dataUrl);SY.ph[pid]=1;sendMsg(ch,{kind:'img',img:pid,w,h,text:cap||''});chatLive()}
@@ -4052,7 +4067,7 @@ function vObjectW(o){
   else if(tab==='mat')body=wkMats(o);
   else if(tab==='work')body=`<h2>Мои работы <small>${money(earn)}</small></h2><div class="list">${myW.map(w=>workLi(w,false)).join('')||'<p class="empty">По этому объекту записей нет</p>'}</div>`;
   else if(tab==='photo')body=vObjPhoto(o);
-  else body=`<div class="list" style="margin-top:8px">${plans.map(pl=>{const c=safePC(pl);return LI('📐 '+esc(pl.name),`${pl.rooms.length} комн. · стены ${fA(c.walls)} м² · периметр ${fA(c.per)} м`,fA(c.floor)+' м²','openPlan',pl.id,'пол')}).join('')||'<p class="empty">Чертежей нет</p>'}</div>`;
+  else body=`<button class="btn p w" style="margin-top:8px" data-a="newPlanS" data-id="${o.id}">＋ Нарисовать чертёж</button><div class="list" style="margin-top:8px">${plans.map(pl=>{const c=safePC(pl);return LI('📐 '+esc(pl.name),`${pl.rooms.length} комн. · стены ${fA(c.walls)} м² · периметр ${fA(c.per)} м`,fA(c.floor)+' м²','openPlan',pl.id,'пол')}).join('')||'<p class="empty">Чертежей нет</p>'}</div>`;
   const q=encodeURIComponent(o.address||'');
   return `<div class="wrap">
    <div class="card sm"><b>${esc(o.address||'Адрес не указан')}</b>${o.client?`<div class="muted">Заказчик: ${esc(o.client)}</div>`:''}
@@ -4106,15 +4121,18 @@ function wkMats(o){
   return (body||'<p class="empty" style="margin-top:12px">Пока ничего — администратор добавит материалы в смету или расчёт</p>')
     +`<button class="btn w" style="margin-top:12px" data-a="newExp" data-id="${o.id}">🧾 Купил материал — добавить расход</button>`}
 /* чертёж для рабочего: просмотр и PDF, без редактирования */
-function wkPlanSheet(id){return ()=>{const pl=S.plans.find(x=>x.id===id);if(!pl)return {title:'Чертёж',html:'<p class="empty">Нет чертежа</p>'};const c=safePC(pl);
+function wkPlanSheet(id,obj){return ()=>{const pl=obj||S.plans.find(x=>x.id===id);if(!pl)return {title:'Чертёж',html:'<p class="empty">Нет чертежа</p>'};const c=safePC(pl);
   return {title:'📐 '+pl.name,html:`<div id="wkpv" class="card" style="padding:6px;min-height:200px;display:grid;place-items:center"><span class="muted">Рисую…</span></div>
    <div class="kv" style="margin-top:8px"><div><small>Пол</small><b class="n">${fA(c.floor)} м²</b></div><div><small>Стены</small><b class="n">${fA(c.walls)} м²</b></div><div><small>Периметр</small><b class="n">${fA(c.per)} м</b></div><div><small>Комнат</small><b class="n">${pl.rooms.length}</b></div></div>
    ${pl.rooms.length?`<div class="list" style="margin-top:8px">${pl.rooms.map(r=>{const rc=safePC({...pl,rooms:[r]});return `<div class="li"><span class="t"><b>${esc(r.name||'Комната')}</b><small>стены ${fA(rc.walls)} м² · периметр ${fA(rc.per)} м</small></span><span class="n">${fA(rc.floor)} м²</span></div>`}).join('')}</div>`:''}
    <div class="btns" style="margin-top:10px"><button class="btn p" data-s="pdf">📄 PDF</button><button class="btn" data-s="big">🔍 Крупно</button></div>
-   <p class="muted sm" style="margin-top:8px">Чертежи меняет администратор.</p>`,
+   <div class="btns" style="margin-top:8px"><button class="btn" data-s="copy">✏️ Скопировать и изменить</button><button class="btn" data-s="tochat">💬 В чат</button></div>
+   <p class="muted sm" style="margin-top:8px">${pl.by&&pl.by!==me()?'Автор: '+esc(pl.by)+'. ':''}Чужой чертёж меняет его автор или администратор — можно сделать свою копию и отправить её в чат.</p>`,
   init(){let pages=[];setTimeout(()=>{try{pages=gostPages(pl,{fmt:'A4'});const b=g('wkpv');if(b&&pages[0]){const im=new Image();im.src=pages[0].toDataURL('image/png');im.style.cssText='width:100%;border-radius:12px;background:#fff';b.innerHTML='';b.appendChild(im)}}catch(e){const b=g('wkpv');if(b)b.innerHTML='<span class="muted">Не удалось нарисовать</span>'}},30);
     SS.pdf=async()=>{try{toast('Готовлю PDF…');await saveFile(`Чертёж_${fileSafe(pl.name)}.pdf`,pdfFromCanvases(pages.length?pages:gostPages(pl,{fmt:'A4'})))}catch(e){toast('Не удалось')}};
-    SS.big=()=>{if(pages[0])viewPhoto(pages[0].toDataURL('image/png'))}}}}}
+    SS.big=()=>{if(pages[0])viewPhoto(pages[0].toDataURL('image/png'))};
+    SS.copy=()=>{const cp=JSON.parse(JSON.stringify({rooms:pl.rooms,items:pl.items||[]}));const np=put('plans',{id:uid(),objectId:pl.objectId||null,name:pl.name+' — '+chMe(),...cp,_loc:isWorker()?1:undefined});commit(true);backThen(()=>openPage({t:'plan',id:np.id}))};
+    SS.tochat=()=>replaceSheet(planPickChatSheet(pl))}}}}
 function wkInit(){
   const _ew=A.editWork,_nw=A.newWork,_op=A.openPlan,_qt=A.qTask;
   A.openPlan=(el,ev)=>isWorker()?openSheet(wkPlanSheet(el.dataset.id)):_op(el,ev);
@@ -4185,6 +4203,93 @@ function splitSheet(oid){return ()=>{
       if(!n)return toast('Впиши суммы');if(sm>left+0.5&&!confirm(`Забираете ${money(sm)}, а доступно ${money(left)}. Записать всё равно?`))return;commit(true);toast(`Записано: ${money(sm)}`);back()};
   }}}}
 function acctInit(){A.splitObj=el=>openSheet(splitSheet(el.dataset.id));A.dimOpen=el=>dimOpen(el)}
+
+/* ================= права рабочих на сервере =================
+   Правила Supabase из первой версии пускают рабочих только в часть разделов.
+   Чат, чертежи и фото появились позже — им нужно отдельное разрешение (только добавляется, ничего не удаляет). */
+const RLS_SQL=`-- Стройка: рабочим — чат, чертежи, фото и отметки задач.
+-- Только ДОБАВЛЯЕТ разрешения. Старые правила, данные и деньги не трогает.
+drop policy if exists "stroyka_team_read" on public.records;
+drop policy if exists "stroyka_team_insert" on public.records;
+drop policy if exists "stroyka_team_update" on public.records;
+drop policy if exists "stroyka_team_delete" on public.records;
+create policy "stroyka_team_read" on public.records for select to authenticated
+  using (col in ('msgs','plans','photos','img','tasks','events','objects'));
+create policy "stroyka_team_insert" on public.records for insert to authenticated
+  with check (col in ('msgs','plans','photos','img','tasks','expenses'));
+create policy "stroyka_team_update" on public.records for update to authenticated
+  using (col in ('msgs','plans','photos','img','tasks','expenses'))
+  with check (col in ('msgs','plans','photos','img','tasks','expenses'));
+create policy "stroyka_team_delete" on public.records for delete to authenticated
+  using (col in ('msgs','plans'));`;
+function rlsSheet(){return ()=>{const ref=(String(SY.url||'').match(/https:\/\/([a-z0-9]+)\.supabase\.co/)||[])[1];
+  return {title:'Доступ рабочих на сервере',html:`<p class="sm">Сервер (Supabase) с первой версии пускает рабочих только в часть разделов. Чат, чертежи и фото появились позже — поэтому у рабочих чат пустой. Нужно один раз добавить разрешение:</p>
+   <ol class="sm" style="padding-left:18px;margin:8px 0">
+    <li>Нажми «Скопировать» ниже.</li>
+    <li>Нажми «Открыть SQL Editor» — откроется ваш проект Supabase${ref?'':' (или зайди: проект → SQL Editor → New query)'}.</li>
+    <li>Вставь текст и нажми <b>Run</b>. Должно появиться «Success».</li>
+    <li>Рабочим — закрыть и открыть приложение.</li></ol>
+   <textarea id="rlsq" rows="9" readonly style="font:12px/1.35 ui-monospace,monospace;width:100%">${esc(RLS_SQL)}</textarea>
+   <div class="btns" style="margin-top:8px"><button class="btn p" data-s="cp">Скопировать</button>${ref?`<a class="btn" href="https://supabase.com/dashboard/project/${ref}/sql/new" target="_blank" rel="noopener" style="display:grid;place-items:center">Открыть SQL Editor</a>`:''}</div>
+   <p class="muted sm" style="margin-top:10px">Это только добавляет права: рабочие смогут читать и писать сообщения, чертежи, фото, отмечать задачи и добавлять расходы. Оплаты, сметы, прайс и касса не открываются — их приложение рабочим и так не загружает. Данные не удаляются.</p>
+   <button class="btn w" style="margin-top:6px" data-s="chk">Проверить доступ с этого телефона</button><div id="acc"></div>`,
+  init(){SS.cp=()=>{const t=RLS_SQL;(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast('Скопировано — вставь в SQL Editor'),()=>{const e=g('rlsq');e.removeAttribute('readonly');e.select();document.execCommand('copy');e.setAttribute('readonly','');toast('Скопировано')})};
+    SS.chk=()=>accessCheck('acc')}}}}
+async function accessCheck(boxId){const b=g(boxId);if(!b)return;if(!sb||!session){b.innerHTML='<p class="empty">Сначала войди в синхронизацию</p>';return}
+  b.innerHTML='<p class="muted sm">Проверяю…</p>';
+  const L=[['objects','Объекты'],['events','Выходы'],['tasks','Задачи'],['msgs','Сообщения чата'],['plans','Чертежи'],['photos','Фото объектов']],out=[];
+  for(const [c,t] of L){try{const {count,error}=await sb.from('records').select('id',{count:'exact',head:true}).eq('col',c);out.push([t,error?'❌ '+error.message:(count||0)+' шт.'])}catch(e){out.push([t,'❌'])}}
+  let w='';try{const id='msgs/__probe_'+uid();const {error}=await sb.from('records').upsert({id,col:'msgs',data:{id:id.slice(5),ch:'__probe',kind:'txt',text:''},updated_at:Date.now()},{onConflict:'id'});
+    if(error)w='❌ '+error.message;else{w='✅ можно';await sb.from('records').delete().in('id',[id])}}catch(e){w='❌ '+e.message}
+  const bad=/❌/.test(w)||(isWorker()&&/^0 /.test(out[3][1])&&S.msgs.length===0);
+  b.innerHTML=`<div class="card sm" style="margin-top:8px">${out.map(([t,v2])=>`<div class="mrow"><span>Видно: ${t}</span><b>${esc(v2)}</b></div>`).join('')}<div class="mrow"><span>Отправка сообщений</span><b>${esc(w)}</b></div></div>
+   ${bad?`<div class="alert warn" style="margin-top:8px"><i></i><span>Сервер не пускает в чат. ${isWorker()?'Скажи администратору: Меню → Люди и доступ → «Настроить».':'Выполни SQL выше в Supabase.'}</span></div>`:`<p class="muted sm" style="margin-top:6px">${isWorker()?'Если сообщений 0, а в чате у админа они есть — права не настроены.':'Админу видно всё. Проверь то же самое с телефона рабочего: Меню → Синхронизация → «Проверить доступ».'}</p>`}`}
+
+/* ================= чертежи: рабочие рисуют, админ правит; чертёж в чате ================= */
+const canEditPlan=pl=>!isWorker()||!!pl&&(pl.by===me()||!!pl._loc);
+function planPageExtras(pl){const old=g('pcSend');if(old)old.remove();
+  if(ui.planChat&&ui.planChat.id===pl.id){const b=document.createElement('button');b.id='pcSend';b.className='btn p pcsend';b.dataset.a='planToChat';b.textContent='Отправить в чат ➤';document.body.appendChild(b)}
+  if(isWorker()&&(SY.deny||{}).plans)setTimeout(()=>toast('Сервер пока не принимает чертежи от рабочих — отправь его в чат кнопкой 💬'),400)}
+async function sendPlanMsg(ch,pl){
+  if(ED&&ED.id===pl.id)ED.saveNow();
+  let pid=null,w=4,h=3;try{const c=planCanvas(pl,1000,800);w=c.width;h=c.height;const d=c.toDataURL('image/jpeg',0.82);pid='p'+uid();await idbPut(pid,d);SY.ph[pid]=1}catch(e){console.error(e)}
+  const c=safePC(pl),snap=JSON.parse(JSON.stringify({name:pl.name,objectId:pl.objectId||null,rooms:pl.rooms||[],items:pl.items||[],by:pl.by||chMe()}));
+  sendMsg(ch,{kind:'plan',planId:pl.id,objectId:pl.objectId||'',name:pl.name,img:pid,w,h,sum:{floor:r2(c.floor),walls:r2(c.walls),per:r2(c.per),rooms:(pl.rooms||[]).length},snap});
+  toast('Чертёж отправлен в чат')}
+function chatChoices(){const people=[...new Set([...team(),...workerNames()])].filter(n=>n&&n!==chMe()&&!(isWorker()&&false));return ['all',...people.map(dmCh)]}
+function planPickChatSheet(pl){return ()=>({title:'Куда отправить',html:`<div class="list">${chatChoices().map(ch=>`<button class="li" data-s="pch" data-id="${esc(ch)}"><span class="av">${ch==='all'?'👥':esc(initials(chatTitle(ch)))}</span><span class="t"><b>${esc(chatTitle(ch))}</b></span></button>`).join('')}</div>`,
+  init(){SS.pch=async el=>{const ch=el.dataset.id;await sendPlanMsg(ch,pl);backThen(()=>{})}}})}
+function planChatSheet(ch){return ()=>{
+  const mine=isWorker()?wkObjIds():new Set();
+  const objs=activeObjs().slice().sort((a,b)=>(mine.has(b.id)-mine.has(a.id))||String(a.name).localeCompare(b.name));
+  const ready=S.plans.slice().sort((a,b)=>(b.ts||0)-(a.ts||0)).slice(0,15);
+  return {title:'Чертёж в чат',html:`${F('Название',I('pc_name','','placeholder="Например: Ванная, розетки"'))}
+   <div class="f"><span>Для какого объекта</span><div class="chips" id="pc_obj" style="flex-wrap:wrap">${chip('Без объекта',!objs.length,'pcObj','','data-s="1"')}${objs.map((o,i)=>chip(esc(o.name),i===0,'pcObj',o.id,'data-s="1"')).join('')}</div></div>
+   <div class="f"><span>Начать с</span><div class="chips" id="pc_tpl">${chip('Комната 4×3',true,'pcTpl','room','data-s="1"')}${chip('Пустой лист',false,'pcTpl','empty','data-s="1"')}</div></div>
+   <button class="btn p w" style="margin-top:12px" data-s="pcGo">✏️ Нарисовать и отправить</button>
+   <p class="muted sm" style="margin:6px 4px 0">Откроется полный редактор: комнаты, размеры, двери, окна, электрика, сантехника. Внизу будет кнопка «Отправить в чат».</p>
+   ${ready.length?`<h2>Или отправить готовый</h2><div class="list">${ready.map(pl=>{const o=S.objects.find(x=>x.id===pl.objectId);return `<button class="li" data-s="pcSendOld" data-id="${pl.id}"><span>📐</span><span class="t"><b>${esc(pl.name)}</b><small>${o?'🏠 '+esc(o.name):'без объекта'}${pl.by?' · '+esc(pl.by):''}</small></span><span class="n">${fA(safePC(pl).floor)} м²</span></button>`}).join('')}</div>`:''}`,
+  init(){SS.pc_o=objs[0]?objs[0].id:'';SS.pc_t='room';
+    SS.pcObj=el=>{SS.pc_o=el.dataset.id;setChip('pc_obj',SS.pc_o)};SS.pcTpl=el=>{SS.pc_t=el.dataset.id;setChip('pc_tpl',SS.pc_t)};
+    SS.pcGo=()=>{const name=v('pc_name').trim()||(SS.pc_o?oname(SS.pc_o):'Чертёж'),o={name,empty:SS.pc_t==='empty',chat:ch},oid=SS.pc_o||null;backThen(()=>newPlan(oid,o))};
+    SS.pcSendOld=async el=>{const pl=S.plans.find(x=>x.id===el.dataset.id);if(!pl)return;await sendPlanMsg(ch,pl);backThen(()=>setTimeout(chatLive,100))}}}}}
+function planFromMsg(m){return {...JSON.parse(JSON.stringify(m.snap||{rooms:[],items:[]})),id:m.planId,name:m.name||(m.snap&&m.snap.name)||'Чертёж',objectId:m.objectId||null}}
+function plansInit2(){
+  A.openPlan=(el,ev)=>{const pl=S.plans.find(x=>x.id===el.dataset.id);if(isWorker()&&!canEditPlan(pl))return openSheet(wkPlanSheet(el.dataset.id));openPage({t:'plan',id:el.dataset.id})};
+  Object.assign(A,{
+    async planToChat(){const pl=ED&&ED.plan;if(!pl)return;ED.saveNow();
+      if(ui.planChat&&ui.planChat.id===pl.id){const ch=ui.planChat.ch;ui.planChat=null;const b=g('pcSend');if(b)b.remove();await sendPlanMsg(ch,pl);history.back();setTimeout(()=>{if(curPage()&&curPage().t==='chat')chatLive()},300);return}
+      openSheet(planPickChatSheet(pl))},
+    msgPlan(el){const m=S.msgs.find(x=>x.id===el.dataset.id);if(!m)return;let pl=S.plans.find(p=>p.id===m.planId);
+      if(pl){if(canEditPlan(pl))return openPage({t:'plan',id:pl.id});return openSheet(wkPlanSheet(pl.id))}
+      if(!isWorker()||m.by===chMe()){pl=put('plans',{...planFromMsg(m),by:m.snap&&m.snap.by||m.by,...(isWorker()?{_loc:1}:{})});commit(true);return openPage({t:'plan',id:pl.id})}
+      openSheet(wkPlanSheet(null,planFromMsg(m)))},
+    msgPlanSave(el){const m=S.msgs.find(x=>x.id===el.dataset.id);if(!m)return;const pl=put('plans',{...planFromMsg(m),by:m.snap&&m.snap.by||m.by});commit(true);toast(`Чертёж сохранён${m.objectId?' в «'+oname(m.objectId)+'»':''}`);chatLive()},
+    async msgPlanPdf(el){const m=S.msgs.find(x=>x.id===el.dataset.id);if(!m)return;const pl=S.plans.find(p=>p.id===m.planId)||planFromMsg(m);
+      try{toast('Готовлю PDF…');await saveFile(`Чертёж_${fileSafe(pl.name)}.pdf`,pdfFromCanvases(gostPages(pl,{fmt:'A4'})))}catch(e){toast('Не удалось')}},
+  });
+  SY.deny={};
+}
 
 /* ================= Чертежи: план, ГОСТ-лист, электрика, сантехника, фигуры, 3D ================= */
 const WT=0.12; // толщина стены, м
@@ -4519,7 +4624,7 @@ const TOOLS=[['','↖','Выбор'],['room','⬚','Комната'],['el','⚡'
 const vPlanSkeleton=()=>`<div class="ed" id="edRoot">
   <div class="edbar"><div class="seg"><button data-e="mode" data-id="2d" class="on">План</button><button data-e="mode" data-id="gost">ГОСТ</button><button data-e="mode" data-id="3d">3D</button></div>
    <button class="ico" data-e="wallMode" id="wmB" hidden aria-label="Вид стен">▣</button>
-   <button class="ico" data-e="undo" aria-label="Отменить">↶</button><button class="ico" data-e="redo" aria-label="Повторить">↷</button><button class="ico" data-e="fit" aria-label="Показать всё">⤢</button><button class="ico" data-e="full" id="fullB" aria-label="Во весь экран">⛶</button></div>
+   <button class="ico" data-e="undo" aria-label="Отменить">↶</button><button class="ico" data-e="redo" aria-label="Повторить">↷</button><button class="ico" data-e="fit" aria-label="Показать всё">⤢</button><button class="ico" data-e="full" id="fullB" aria-label="Во весь экран">⛶</button><button class="ico" data-a="planToChat" aria-label="Отправить в чат">💬</button></div>
   <div class="edt" id="edt">${TOOLS.map(([k,i,t])=>`<button data-e="tool" data-id="${k}" class="${k===''?'on':''}"><b>${i}</b><small>${t}</small></button>`).join('')}</div>
   <div class="edc" id="edc"><canvas id="c2d"></canvas><div id="c3d" hidden></div></div>
   <div class="edp" id="edp"></div></div>`;
@@ -5066,7 +5171,8 @@ function gostSheet(pid){return ()=>{
 /* ================= вкладка «Чертежи» ================= */
 function newPlan(oid,o={}){
   oid=oid||null;const n=S.plans.filter(x=>(x.objectId||null)===oid).length;
-  const p=put('plans',{id:uid(),objectId:oid,name:o.name||(n?'План '+(n+1):'План'),rooms:o.empty?[]:[mkRoom(0,0,4,3,'Комната 1')],items:[]});
+  const p=put('plans',{id:uid(),objectId:oid,name:o.name||(n?'План '+(n+1):'План'),rooms:o.empty?[]:[mkRoom(0,0,4,3,'Комната 1')],items:[],...(isWorker()?{_loc:1}:{})});
+  if(o.chat)ui.planChat={ch:o.chat,id:p.id};
   commit(true);openPage({t:'plan',id:p.id});
 }
 function vPlans(){
