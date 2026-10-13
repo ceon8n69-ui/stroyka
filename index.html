@@ -469,6 +469,14 @@ body.wk [data-s=toEst],body.wk [data-e=toEst],body.wk .adm{display:none!importan
 .mcardx{margin-top:8px;padding:14px 16px}.mcardx hr{border:0;border-top:1px dashed var(--line);margin:8px 0}
 .mrow{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:5px 0}.mrow span{display:flex;flex-direction:column;min-width:0}.mrow small{color:var(--muted);font-size:12px;font-weight:500}
 .mrow.pos b{color:var(--good,#1f9d6b)}.mrow.warn b{color:var(--warn,#c98400)}.mrow.big span{font-weight:800;font-size:16px}.mrow.big b{font-size:24px}.mrow.big.neg b{color:var(--bad)}
+.dimb{font-size:14px;font-weight:700;color:var(--ink);text-decoration:underline;padding:4px 0;background:none;border:0}
+.dimp{margin-top:8px;background:var(--card);border:1.5px solid var(--line);border-radius:18px;padding:12px}
+.dimp input{min-height:42px;padding:6px 10px;text-align:center;font-weight:650;width:100%}
+.drow{display:flex;align-items:center;gap:6px;margin-top:6px}.drow input{flex:1;min-width:0}.drow input[data-k=n]{flex:0 0 56px}.drow span{color:var(--muted)}
+.dmi,.dmx{flex:0 0 38px;height:38px;border-radius:12px;border:1.5px solid var(--line);background:none;font-weight:800;color:var(--ink)}.dmi.on{background:var(--bad);color:#fff;border-color:var(--bad)}
+.dg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+.dres{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-top:10px;padding-top:8px;border-top:1px dashed var(--line)}.dres span{color:var(--muted);font-size:12px}.dres b{font-size:20px;white-space:nowrap}
+.dl{display:flex;flex-direction:column;gap:3px;min-width:0}.dl small{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.dhead{margin-top:0;font-size:11px;color:var(--muted)}.dhead span:first-child{flex:1}
 
 </style>
 </head>
@@ -573,7 +581,7 @@ function mark(c,id){const k=c+'/'+id;SY.pend[k]=(SY.pend[k]||0)+1}
 function commit(noRender){saveLocal();saveSync();setStatus();schedule(600);if(!noRender)render()}
 
 function seedRates(){
-  if(S.settings.seeded)return;
+  if(S.settings.seeded||SY.role==='worker')return;
   S.settings.seeded=1;
   if(S.rates.length)return;
   SEED.forEach(([cat,name,unit,worker,client],i)=>{const id='seed'+(i+1);S.rates.push({id,cat,name,unit,worker,client,ts:0});mark('rates',id)});
@@ -785,7 +793,7 @@ function workSheet(pre={}){return ()=>{
   ${F('Рабочий',`<div class="chips" id="pickWkC">${names.map(n=>chip(esc(n),false,'pickWk',n,'data-s="1"')).join('')}<button class="chip add" data-s="newWk">＋ Новый</button></div><div id="newWkBox" hidden class="qadd" style="padding:0"><input id="nwk" placeholder="Имя рабочего"><button class="btn p" data-s="addWk">✓</button></div>`)}
   <div class="f"><span>Работа</span><div id="rateBox"></div></div>
   <div id="detail" hidden>
-    ${F('Количество',`<div class="step"><button data-s="dec">−</button><input id="wq" inputmode="decimal" autocomplete="off"><button data-s="inc">+</button></div>`,'<span id="unitH"></span>')}
+    ${F('Количество',`<div class="step"><button data-s="dec">−</button><input id="wq" inputmode="decimal" autocomplete="off"><button data-s="inc">+</button></div>`,'<span id="unitH"></span> '+dimBtn('#wq','',''))}
     <div class="two">${F('Рабочему за ед., ₴',N('wp',''))}${F('Заказчику за ед., ₴',N('cp',''))}</div>
     <div class="res"><div class="main"><small>Рабочему</small><b class="n" id="rW">0 ₴</b></div><div><small>Заказчику</small><b class="n" id="rC">0 ₴</b></div><div><small>Фирме</small><b class="n" id="rF">0 ₴</b></div></div>
     <details><summary>Дата, заметка</summary><div class="two">${F('Дата',`<input id="wd" type="date" value="${w.date||today()}">`)}${F('Заметка',I('wn',w.note||''))}</div></details>
@@ -1403,6 +1411,9 @@ const MATS={
   serp:{n:'Серпянка 50 мм',u:'м',pack:45,pn:'рулон',pr:90},
   primer:{n:'Грунтовка глубокого проникновения',u:'л',pack:10,pn:'канистра',pr:420},
   corner:{n:'Перфоуголок, 3 м',u:'шт',pr:45},
+  gglue:{n:'Клей гипсовый монтажный (Перлфикс)',u:'кг',pack:30,pn:'мешок',pr:360},
+  sandw:{n:'Сэндвич-панель ПВХ 10 мм 1500×3000',u:'м²',pack:4.5,pn:'лист',pr:1250},
+  fstart:{n:'Профиль стартовый для откосов ПВХ, 3 м',u:'шт',pr:85},
   putty:{n:'Шпаклёвка финишная',u:'кг',pack:25,pn:'мешок',pr:380},
   paint:{n:'Краска водоэмульсионная',u:'л',pack:10,pn:'ведро',pr:1250},
   plaster:{n:'Штукатурка гипсовая',u:'кг',pack:30,pn:'мешок',pr:340},
@@ -1578,8 +1589,10 @@ function calcRows(res){
     if(mt.step){buy=ceilE(q/mt.step)*mt.step;unitBuy=mt.u}else if(mt.pack>1||mt.pn){buy=ceilE(q/mt.pack);unitBuy=mt.pn||mt.u}else{buy=mt.u==='шт'||mt.u==='рулон'||mt.u==='пачка'?ceilE(q):r2(q);unitBuy=mt.u}
     const sumv=mt.price?(mt.step?buy*mt.price:buy*mt.price):0;
     return {key,mt,q,buy,unitBuy,sum:sumv}});
-  const wm={};res.works.forEach(([n,q])=>{wm[n]=(wm[n]||0)+q});
-  const works=Object.entries(wm).map(([n,q])=>{const wp=workPrice(n);return {n,q:r2(q),...wp,sum:r2(q)*wp.price,wsum:r2(q)*wp.worker}});
+  const wm={};res.works.forEach(([n,q,k])=>{const key=n+'|'+(k||1);wm[key]=(wm[key]||0)+q});
+  const works=Object.entries(wm).map(([key,q])=>{const i=key.lastIndexOf('|'),n=key.slice(0,i),k=+key.slice(i+1)||1,wp={...workPrice(n)};
+    if(k!==1){wp.price=Math.round(wp.price*k);wp.worker=Math.round(wp.worker*k);wp.title=wp.title+` (×${String(k).replace('.',',')})`}
+    return {n,q:r2(q),...wp,sum:r2(q)*wp.price,wsum:r2(q)*wp.worker}});
   return {mats,works,matTot:sum(mats,'sum'),workTot:sum(works,'sum'),wTot:sum(works,'wsum'),noPrice:mats.filter(x=>!x.mt.price).length,refN:mats.filter(x=>x.mt.ref).length,noWork:works.filter(x=>!x.price).length};
 }
 const perOf=mt=>mt.step?mt.u:(mt.pn||mt.u);
@@ -1594,7 +1607,7 @@ function calcMoneyHtml(rows,res){
   const inc=rows.workTot-rows.wTot;
   if(typeof isWorker==='function'&&isWorker())return `${(res.notes||[]).map(n=>`<p class="muted sm" style="margin:8px 2px 0">${esc(n)}</p>`).join('')}
    ${rows.mats.length?`<h2>Материалы</h2><div class="list">${rows.mats.map(x=>`<div class="li"><span class="t"><b>${esc(x.mt.n)}</b><small>нужно ${qf(r2(x.q))} ${esc(x.mt.u)}</small></span><span class="r"><b class="n">${qf(x.buy)}</b><small>${esc(x.unitBuy||x.mt.u)}</small></span></div>`).join('')}</div>`:''}
-   ${rows.works.length?`<h2>Работы</h2><div class="list">${rows.works.map(x=>`<div class="li"><span class="t"><b>${esc(x.title)}</b><small>${qf(x.q)} ${esc(x.unit)}</small></span>${x.wsum?`<span class="r"><span class="n">${money(x.wsum)}</span><small>вам</small></span>`:''}</div>`).join('')}</div>`:''}`;
+   ${rows.works.length?`<h2>Работы</h2><div class="list">${rows.works.map(x=>`<div class="li"><span class="t"><b>${esc(x.title)}</b><small>${qf(x.q)} ${esc(x.unit)}</small></span></div>`).join('')}</div>`:''}`;
   return `${(res.notes||[]).map(n=>`<p class="${/Ошибка|укажи/.test(n)?'warn':'muted'} sm" style="margin:8px 2px 0">${esc(n)}</p>`).join('')}
    <div class="kv" style="margin-top:12px"><div><small>Материалы</small><b class="n">${rows.refN?'≈ ':''}${money(rows.matTot)}</b></div><div><small>Работы</small><b class="n">${money(rows.workTot)}</b></div>
     <div class="wide row"><span><small>Итого заказчику</small><b class="n" style="font-size:24px;color:var(--accent)">${money(rows.matTot+rows.workTot)}</b></span></div>
@@ -1775,6 +1788,23 @@ const JOBS={
       if(v.riser==='1')M.work('Врезка в стояк',1);if(v.meter==='2')M.work('Установка счётчика воды',2);
       if(v.wall!=='none')M.work(`Штробление под трубы в ${v.wall==='beton'?'бетоне':'кирпиче'}, 5 см`,(cw+hw)*3+dr*1.5);
       M.note('Унитаз, ванна, смесители и бойлер — по выбору заказчика, в материалы не входят.')}},
+  slope:{n:'Откосы',i:'🪟',g:'Внутри',d:'Окна и двери: п.м. по наружному краю, площадь, наценка за глубину',f:[
+    ['n','Проёмов, шт','1'],['W','Ширина у окна, см','96'],['H','Высота у окна, см','142'],['D','Глубина откоса, см','42'],
+    ['Wo','Ширина по наружному краю (верх), см',''],['Ho','Высота по наружному краю, см',''],
+    ['sides','Какие откосы','3',[['3','2 боковых + верх'],['2','Только боковые'],['4','Боковые + верх + низ']]],
+    ['type','Из чего','gkl',[['gkl','ГКЛ на клей'],['gklp','ГКЛ на профиль'],['plast','Штукатурка'],['pvc','Сэндвич ПВХ']]],
+    ['fin','Отделка','paint',[['paint','Шпаклёвка + покраска'],['putty','Только шпаклёвка'],['none','Без отделки']]],
+    ['kd','Наценка за глубину','auto',[['auto','Авто: ×1,3 если глубже 30 см'],['1','Без наценки'],['1.5','×1,5']]]],
+    run(v,M){const r=slopeCalc({W:v.W,H:v.H,D:v.D,Wo:v.Wo,Ho:v.Ho,sides:v.sides,n:v.n,unit:'cm'});if(!r.lm){M.note('Укажи ширину, высоту и глубину');return}
+      const k=v.kd==='auto'?(r.Dcm>30?1.3:1):+v.kd||1,A=r.area,L=r.lm;
+      if(v.type==='gkl'||v.type==='gklp'){M.mat('gkl',A*1.15);M.work('Откосы из гипсокартона',L,k);M.mat('fug',L*0.35);M.mat('serp',L*1.1);
+        if(v.type==='gkl'){M.mat('gglue',A*4);M.mat('foam',M.n(v.n)*0.5)}else{M.mat('pn',Math.ceil(L*2*1.05/3));M.mat('s25',A*25);M.mat('dowel',L*4)}}
+      if(v.type==='plast'){M.mat('plaster',A*15);M.mat('primer',A*0.2);M.work('Ручная штукатурка откосов',L,k)}
+      if(v.type==='pvc'){M.mat('sandw',A*1.1);M.mat('fstart',Math.ceil(L*1.05/3));M.mat('foam',M.n(v.n));M.work('Монтаж откосов из сэндвич-панелей',L,k)}
+      if(v.type!=='pvc'){M.mat('corner',Math.ceil(r.outer*1.05/3));
+        if(v.fin!=='none'){M.mat('putty',A*1.2);M.mat('primer',A*0.15);M.work('Подготовка откосов под покраску',L,k)}
+        if(v.fin==='paint'){M.mat('paint',A*0.3);M.work('Покраска откосов',L)}}
+      M.note(r.text);if(k!==1)M.note(`Глубина ${r.Dcm} см — цена работ ×${String(k).replace('.',',')} (широкий откос: больше материала и работы).`)}},
   doors:{n:'Двери',i:'🚪',g:'Внутри',d:'Установка межкомнатных и входных',f:[['inner','Межкомнатных, шт','3'],['entr','Входных, шт','0'],
     ['nal','Наличники','1',[['1','Ставим'],['0','Нет']]],['widen','Расширить проёмов','0']],
     run(v,M){const a=M.n(v.inner),b=M.n(v.entr);M.mat('foam',a+b*2);if(v.nal==='1')M.mat('nal',a*2);
@@ -1923,7 +1953,7 @@ const JOBG=['Внутри','Стены и фундамент','Крыша и ф�
 function jobDefaults(id){const v={};JOBS[id].f.forEach(([k,,d])=>v[k]=d);return v}
 function runJob(id,v){
   const m={},works=[],notes=[],mat=(k,q)=>{if(q>0&&MATS[k])m[k]=(m[k]||0)+q},n=x=>Math.max(0,num(x));
-  const M={n,mat,work:(nm,q)=>{if(q>0.001)works.push([nm,q])},note:t=>notes.push(t),
+  const M={n,mat,work:(nm,q,k)=>{if(q>0.001)works.push([nm,q,k||1])},note:t=>notes.push(t),
     reb:(d,len)=>{const k='reb'+d;mat(k,len*1.05);return len*1.05*(KGM[k]||0)},
     conc:(V,grade,how,noWork)=>{if(!(V>0))return;if(how==='hand'){const c=grade==='300'?[360,.45,.78]:[290,.5,.8];mat('cement',V*1.03*c[0]);mat('sand',V*1.03*c[1]);mat('gravel',V*1.03*c[2]);
         if(!noWork){M.work('Приготовление бетона',V);M.work('Бетонирование вручную (без приготовления раствора)',V)}}
@@ -1964,6 +1994,75 @@ function jobSheet(id,init={}){
 }}
 function openCalcAny(id){const x=S.calcs.find(q=>q.id===id);if(x&&x.c&&x.c.job&&JOBS[x.c.job])openSheet(jobSheet(x.c.job,{calcId:id}));else openSheet(calcSheet({id}))}
 
+/* ---------- откосы: п.м. по наружному краю + площадь ---------- */
+function slopeCalc(o){const cm=o.unit!=='m',f=x=>{const n=evalNum(x);return cm?n/100:n};
+  const W=f(o.W),H=f(o.H),D=f(o.D),Wo=f(o.Wo)||W,Ho=f(o.Ho)||H,n=Math.max(1,Math.round(evalNum(o.n)||1)),sd=+o.sides||3;
+  if(!(W>0||H>0)||!(D>0))return {lm:0,area:0,outer:0,text:''};
+  const flW=Math.max(0,(Wo-W)/2),flH=Math.max(0,Ho-H),dS=Math.hypot(D,flW),dT=Math.hypot(D,flH);
+  const sideL=Ho,topL=Wo,lm1=(sd>=2?2*sideL:0)+(sd>=3?topL:0)+(sd>=4?topL:0);
+  const a1=(sd>=2?2*(H+Ho)/2*dS:0)+(sd>=3?(W+Wo)/2*dT:0)+(sd>=4?(W+Wo)/2*D:0);
+  const outer1=(sd>=2?2*sideL:0)+(sd>=3?topL:0);
+  const t=x=>String(r2(x)).replace('.',',');
+  const text=`На один проём: ${sd>=2?`боковые 2 × ${t(sideL)}`:''}${sd>=3?` + верх ${t(topL)}`:''}${sd>=4?` + низ ${t(topL)}`:''} = ${t(lm1)} п.м. (по наружному краю), площадь ${t(a1)} м²${n>1?`. Проёмов: ${n}`:''}.`;
+  return {lm:r2(lm1*n),area:r2(a1*n),outer:outer1*n,Dcm:Math.round(D*100),text,lm1,a1}}
+const evalNum=x=>{let s=String(x==null?'':x).trim().replace(/,/g,'.').replace(/[×xх]/gi,'*').replace(/[^0-9.+\-*/() ]/g,'');if(!s)return 0;
+  try{const r=Function('"use strict";return ('+s+')')();return isFinite(r)?+r:0}catch(e){return 0}};
+
+/* ---------- «📐 По размерам» для любого поля количества ---------- */
+const dimMode=(u,t)=>/откос/i.test(t||'')?'slope':/м²|м2|кв/i.test(u||'')?'area':/м³|м3|куб/i.test(u||'')?'vol':/^(п\.?\s?м\.?|м\.?\s?п\.?|пог|м|м\.)$/i.test(String(u||'').trim())||/пог/i.test(u||'')?'len':'len';
+function dimBtn(sel,u,t){return `<button type="button" class="link dimb" data-a="dimOpen" data-for="${esc(sel)}" data-u="${esc(u||'')}" data-t="${esc(t||'')}">📐 По размерам</button>`}
+function dimOpen(el){
+  const sel=el.dataset.for,tg=document.querySelector(sel);if(!tg)return;
+  if(el._box&&el._box.isConnected){el._box.remove();el._box=null;return}
+  const u=el.dataset.u||(typeof SS!=='undefined'&&SS.rate&&SS.rate.unit)||'',t=el.dataset.t||(SS.rate&&SS.rate.name)||'';
+  let unitCm=true;try{unitCm=localStorage.getItem('stroyka.dimU')!=='m'}catch(e){}
+  const st={mode:dimMode(u,t),rows:[{a:'',b:'',c:'',n:'1',minus:false}],sl:{W:'',H:'',D:'',Wo:'',Ho:'',sides:'3',n:'1'},k:1};
+  const box=document.createElement('div');box.className='dimp';el._box=box;const host=el.closest('.estl');(host||el).insertAdjacentElement('afterend',box);
+  const MODES=[['len','Длины'],['area','Площадь'],['vol','Объём'],['slope','Откосы']];
+  const fm=x=>{const n=evalNum(x);return unitCm?n/100:n};
+  const res=()=>{
+    if(st.mode==='slope'){const r=slopeCalc({...st.sl,unit:unitCm?'cm':'m'});st.k=r.Dcm>30?1.3:1;return {q:r.lm,txt:r.text||'Укажи ширину, высоту и глубину',u:'п.м.',area:r.area,D:r.Dcm}}
+    let q=0;const parts=[];st.rows.forEach(r=>{const a=fm(r.a),b=fm(r.b),c=fm(r.c),n=evalNum(r.n)||1;let x=0;
+      if(st.mode==='len')x=a*n;else if(st.mode==='area')x=a*b*n;else x=a*b*c*n;if(!x)return;q+=r.minus?-x:x;
+      parts.push((r.minus?'− ':'')+(st.mode==='len'?`${qf(r2(a))}`:st.mode==='area'?`${qf(r2(a))}×${qf(r2(b))}`:`${qf(r2(a))}×${qf(r2(b))}×${qf(r2(c))}`)+(n!==1?` ×${qf(n)}`:''))});
+    return {q:r2(Math.max(0,q)),txt:parts.join(' + ').replace(/\+ −/g,'−'),u:st.mode==='len'?'п.м.':st.mode==='area'?'м²':'м³'}};
+  const draw=()=>{const U=unitCm?'см':'м',I=(k,v,ph,i)=>`<input data-k="${k}" ${i!=null?`data-i="${i}"`:''} value="${esc(v)}" placeholder="${ph}" inputmode="decimal" autocomplete="off">`;
+    let body='';
+    const L=(t,h)=>`<label class="dl"><small>${t}</small>${h}</label>`;
+    if(st.mode==='slope'){const s2=st.sl;body=`<div class="dg3">${L('Ширина у окна',I('W',s2.W,U))}${L('Высота у окна',I('H',s2.H,U))}${L('Глубина',I('D',s2.D,U))}</div>
+      <div class="dg3" style="margin-top:6px">${L('Верх снаружи',I('Wo',s2.Wo,'= ширине'))}${L('Высота снаружи',I('Ho',s2.Ho,'= высоте'))}${L('Проёмов',I('n',s2.n,'1'))}</div>
+      <div class="chips" style="margin-top:6px">${[['2','бока'],['3','бока + верх'],['4','+ низ']].map(([k,l])=>`<button type="button" class="chip ${s2.sides===k?'on':''}" data-dx="sides" data-id="${k}">${l}</button>`).join('')}</div>
+      <small class="muted">«Верх снаружи» — длина верхнего откоса по наружному краю, если откос расширяется (например 114 при 96 у окна). Пусто — без расширения.</small>`}
+    else body=`<div class="drow dhead"><span>${st.mode==='len'?'длина, '+U:st.mode==='area'?'длина × ширина, '+U:'длина × ширина × высота, '+U}</span><span style="flex:0 0 56px;text-align:center">шт</span>${st.mode==='area'?'<span style="flex:0 0 38px"></span>':''}<span style="flex:0 0 38px"></span></div>`+st.rows.map((r,i)=>`<div class="drow">${I('a',r.a,st.mode==='len'?'длина':'длина',i)}${st.mode!=='len'?'<span>×</span>'+I('b',r.b,'ширина',i):''}${st.mode==='vol'?'<span>×</span>'+I('c',r.c,'высота',i):''}<span>×</span>${I('n',r.n,'шт',i)}
+      ${st.mode==='area'?`<button type="button" class="dmi ${r.minus?'on':''}" data-dx="minus" data-i="${i}" title="вычесть (окно, дверь)">−</button>`:''}<button type="button" class="dmx" data-dx="rm" data-i="${i}">✕</button></div>`).join('')
+      +`<button type="button" class="chip add" data-dx="add" style="margin-top:6px">＋ ${st.mode==='area'?'ещё стена / вычесть проём':'ещё размер'}</button>`;
+    box.innerHTML=`<div class="chips" style="flex-wrap:wrap">${MODES.map(([k,l])=>`<button type="button" class="chip ${st.mode===k?'on':''}" data-dx="mode" data-id="${k}">${l}</button>`).join('')}</div>
+      <div class="chips" style="margin-top:6px"><small class="muted" style="align-self:center">Размеры в</small><button type="button" class="chip ${unitCm?'on':''}" data-dx="u" data-id="cm">см</button><button type="button" class="chip ${!unitCm?'on':''}" data-dx="u" data-id="m">метрах</button><small class="muted" style="align-self:center">· можно «142*2+114»</small></div>
+      <div style="margin-top:8px">${body}</div><div class="dtail"></div>`;tail()};
+  const tail=()=>{const r=res(),T=box.querySelector('.dtail');if(!T)return;
+    T.innerHTML=`<div class="dres"><span>${esc(r.txt||'')}</span><b>= ${qf(r.q)} ${r.u}</b></div>
+      ${st.mode==='slope'&&r.D>30&&!st.kDone&&(g('cp')||g('wp'))?`<button type="button" class="btn w" data-dx="k" style="margin-top:6px">Глубина ${r.D} см — поднять цены ×1,3</button>`:''}
+      ${u&&r.u&&!new RegExp(r.u.replace('.','\\.'),'i').test(u)&&!(r.u==='п.м.'&&/^(м|п\.м)/i.test(u))?`<p class="warn sm" style="margin:6px 0 0">Работа в «${esc(u)}», а посчитано в ${r.u}</p>`:''}
+      <button type="button" class="btn p w" data-dx="ok" style="margin-top:8px" ${r.q?'':'disabled'}>Подставить ${qf(r.q)}</button>`};
+  draw();
+  const keepFocus=(k,i)=>{const e=box.querySelector(`input[data-k="${k}"]${i!=null?`[data-i="${i}"]`:''}`);if(e){e.focus();const L=e.value.length;try{e.setSelectionRange(L,L)}catch(_){}}};
+  box.addEventListener('input',ev=>{ev.stopPropagation();const e=ev.target,k=e.dataset.k;if(!k)return;
+    if(st.mode==='slope')st.sl[k]=e.value;else st.rows[+e.dataset.i][k]=e.value;
+    tail()});
+  box.addEventListener('click',ev=>{const b=ev.target.closest('[data-dx]');if(!b)return;ev.preventDefault();ev.stopPropagation();const x=b.dataset.dx,i=+b.dataset.i;
+    if(x==='mode')st.mode=b.dataset.id;
+    if(x==='u'){unitCm=b.dataset.id==='cm';try{localStorage.setItem('stroyka.dimU',unitCm?'cm':'m')}catch(e){}}
+    if(x==='add')st.rows.push({a:'',b:'',c:'',n:'1',minus:st.mode==='area'&&st.rows.length>0&&false});
+    if(x==='rm'){st.rows.splice(i,1);if(!st.rows.length)st.rows.push({a:'',b:'',c:'',n:'1'})}
+    if(x==='minus')st.rows[i].minus=!st.rows[i].minus;
+    if(x==='sides')st.sl.sides=b.dataset.id;
+    if(x==='k'){['cp','wp'].forEach(id=>{const e=g(id);if(e&&num(e.value)){e.value=Math.round(num(e.value)*1.3);e.dispatchEvent(new Event('input',{bubbles:true}))}});toast('Цены ×1,3 за глубину');st.kDone=1;tail();return}
+    if(x==='ok'){const r=res();if(!r.q)return;tg.value=String(r.q);tg.dispatchEvent(new Event('input',{bubbles:true}));tg.dispatchEvent(new Event('change',{bubbles:true}));
+      if(st.mode==='slope'){const n=g('wn');if(n&&!n.value)n.value=r.txt.replace(/^На один проём: /,'')}
+      box.remove();toast('Подставлено: '+qf(r.q)+' '+r.u);return}
+    draw();if(x==='add')keepFocus('a',st.rows.length-1)});
+}
+
 const IC={
   work:'<svg viewBox="0 0 24 24"><path d="M15 4l5 5-3 3-5-5z"/><path d="M12.5 9.5L4 18l2 2 8.5-8.5"/></svg>',
   exp:'<svg viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/></svg>',
@@ -1971,7 +2070,7 @@ const IC={
   pay:'<svg viewBox="0 0 24 24"><rect x="3" y="6.5" width="18" height="11" rx="2.5"/><circle cx="12" cy="12" r="2.4"/><path d="M6.5 9.5v5M17.5 9.5v5"/></svg>',
   photo:'<svg viewBox="0 0 24 24"><path d="M4 8.5h3.2L9 6h6l1.8 2.5H20V19H4z"/><circle cx="12" cy="13.3" r="3.3"/></svg>'};
 /* ================= Стройка 2.2: бизнес-функции ================= */
-const APP_VERSION='3.10.1';
+const APP_VERSION='3.11';
 const LOGC=['work','expenses','payments','est','payplan','cash','objects','tools'];
 const TRASHC=['objects','tasks','work','workers','rates','est','plans','expenses','payments','fuelDays','tools','events','photos','payplan','cash','checks','tpls','team'];
 const STAGES={before:'До',work:'Процесс',after:'После',hidden:'Скрытые'};
@@ -2561,7 +2660,7 @@ function payoutBody(name,cur,amt,opt={}){
            <label class="f" style="margin:0"><span>Объём, ${esc(l.unit)}</span><input class="plf" data-i="${i}" data-k="qty" inputmode="decimal" value="${l.qty||''}" style="min-height:42px"></label>
            <label class="f" style="margin:0"><span>Цена, ₴</span><input class="plf" data-i="${i}" data-k="price" inputmode="decimal" value="${l.price||''}" style="min-height:42px"></label>
            <label class="f" style="margin:0"><span>Когда сделал</span><input class="plf" data-i="${i}" data-k="date" type="date" value="${l.date}" style="min-height:42px;padding:6px"></label>
-         </div><div class="row sm" style="margin-top:4px"><span class="muted">сумма</span><b class="n" id="pls${i}"></b></div></div>`).join('');
+         </div><div class="row sm" style="margin-top:4px">${dimBtn(`.plf[data-i="${i}"][data-k="qty"]`,l.unit,l.title)}<span class="muted">сумма <b class="n" id="pls${i}"></b></span></div></div>`).join('');
        upd()};
      draw();
      if(!cur&&!amt)setTimeout(()=>{const e=g('pa');e&&e.focus()},120);
@@ -2649,7 +2748,7 @@ function estSheet(oid){return ()=>{
    <div class="btns"><button class="btn" data-s="ver">Сохранить версию</button><button class="btn" data-s="text">Текстом</button><button class="btn p" data-s="pdf">PDF</button></div>`,
   init(){
     SS.mk='mat';SS.emode='work';
-    const line=e=>`<div class="estl"><span><b>${esc(e.title)}</b><small>${money(e.price)} / ${esc(e.unit)}${e.kind==='extra'?` · <button class="link" data-s="okE" data-id="${e.id}">${e.ok?'✓ согласовано':'⏳ на согласовании'}</button>`:''}</small></span><input class="qin" data-id="${e.id}" value="${qf(e.qty).replace(/\s/g,'')}" inputmode="decimal"><b class="n" id="es_${e.id}" style="text-align:right">${money(e.qty*e.price)}</b><button class="x" data-s="rmE" data-id="${e.id}">✕</button></div>`;
+    const line=e=>`<div class="estl"><span><b>${esc(e.title)}</b><small>${money(e.price)} / ${esc(e.unit)} · ${dimBtn(`.qin[data-id="${e.id}"]`,e.unit,e.title)}${e.kind==='extra'?` · <button class="link" data-s="okE" data-id="${e.id}">${e.ok?'✓ согласовано':'⏳ на согласовании'}</button>`:''}</small></span><input class="qin" data-id="${e.id}" value="${qf(e.qty).replace(/\s/g,'')}" inputmode="decimal"><b class="n" id="es_${e.id}" style="text-align:right">${money(e.qty*e.price)}</b><button class="x" data-s="rmE" data-id="${e.id}">✕</button></div>`;
     const draw=()=>{
       const ei=estInfo(oid),L=ei.L;
       const sec=(f,t)=>{const a=L.filter(f);if(!a.length)return'';return `<h2>${t} <small>${money(estSum(a))}</small></h2><div class="list">${a.map(line).join('')}</div>`};
@@ -2880,7 +2979,7 @@ function searchSheet(){return ()=>({title:'Поиск',html:`<input id="sq" plac
         +grp('Работы',S.work.filter(w=>hit(workTitle(w))||hit(w.worker)||hit(w.amount)).sort(byDate).map(w=>LI(esc(workTitle(w)),`${fdate(w.date)} · ${esc(w.worker)} · ${esc(oname(w.objectId))}`,money(w.amount),'editWork',w.id)))
         +grp('Расходы',S.expenses.filter(e=>hit(e.title)||hit(e.category)||hit(e.amount)).sort(byDate).map(e=>LI(esc(e.title||e.category),`${fdate(e.date)} · ${esc(oname(e.objectId))}`,money(e.amount),'editExp',e.id)))
         +grp('Оплаты',S.payments.filter(p=>hit(p.note)||hit(p.amount)||hit(oname(p.objectId))).sort(byDate).map(p=>LI(esc(oname(p.objectId)),fdate(p.date)+(p.note?' · '+esc(p.note):''),money(p.amount),'editPay',p.id)))
-        +grp('Прайс',S.rates.filter(r=>hit(r.name)).map(r=>LI(esc(r.name),esc(r.unit),money(r.client),'editRate',r.id)));
+        +grp('Прайс',(isWorker()?[]:S.rates).filter(r=>hit(r.name)).map(r=>LI(esc(r.name),esc(r.unit),money(r.client),'editRate',r.id)));
       g('sres').innerHTML=h||'<p class="empty">Ничего не найдено</p>'};
   }})}
 
@@ -3893,12 +3992,11 @@ function chatInit2(){
 /* ================= режим рабочего =================
    Рабочий видит все вкладки, но на его телефоне не хранятся деньги заказчика:
    оплаты, сметы, цены для заказчика, прибыль и чужие заработки. */
-const WK_DROP=['payments','payplan','cash','est','estv','log','trash','tpls','mprice_hist'];
+const WK_DROP=['payments','payplan','cash','est','estv','log','trash','tpls','mprice_hist','rates'];
 function wkMsgOk(m){if(!m)return false;if(m.kind==='tpl'){const t=m.tpl||{};if(t.type==='got'||t.type==='rep')return false;if(t.type==='pay')return t.who===me()}return true}
 function wkKeep(c,r){const n=me();
   if(WK_DROP.includes(c))return null;
   if(c==='work'){if(r.worker!==n)return null;const {client,cprice,...x}=r;return x}
-  if(c==='rates'){const {client,...x}=r;return x}
   if(c==='workers')return r.name===n?r:null;
   if(c==='expenses')return (r.by||r.holder)===n?r:null;
   if(c==='msgs')return wkMsgOk(r)?r:null;
@@ -3907,7 +4005,7 @@ function wkKeep(c,r){const n=me();
 function wkPrune(){if(!isWorker())return;
   for(const c of Object.keys(S)){if(!Array.isArray(S[c]))continue;
     const pend=new Set(Object.keys(SY.pend).filter(k=>k.startsWith(c+'/')).map(k=>k.slice(c.length+1)));
-    S[c]=S[c].map(r=>pend.has(r.id)?r:wkKeep(c,r)).filter(Boolean)}}
+    S[c]=WK_DROP.includes(c)?[]:S[c].map(r=>pend.has(r.id)?r:wkKeep(c,r)).filter(Boolean);WK_DROP.includes(c)&&Object.keys(SY.pend).forEach(k=>{if(k.startsWith(c+'/'))delete SY.pend[k]})}}
 function wkTabLabel(b,W){const t=[...b.childNodes].find(x=>x.nodeType===3&&x.textContent.trim());if(!t)return;
   if(!b.dataset.l)b.dataset.l=t.textContent;const L={workers:'Заработок'};t.textContent=W&&L[b.dataset.id]?L[b.dataset.id]:b.dataset.l;
   document.body.classList.toggle('wk',W)}
@@ -3973,7 +4071,19 @@ function vMyMoney(){
    <h2>Работы <small>${hist.length}</small></h2><div class="list">${shown.map(r=>workLi(r,true)).join('')||'<p class="empty">Записей нет</p>'}${hist.length>shown.length?`<button class="li" data-a="wkAll" data-id="${esc(n)}"><span class="t muted sm">Показать все (${hist.length})</span></button>`:''}</div>
    <p class="muted sm" style="margin-top:12px">Если что-то не сходится — напишите в чат, администратор поправит.</p></div>`;
 }
+function wkWorkSheet(id){return ()=>{const w=S.work.find(x=>x.id===id);if(!w)return {title:'Запись',html:'<p class="empty">Нет записи</p>'};
+  const po=w.type==='payout',row=(l,v2)=>`<div class="mrow"><span>${l}</span><b class="n">${v2}</b></div>`;
+  return {title:po?'Выплата':'Работа',html:`<div class="card mcardx">
+   ${po?row('Выплачено',money(w.amount)):row(esc(workTitle(w)),w.qty&&w.kind==='piece'?qf(w.qty)+' '+esc(w.unit||''):'')}
+   ${!po?row('Начислено вам',money(w.amount)):''}
+   ${row('Дата',fdateY(w.date))}${w.objectId?row('Объект',esc(oname(w.objectId))):''}${w.note?`<p class="muted sm" style="margin:6px 0 0">${esc(w.note)}</p>`:''}</div>
+   <p class="muted sm" style="margin-top:10px">Записи меняет администратор. Если что-то не так — напишите в чат.</p>
+   <button class="btn w" style="margin-top:8px" data-s="ask">💬 Написать про эту запись</button>`,
+  init(){SS.ask=()=>{back();setTimeout(()=>{openPage({t:'chat',id:dmCh(team()[0]||'all')});setTimeout(()=>{const t=g('chatIn');if(t){t.value=`По записи «${po?'Выплата':workTitle(w)}» от ${fdate(w.date)} (${money(w.amount)}): `;t.focus()}},200)},200)}}}}}
 function wkInit(){
+  const _ew=A.editWork,_nw=A.newWork;
+  A.editWork=(el,ev)=>isWorker()?openSheet(wkWorkSheet(el.dataset.id)):_ew(el,ev);
+  A.newWork=(el,ev)=>isWorker()?toast('Работы записывает администратор'):_nw(el,ev);
   Object.assign(A,{
     objFW(el){ui.objFW=el.dataset.id;render()},
     objMap(el){const o=S.objects.find(x=>x.id===el.dataset.id);if(!o)return;
@@ -4037,7 +4147,7 @@ function splitSheet(oid){return ()=>{
     SS.spGo=()=>{let n=0,sm=0;document.querySelectorAll('.spa').forEach(e=>{const a=num(e.value);if(a>0){put('cash',{id:uid(),type:'take',from:e.dataset.n,src:SS.hold,to:'',objectId:oid,amount:r2(a),date:v('spd')||today(),note:'с объекта «'+(o?o.name:'')+'»'});n++;sm+=a}});
       if(!n)return toast('Впиши суммы');if(sm>left+0.5&&!confirm(`Забираете ${money(sm)}, а доступно ${money(left)}. Записать всё равно?`))return;commit(true);toast(`Записано: ${money(sm)}`);back()};
   }}}}
-function acctInit(){A.splitObj=el=>openSheet(splitSheet(el.dataset.id))}
+function acctInit(){A.splitObj=el=>openSheet(splitSheet(el.dataset.id));A.dimOpen=el=>dimOpen(el)}
 
 /* ================= Чертежи: план, ГОСТ-лист, электрика, сантехника, фигуры, 3D ================= */
 const WT=0.12; // толщина стены, м
