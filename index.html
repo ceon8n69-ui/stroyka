@@ -542,6 +542,11 @@ body.wk [data-s=toEst],body.wk [data-e=toEst],body.wk .adm{display:none!importan
 .mks[data-skin=bike] .mk-head{transform-origin:50px 46px}.mks[data-skin=bike] .mk-eyes{transform-origin:50px 32px}.mks[data-skin=bike] .mk-pt{transform-origin:57px 15px}
 #mika.talk .mks[data-skin=bike] .mk-mo{transform-origin:50px 39.8px}
 
+#mika.rig{width:86px;height:136px}#mika.rig .mkw{pointer-events:none}#mika.rig .mkb{bottom:142px}
+#mika.rig .mkcv{width:100%;height:100%;display:block}
+#mika.rig .mkhit{position:absolute;left:24px;right:24px;top:0;bottom:0;pointer-events:auto;touch-action:none;cursor:grab;-webkit-tap-highlight-color:transparent}
+.mkava img{width:100%;height:100%;object-fit:contain}
+
 </style>
 </head>
 <body>
@@ -2136,7 +2141,7 @@ const IC={
   pay:'<svg viewBox="0 0 24 24"><rect x="3" y="6.5" width="18" height="11" rx="2.5"/><circle cx="12" cy="12" r="2.4"/><path d="M6.5 9.5v5M17.5 9.5v5"/></svg>',
   photo:'<svg viewBox="0 0 24 24"><path d="M4 8.5h3.2L9 6h6l1.8 2.5H20V19H4z"/><circle cx="12" cy="13.3" r="3.3"/></svg>'};
 /* ================= Стройка 2.2: бизнес-функции ================= */
-const APP_VERSION='3.15';
+const APP_VERSION='3.16';
 const LOGC=['work','expenses','payments','est','payplan','cash','objects','tools'];
 const TRASHC=['objects','tasks','work','workers','rates','est','plans','expenses','payments','fuelDays','tools','events','photos','payplan','cash','checks','tpls','team'];
 const STAGES={before:'До',work:'Процесс',after:'После',hidden:'Скрытые'};
@@ -4351,13 +4356,39 @@ function plansInit2(){
   });
   SY.deny={};
 }
+/* Риг помощницы (layered-assistant-2d-v2): движок и данные из присланного архива */
+(function(scope){
+'use strict';
+const rad=Math.PI/180, clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const wrap=a=>((a+180)%360+360)%360-180;
+function sample(keys,t){if(t<=keys[0][0])return keys[0][1];for(let i=1;i<keys.length;i++)if(t<=keys[i][0]){const a=keys[i-1],b=keys[i];let u=(t-a[0])/(b[0]-a[0]);u=u*u*(3-2*u);return a[1]+(b[1]-a[1])*u}return keys.at(-1)[1]}
+class LayeredRig{
+ constructor(data,clips){this.data=data;this.clips=clips;this.bones=Object.fromEntries(data.bones.map(b=>[b.name,b]));this.angles={};this.manual={};this.targets={};this.world={};this.clip='idle';this.time=0;this.transition=1;this.from={};this.expression='auto';this.look={x:0,y:0};this.update(0)}
+ play(name){if(!this.clips[name])throw Error('Unknown clip: '+name);this.from={...this.angles};this.transition=0;this.time=0;this.clip=name}
+ setBone(name,angle){const b=this.bones[name];if(!b)throw Error('Unknown bone');this.manual[name]=clamp(angle,...b.limits)}
+ setTarget(name,x,y){if(!this.data.ik.find(c=>c.name===name))throw Error('Unknown chain');if(!Number.isFinite(x)||!Number.isFinite(y))return;this.targets[name]={x,y}}
+ clearControls(){this.manual={};this.targets={}}
+ fk(){this.world={};for(const b of this.data.bones){const p=this.world[b.parent];let angle=(this.angles[b.name]||0)*rad;if(p){const c=Math.cos(p.a),s=Math.sin(p.a);this.world[b.name]={x:p.x+c*b.x-s*b.y,y:p.y+s*b.x+c*b.y,a:p.a+angle}}else this.world[b.name]={x:b.x,y:b.y,a:angle}}return this.world}
+ solveIK(chain,target){this.fk();const b=this.bones[chain.upper],lo=this.bones[chain.lower],w=this.world[b.name],parent=this.world[b.parent];let dx=target.x-w.x,dy=target.y-w.y;const l1=b.length,l2=lo.length,r=clamp(Math.hypot(dx,dy),Math.abs(l1-l2)+.001,l1+l2-.001);const elbow=chain.bend*Math.acos(clamp((r*r-l1*l1-l2*l2)/(2*l1*l2),-1,1));const theta=Math.atan2(dy,dx)-Math.atan2(l2*Math.sin(elbow),l1+l2*Math.cos(elbow));this.angles[b.name]=clamp(wrap((theta-Math.PI/2-(parent?.a||0))/rad),...b.limits);this.angles[lo.name]=clamp(elbow/rad,...lo.limits);this.fk()}
+ update(dt){this.time+=dt;this.transition=Math.min(1,this.transition+dt/.25);let clip=this.clips[this.clip];if(!clip.loop&&this.time>clip.duration){this.play('idle');clip=this.clips.idle}const t=clip.loop?this.time%clip.duration:Math.min(this.time,clip.duration);for(const b of this.data.bones){const target=clip.tracks[b.name]?sample(clip.tracks[b.name],t):0;this.angles[b.name]=clamp((this.from[b.name]||0)*(1-this.transition)+target*this.transition,...b.limits)}Object.assign(this.angles,this.manual);this.fk();for(const chain of this.data.ik)if(this.targets[chain.name])this.solveIK(chain,this.targets[chain.name]);this.fk()}
+ face(){let e=this.expression==='auto'?this.clip:this.expression;let closed=e==='sleep'||(this.time%4.3>4.12);return {eyes:closed?'eyes_closed':e==='sad'?'eyes_sad':'eyes_open',mouth:e==='talk'&&Math.sin(this.time*12)>0||e==='wave'||e==='reaction'?'mouth_open':'mouth_closed'}}
+ draw(ctx,images,{bones=false,handles=false,explode=0}={}){const f=this.face();const slots=[...this.data.slots].sort((a,b)=>a.z-b.z);for(const slot of slots){let w=this.world[slot.bone];let asset=slot.name==='eyes'?f.eyes:slot.name==='mouth'?f.mouth:slot.asset;const im=images[asset];if(!im)continue;ctx.save();ctx.translate(w.x+(w.x-320)*explode,w.y+(w.y-420)*explode);ctx.rotate(w.a);if(slot.shearX)ctx.transform(1,0,slot.shearX,1,slot.shiftX,0);let [x,y,sw,sh]=slot.rect;if(slot.name==='mouth'&&asset==='mouth_open'){sh=20;y-=2}ctx.drawImage(im,x,y,sw,sh);ctx.restore()}
+ if(bones){ctx.lineWidth=2;for(const b of this.data.bones){const w=this.world[b.name];ctx.strokeStyle='#00d9ff';ctx.fillStyle='#ff5298';ctx.beginPath();ctx.moveTo(w.x,w.y);ctx.lineTo(w.x-Math.sin(w.a)*b.length,w.y+Math.cos(w.a)*b.length);ctx.stroke();ctx.beginPath();ctx.arc(w.x,w.y,3,0,Math.PI*2);ctx.fill()}}
+ if(handles){for(const chain of this.data.ik){const p=this.targets[chain.name]||this.world[chain.end];ctx.strokeStyle='#0aa78e';ctx.lineWidth=3;ctx.beginPath();ctx.arc(p.x,p.y,12,0,Math.PI*2);ctx.stroke();ctx.fillStyle='#0aa78e';ctx.font='12px sans-serif';ctx.fillText(chain.name,p.x+16,p.y)}}
+ }
+}
+scope.LayeredRig=LayeredRig;if(typeof module!=='undefined')module.exports={LayeredRig,sample};
+})(typeof window!=='undefined'?window:globalThis);
+
+const RIG_DATA={"format":"layered-assistant-2d-v2","canvas":[640,860],"bones":[{"name":"root","parent":null,"x":320,"y":420,"length":0,"limits":[-15,15]},{"name":"torso","parent":"root","x":0,"y":-190,"length":190,"limits":[-12,12]},{"name":"head","parent":"torso","x":0,"y":-3,"length":0,"limits":[-25,25]},{"name":"hair","parent":"head","x":-25,"y":-145,"length":200,"limits":[-30,30]},{"name":"upper_arm_L","parent":"torso","x":-65,"y":35,"length":108,"limits":[-155,155]},{"name":"forearm_L","parent":"upper_arm_L","x":0,"y":108,"length":96,"limits":[-150,150]},{"name":"hand_L","parent":"forearm_L","x":0,"y":96,"length":46,"limits":[-65,65]},{"name":"thigh_L","parent":"root","x":-37,"y":54,"length":132,"limits":[-65,65]},{"name":"shin_L","parent":"thigh_L","x":0,"y":132,"length":142,"limits":[-120,120]},{"name":"foot_L","parent":"shin_L","x":0,"y":142,"length":36,"limits":[-40,40]},{"name":"upper_arm_R","parent":"torso","x":65,"y":35,"length":108,"limits":[-155,155]},{"name":"forearm_R","parent":"upper_arm_R","x":0,"y":108,"length":96,"limits":[-150,150]},{"name":"hand_R","parent":"forearm_R","x":0,"y":96,"length":46,"limits":[-65,65]},{"name":"thigh_R","parent":"root","x":37,"y":54,"length":132,"limits":[-65,65]},{"name":"shin_R","parent":"thigh_R","x":0,"y":132,"length":142,"limits":[-120,120]},{"name":"foot_R","parent":"shin_R","x":0,"y":142,"length":36,"limits":[-40,40]}],"slots":[{"name":"hair","bone":"hair","asset":"hair","rect":[-48,-8,92,260],"z":0},{"name":"pelvis","bone":"root","asset":"pelvis","rect":[-74,-22,148,127],"z":50},{"name":"torso","bone":"torso","asset":"torso","rect":[-78,-12,156,225],"z":55},{"name":"head","bone":"head","asset":"head","rect":[-67,-174,134,190],"z":70},{"name":"eyes","bone":"head","asset":"eyes_open","rect":[-37,-94,77,23],"z":71},{"name":"mouth","bone":"head","asset":"mouth_closed","rect":[-15,-59,32,11],"z":72},{"name":"upper_arm_L","bone":"upper_arm_L","asset":"upper_arm_L","rect":[-22,-14,44,132],"z":30,"shearX":0.07693071272582887,"shiftX":-1.6418503077228506},{"name":"forearm_L","bone":"forearm_L","asset":"forearm_L","rect":[-18,-8,36,112],"z":31,"shearX":0.09907045009784735,"shiftX":-1.9968199608610568},{"name":"hand_L","bone":"hand_L","asset":"hand_L","rect":[-16,-8,32,65],"z":65},{"name":"thigh_L","bone":"thigh_L","asset":"thigh_L","rect":[-34,-20,68,163],"z":15,"shearX":-0.028573829733591048,"shiftX":0.6128678280287677},{"name":"shin_L","bone":"shin_L","asset":"shin_L","rect":[-20,-8,40,157],"z":20,"shearX":-0.010906552656836228,"shiftX":-0.8304031061861966},{"name":"foot_L","bone":"foot_L","asset":"foot_L","rect":[-26,-14,52,84],"z":25},{"name":"upper_arm_R","bone":"upper_arm_R","asset":"upper_arm_R","rect":[-22,-14,44,132],"z":30,"shearX":-0.07941234862021046,"shiftX":2.1345046654754825},{"name":"forearm_R","bone":"forearm_R","asset":"forearm_R","rect":[-18,-8,36,112],"z":31,"shearX":-0.09631849315068493,"shiftX":1.9726027397260273},{"name":"hand_R","bone":"hand_R","asset":"hand_R","rect":[-16,-8,32,65],"z":65},{"name":"thigh_R","bone":"thigh_R","asset":"thigh_R","rect":[-34,-20,68,163],"z":15,"shearX":0.03039769120594795,"shiftX":-0.6175392294125679},{"name":"shin_R","bone":"shin_R","asset":"shin_R","rect":[-20,-8,40,157],"z":20,"shearX":0.014896754848361674,"shiftX":0.5000627791811456},{"name":"foot_R","bone":"foot_R","asset":"foot_R","rect":[-26,-14,52,84],"z":25}],"ik":[{"name":"arm_L","upper":"upper_arm_L","lower":"forearm_L","end":"hand_L","bend":1},{"name":"arm_R","upper":"upper_arm_R","lower":"forearm_R","end":"hand_R","bend":-1},{"name":"leg_L","upper":"thigh_L","lower":"shin_L","end":"foot_L","bend":-1},{"name":"leg_R","upper":"thigh_R","lower":"shin_R","end":"foot_R","bend":1}]};
+const RIG_CLIPS={"idle":{"duration":4,"loop":true,"tracks":{"torso":[[0,0],[1,1],[2,0],[3,-1],[4,0]],"head":[[0,0],[2,2],[4,0]],"hair":[[0,0],[2,-3],[4,0]]}},"wave":{"duration":2.4,"loop":true,"tracks":{"upper_arm_R":[[0,-8],[0.4,-112],[2,-112],[2.4,-8]],"forearm_R":[[0,0],[0.4,-62],[0.7,-40],[1,-72],[1.3,-40],[1.6,-72],[2,-62],[2.4,0]],"hand_R":[[0,0],[0.4,-15],[0.7,15],[1,-15],[1.3,15],[1.6,-15],[2.4,0]],"head":[[0,0],[0.5,-5],[2,-5],[2.4,0]]}},"walk":{"duration":1.2,"loop":true,"tracks":{"thigh_L":[[0,-12],[0.3,0],[0.6,12],[0.9,0],[1.2,-12]],"thigh_R":[[0,12],[0.3,0],[0.6,-12],[0.9,0],[1.2,12]],"shin_L":[[0,0],[0.3,28],[0.6,0],[1.2,0]],"shin_R":[[0,0],[0.6,0],[0.9,-28],[1.2,0]],"upper_arm_L":[[0,10],[0.6,-10],[1.2,10]],"upper_arm_R":[[0,-10],[0.6,10],[1.2,-10]],"hair":[[0,-2],[0.6,3],[1.2,-2]]}},"reaction":{"duration":1.1,"loop":false,"tracks":{"torso":[[0,0],[0.2,-4],[0.5,3],[1.1,0]],"head":[[0,0],[0.2,12],[0.6,-5],[1.1,0]],"upper_arm_L":[[0,0],[0.2,22],[1.1,0]],"upper_arm_R":[[0,0],[0.2,-22],[1.1,0]],"forearm_L":[[0,0],[0.3,35],[1.1,0]],"forearm_R":[[0,0],[0.3,-35],[1.1,0]]}},"sad":{"duration":4,"loop":true,"tracks":{"head":[[0,10],[2,14],[4,10]],"torso":[[0,2],[2,3],[4,2]],"hair":[[0,3],[2,6],[4,3]]}},"sleep":{"duration":5,"loop":true,"tracks":{"head":[[0,15],[2.5,20],[5,15]],"torso":[[0,0],[2.5,1],[5,0]],"hair":[[0,4],[2.5,7],[5,4]]}},"talk":{"duration":3,"loop":true,"tracks":{"head":[[0,0],[1,4],[2,-3],[3,0]],"forearm_L":[[0,0],[1,22],[2,10],[3,0]],"hair":[[0,0],[1,-3],[3,0]]}}};
 /* ================= Мика — помощница-тамагочи =================
    Своя оригинальная героиня (рисуется SVG прямо в коде). Ходит по нижнему краю экрана, стоит на панели вкладок,
    реагирует на нажатия, её можно перетаскивать, кормить, гладить, укладывать спать; отвечает на вопросы по данным приложения.
    Состояние — только на этом телефоне (localStorage), в Supabase ничего не пишет. */
 const MK_KEY='stroyka.mika';
-const MK_SKINS={bike:'Велосипедистка',hard:'Прораб в каске'};
-function mkSVGFor(){return MKA.skin==='hard'?mkSVG(MKA.hat):mkSVGBike()}
+const MK_SKINS={rig:'Аниме (рисованная)',bike:'Велосипедистка (простая)',hard:'Прораб в каске'};
+function mkSVGFor(){return MKA.skin==='rig'?'<canvas class="mks mkcv"></canvas><div class="mkhit"></div>':MKA.skin==='hard'?mkSVG(MKA.hat):mkSVGBike()}
 function mkSVGBike(){return `<svg class="mks" data-skin="bike" viewBox="0 0 100 142" aria-hidden="true">
  <ellipse class="mk-shadow" cx="50" cy="139" rx="16" ry="2.8" fill="rgba(0,0,0,.18)"/>
  <g class="mk-legs">
@@ -4402,7 +4433,7 @@ const MK_HATS={hard:{n:'Каска',lv:1},cap:{n:'Кепка',lv:2},bow:{n:'Ба
 const MK_FOOD=[['🍩','Пончик',{food:18,mood:6}],['🍎','Яблоко',{food:12,mood:3}],['🍜','Рамен',{food:35,mood:5}],['☕','Кофе',{food:4,energy:25,mood:2}],['🍫','Шоколадка',{food:8,mood:12}]];
 let MKA=null,mkEl=null;
 function mkLoad(){let d={};try{d=JSON.parse(localStorage.getItem(MK_KEY)||'{}')}catch(e){}
-  return Object.assign({on:true,skin:'bike',name:'Мика',tips:true,hat:'hard',food:80,mood:80,energy:90,xp:0,xpDay:'',xpToday:0,last:Date.now(),chat:[],greet:'',seen:{}},d)}
+  return Object.assign({on:true,skin:'rig',name:'Мика',tips:true,hat:'hard',food:80,mood:80,energy:90,xp:0,xpDay:'',xpToday:0,last:Date.now(),chat:[],greet:'',seen:{}},d)}
 function mkSave(){try{const c={...MKA,chat:(MKA.chat||[]).slice(-60)};localStorage.setItem(MK_KEY,JSON.stringify(c))}catch(e){}}
 const mkLv=()=>Math.floor(Math.sqrt((MKA.xp||0)/25))+1;
 const mkLvNext=()=>{const l=mkLv();return {cur:(l-1)*(l-1)*25,next:l*l*25}};
@@ -4467,9 +4498,11 @@ function mkMaxX(){const f=document.getElementById('fab');if(f&&!f.hidden&&getCom
 function mkMount(){
   if(mkEl)mkEl.remove();if(!MKA.on)return;
   mkEl=document.createElement('div');mkEl.id='mika';mkEl.innerHTML=`<div class="mkb" hidden></div><div class="mkw">${mkSVGFor()}<span class="mkz">z<b>z</b><i>z</i></span></div>`;
+  mkEl.classList.toggle('rig',MKA.skin==='rig');
   document.body.appendChild(mkEl);
+  if(MKA.skin==='rig')mkRigInit(mkEl.querySelector('.mkcv'));
   mkS.x=Math.max(10,Math.min(innerWidth-80,innerWidth*0.12));mkPlace();
-  const w=mkEl.querySelector('.mkw');let down=null;
+  const w=mkEl.querySelector('.mkhit')||mkEl.querySelector('.mkw');let down=null;
   w.addEventListener('pointerdown',e=>{down={x:e.clientX,y:e.clientY,t:Date.now(),ox:mkS.x,oy:mkS.y,moved:false};w.setPointerCapture(e.pointerId);e.preventDefault()});
   w.addEventListener('pointermove',e=>{if(!down)return;const dx=e.clientX-down.x,dy=e.clientY-down.y;
     if(!down.moved&&Math.hypot(dx,dy)>8){down.moved=true;mkSet('drag');mkSay(['Эй! Куда?! 😳','Ай-ай, высоко!','Только не урони!'][Math.floor(Math.random()*3)],'',1600)}
@@ -4496,6 +4529,7 @@ function mkLoop(t){mkS.raf=requestAnimationFrame(mkLoop);if(!mkEl)return;const d
   const hide=document.body.classList.contains('ed')||document.body.classList.contains('chatpg')||!!document.querySelector('.ped,.qrscan:not(.out)');
   if(hide!==mkS.hidden){mkS.hidden=hide;mkEl.classList.toggle('gone',hide)}
   if(hide)return;
+  if(mkR.rig)mkRigDraw(t);
   if(mkS.state==='fall'||(mkS.air&&mkS.state!=='drag')){mkS.vy-=1800*dt;mkS.y+=mkS.vy*dt;if(mkS.y<=0){mkS.y=0;mkS.air=false;mkS.vy=0;mkSet('jump',500);mkSay(['Фух! 😅','Приземлилась!','Больше так не делай 😤'][Math.floor(Math.random()*3)],'',1600)}mkPlace();return}
   if(mkS.state==='drag')return;
   if(mkS.until&&t>mkS.until){mkS.until=0;mkSet(mkNight()||MKA.sleep?'sleep':'idle')}
@@ -4582,7 +4616,7 @@ function mkSheet(){return ()=>{mkTick();const lv=mkLv(),nx=mkLvNext(),pr=Math.ro
   const bar=(l,v2,c)=>`<div class="mkbar"><span>${l}</span><i><b style="width:${v2}%;background:${c}"></b></i><small>${v2}%</small></div>`;
   const msgs=(MKA.chat||[]).slice(-30);
   return {title:`${MKA.name} · ур. ${lv}`,html:`
-   <div class="mkhead"><div class="mkava">${mkSVGFor()}</div><div style="flex:1;min-width:0">
+   <div class="mkhead"><div class="mkava" ${MKA.skin==='rig'?'data-rig':''}>${mkAvatar()}</div><div style="flex:1;min-width:0">
      ${bar('🍩 Сытость',MKA.food,'#ffb547')}${bar('💗 Настроение',MKA.mood,'#ff7aa8')}${bar('⚡ Энергия',MKA.energy,'#7fdcbf')}
      <div class="mkbar"><span>⭐ Опыт</span><i><b style="width:${pr}%;background:#a58bff"></b></i><small>ур.${lv}</small></div></div></div>
    <div class="chips" style="flex-wrap:wrap;margin-top:10px">${MK_FOOD.map(([e,t],i)=>`<button class="chip" data-s="mkFeed" data-id="${i}">${e} ${t}</button>`).join('')}
@@ -4611,7 +4645,7 @@ function mkSheet(){return ()=>{mkTick();const lv=mkLv(),nx=mkLvNext(),pr=Math.ro
     SS.mkSleep=()=>{MKA.sleep=!MKA.sleep;mkSave();if(MKA.sleep){mkSet('sleep');mkSay('Спокойной ночи 🌙','',2000)}else{mkSet('idle');mkAct('wave');mkSay('Доброе утро! ☀️','',2000)}replaceSheet(sheets[sheets.length-1])};
     SS.mkDance=()=>{if(MKA.energy<10)return mkSay('Нет сил танцевать… дай кофе ☕','',2500);MKA.energy=mkClamp(MKA.energy-4);MKA.mood=mkClamp(MKA.mood+3);mkSave();backThen(()=>{mkAct('dance');mkHearts(4,'🎵')})};
     SS.mkHat=el=>{MKA.hat=el.dataset.id;mkSave();const h=mkEl&&mkEl.querySelector('.mk-hat');if(h)h.innerHTML=mkHat(MKA.hat);replaceSheet(sheets[sheets.length-1]);mkAct('spin')};
-    SS.mkSkin=el=>{MKA.skin=el.dataset.id;mkSave();if(mkEl){const w=mkEl.querySelector('.mkw');w.innerHTML=mkSVGFor()+'<span class="mkz">z<b>z</b><i>z</i></span>'}mkFace();replaceSheet(sheets[sheets.length-1]);setTimeout(()=>{mkAct('spin');mkWink(900)},300)};
+    SS.mkSkin=el=>{MKA.skin=el.dataset.id;mkSave();mkMount();replaceSheet(sheets[sheets.length-1]);setTimeout(()=>{mkAct('spin');mkWink(900)},300)};
     SS.mkTips=()=>{MKA.tips=!MKA.tips;mkSave();replaceSheet(sheets[sheets.length-1])};
     SS.mkOff=()=>{MKA.on=false;mkSave();if(mkEl){mkEl.remove();mkEl=null}toast(`${MKA.name} спряталась. Вернуть: Меню → «${MKA.name}»`);back()};
     SS.mkClr=()=>{MKA.chat=[];mkSave();replaceSheet(sheets[sheets.length-1])};
@@ -4629,7 +4663,7 @@ function mkReact(c,r,isNew){if(!MKA||!MKA.on)return;
 let mkLastTab='';
 function mkOnRender(){if(!MKA||!MKA.on)return;const k=(curPage()&&curPage().t)||ui.tab;if(k===mkLastTab)return;mkLastTab=k;
   if(mkEl&&!mkS.hidden&&mkS.state!=='sleep'&&mkS.state!=='drag'&&Math.random()<0.35){mkS.x=mkS.dir>0?-40:innerWidth-20;mkS.tx=20+Math.random()*Math.max(40,mkMaxX()-20);mkS.run=true;mkSet('walk')}}
-function mikaInit(){MKA=mkLoad();mkTick();
+function mikaInit(){MKA=mkLoad();if(!MKA.rigV){MKA.rigV=1;MKA.skin='rig';mkSave()}mkTick();
   const _put=put;put=function(c,r){const isNew=!(S[c]||[]).some(x=>x.id===r.id);const x=_put(c,r);try{mkReact(c,r,isNew)}catch(e){}return x};
   const _render=render;render=function(){const x=_render.apply(this,arguments);try{mkOnRender()}catch(e){}return x};
   A.mika=()=>{if(!MKA.on){MKA.on=true;mkSave();mkMount();setTimeout(()=>{mkAct('wave');mkSay(`Я вернулась! 💗`,'',2500)},400)}openSheet(mkSheet())};
@@ -4642,6 +4676,30 @@ function mikaInit(){MKA=mkLoad();mkTick();
 }
 
 function mkOpenFromMenu(){if(!MKA.on){MKA.on=true;mkSave();mkMount();setTimeout(()=>{mkAct('wave');mkSay('Я вернулась! 💗','',2500)},400)}replaceSheet(mkSheet())}
+
+/* ---------- рисованный риг (16 костей, Canvas) ---------- */
+const mkR={rig:null,img:{},ready:false,cv:null,ctx:null,last:0,snap:'',loading:null};
+const MK_CROP={x:100,y:40,w:500,h:790};   // область холста рига 640×860, где бывает фигура (с запасом под руку)
+function mkRigLoad(){if(mkR.loading)return mkR.loading;
+  const names=[...new Set(RIG_DATA.slots.map(x=>x.asset).concat(['eyes_open','eyes_closed','eyes_sad','mouth_open','mouth_closed']))];
+  mkR.loading=Promise.all(names.map(n=>new Promise(res=>{const i=new Image();i.onload=()=>res();i.onerror=()=>res();i.src='mika/'+n+'.webp';mkR.img[n]=i}))).then(()=>{mkR.ready=true;mkRigSnap()});
+  return mkR.loading}
+function mkRigInit(cv){mkR.cv=cv;mkR.rig=mkR.rig||new LayeredRig(RIG_DATA,RIG_CLIPS);
+  const css=cv.getBoundingClientRect(),dpr=Math.min(2.5,window.devicePixelRatio||1);cv.width=Math.round((css.width||85)*dpr);cv.height=Math.round((css.height||134)*dpr);
+  mkR.ctx=cv.getContext('2d');mkRigLoad().then(()=>mkRigDraw(performance.now(),true))}
+function mkRigClip(){const st=mkS.state,sad=MKA.food<20||MKA.mood<20;
+  return st==='walk'?'walk':st==='wave'||st==='drag'?'wave':['jump','dance','spin','pet','eat'].includes(st)?'reaction':st==='sleep'?'sleep':sad?'sad':'idle'}
+function mkRigDraw(t,force){const r=mkR.rig;if(!r||!mkR.ready||!mkR.ctx)return;if(!force&&t-mkR.last<33)return;const dt=Math.min(0.1,(t-(mkR.last||t))/1000);mkR.last=t;
+  const want=mkRigClip();
+  if(want==='reaction'){if(r.clip!=='reaction'&&(r.clip!=='idle'||mkS.state==='dance'||!mkR.reacted)){r.play('reaction');mkR.reacted=1}}
+  else{mkR.reacted=0;if(r.clip!==want)r.play(want)}
+  r.expression=mkEl&&mkEl.classList.contains('talk')?'talk':mkS.state==='sleep'?'sleep':mkEl&&mkEl.classList.contains('blink')?'sleep':'auto';
+  r.update(dt);const c=mkR.ctx,W=mkR.cv.width,H=mkR.cv.height,k=W/MK_CROP.w;
+  c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,W,H);c.setTransform(k,0,0,H/MK_CROP.h,-MK_CROP.x*k,-MK_CROP.y*H/MK_CROP.h);r.draw(c,mkR.img)}
+function mkRigSnap(){try{const r=new LayeredRig(RIG_DATA,RIG_CLIPS);r.play('idle');r.update(1);const c=document.createElement('canvas');c.width=240;c.height=420;const x=c.getContext('2d');
+  const k=240/250;x.setTransform(k,0,0,k,-195*k,-40*k);r.draw(x,mkR.img);mkR.snap=c.toDataURL('image/png');
+  document.querySelectorAll('.mkava[data-rig]').forEach(e=>e.innerHTML=`<img src="${mkR.snap}" alt="">`)}catch(e){}}
+function mkAvatar(){if(MKA.skin!=='rig')return mkSVGFor();if(!mkR.snap)mkRigLoad();return mkR.snap?`<img src="${mkR.snap}" alt="">`:'<span class="muted sm">…</span>'}
 
 /* ================= Чертежи: план, ГОСТ-лист, электрика, сантехника, фигуры, 3D ================= */
 const WT=0.12; // толщина стены, м
