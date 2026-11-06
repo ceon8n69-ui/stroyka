@@ -481,6 +481,62 @@ body.wk [data-s=toEst],body.wk [data-e=toEst],body.wk .adm{display:none!importan
 .mplan{background:var(--card);border-radius:20px;overflow:hidden;width:min(78vw,320px)}.mplan img{display:block;width:100%;background:#fff;object-fit:contain}.mplan .gi{padding:10px 12px}.mplan .gi b{display:block;font-size:15px}.mplan .gi small{color:var(--muted);font-size:12px}
 .mplan .chip{height:34px;font-size:13px;background:var(--bg);color:var(--ink)}
 
+/* ===== Мика ===== */
+#mika{position:fixed;left:0;bottom:0;z-index:8;width:68px;height:97px;pointer-events:none;will-change:transform}
+#mika.gone{opacity:0;visibility:hidden}
+#mika .mkw{position:absolute;inset:0;pointer-events:auto;touch-action:none;cursor:grab;-webkit-tap-highlight-color:transparent}
+.mks{width:100%;height:100%;overflow:visible;display:block;transform-origin:50% 100%}
+.mk-eh,.mk-ec,.mk-ex,.mk-mo,.mk-md,.mk-mc{display:none}
+#mika[data-e=h] .mk-eo,#mika[data-e=c] .mk-eo,#mika[data-e=x] .mk-eo{display:none}
+#mika[data-e=h] .mk-eh,#mika[data-e=c] .mk-ec,#mika[data-e=x] .mk-ex{display:inline}
+#mika[data-m=o] .mk-ms,#mika[data-m=d] .mk-ms,#mika[data-m=c] .mk-ms{display:none}
+#mika[data-m=o] .mk-mo,#mika[data-m=d] .mk-md,#mika[data-m=c] .mk-mc{display:inline}
+#mika.talk .mk-ms,#mika.talk .mk-md{display:none}#mika.talk .mk-mo{display:inline;transform-origin:50px 60.5px;animation:mkTalk .2s ease-in-out infinite alternate}
+.mk-eyes{transform-origin:50px 49px;transition:transform .06s}#mika.blink .mk-eyes{transform:scaleY(.12)}
+.mk-lgL{transform-origin:44.5px 106px}.mk-lgR{transform-origin:55.5px 106px}.mk-arL{transform-origin:34.5px 75px}.mk-arR{transform-origin:65.5px 75px}
+.mk-pt{transform-origin:64px 28px;animation:mkPt 2.6s ease-in-out infinite}.mk-head{transform-origin:50px 66px}.mk-up{animation:mkBreath 3.2s ease-in-out infinite}
+#mika .mk-head{animation:mkHead 7s ease-in-out infinite}
+#mika.walk .mk-lgL{animation:mkLeg .46s ease-in-out infinite alternate}#mika.walk .mk-lgR{animation:mkLeg .46s ease-in-out infinite alternate-reverse}
+#mika.walk .mk-arL{animation:mkArm .46s ease-in-out infinite alternate-reverse}#mika.walk .mk-arR{animation:mkArm .46s ease-in-out infinite alternate}
+#mika.walk .mk-up{animation:mkBob .23s ease-in-out infinite alternate}#mika.walk .mk-pt{animation-duration:.46s}
+#mika.wave .mk-arR{animation:mkWave .42s ease-in-out infinite alternate}#mika.wave .mk-head{animation:mkPet .84s ease-in-out infinite alternate}
+#mika.jump .mks{animation:mkJump .45s ease-out 2}
+#mika.dance .mks{animation:mkDance .9s ease-in-out infinite}#mika.dance .mk-arR{animation:mkWave .45s ease-in-out infinite alternate}#mika.dance .mk-arL{animation:mkWaveL .45s ease-in-out infinite alternate}
+#mika.dance .mk-lgL{animation:mkLeg .45s ease-in-out infinite alternate}#mika.dance .mk-lgR{animation:mkLeg .45s ease-in-out infinite alternate-reverse}
+#mika.spin .mks{animation:mkSpin .8s ease-in-out}
+#mika.eat .mk-arR{animation:mkEat .45s ease-in-out infinite alternate}
+#mika.pet .mk-head{animation:mkPet .5s ease-in-out infinite alternate}
+#mika.drag .mkw{cursor:grabbing}#mika.drag .mk-lgL,#mika.drag .mk-lgR{animation:mkLeg .16s ease-in-out infinite alternate}#mika.drag .mk-arR{transform:rotate(-155deg)}#mika.drag .mk-arL{transform:rotate(155deg)}#mika.drag .mk-shadow{opacity:0}
+#mika.sleep .mk-head{animation:none;transform:rotate(-9deg)}#mika.sleep .mk-up{animation:mkBreath 2.2s ease-in-out infinite}
+#mika.sadm .mk-up{animation-duration:5s}
+.mkz{display:none;position:absolute;right:-6px;top:-6px;font-weight:800;color:#8aa0ff;font-size:14px;pointer-events:none}
+#mika.sleep .mkz{display:block}.mkz,.mkz b,.mkz i{animation:mkZ 2.4s ease-in-out infinite}.mkz b{position:absolute;left:9px;top:-10px;font-size:12px;animation-delay:.6s}.mkz i{position:absolute;left:17px;top:-20px;font-size:10px;font-style:normal;animation-delay:1.2s}
+.mkb{position:absolute;bottom:102px;background:var(--card);color:var(--ink);border-radius:18px;padding:9px 13px;font-size:14px;font-weight:600;line-height:1.35;box-shadow:0 8px 24px rgba(0,0,0,.2);pointer-events:auto;border:1.5px solid var(--line)}
+.mkb.pop{animation:mkPop .28s cubic-bezier(.2,1.4,.5,1)}
+.mkh{position:absolute;bottom:78px;font-size:18px;pointer-events:none;animation:mkHeart 1.6s ease-out forwards;opacity:0}
+@keyframes mkLeg{from{transform:rotate(17deg)}to{transform:rotate(-17deg)}}
+@keyframes mkArm{from{transform:rotate(-15deg)}to{transform:rotate(15deg)}}
+@keyframes mkBob{to{transform:translateY(-1.8px)}}
+@keyframes mkBreath{50%{transform:translateY(-.9px)}}
+@keyframes mkPt{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(6deg)}}
+@keyframes mkHead{0%,70%,100%{transform:rotate(0)}78%{transform:rotate(-6deg)}88%{transform:rotate(4deg)}}
+@keyframes mkWave{from{transform:rotate(-155deg)}to{transform:rotate(-112deg)}}
+@keyframes mkWaveL{from{transform:rotate(155deg)}to{transform:rotate(112deg)}}
+@keyframes mkEat{from{transform:rotate(95deg)}to{transform:rotate(138deg)}}
+@keyframes mkPet{from{transform:rotate(-7deg)}to{transform:rotate(7deg)}}
+@keyframes mkJump{0%,100%{transform:translateY(0) scale(1,1)}12%{transform:translateY(0) scale(1.1,.88)}50%{transform:translateY(-26px) scale(.94,1.06)}85%{transform:translateY(0) scale(1.06,.94)}}
+@keyframes mkDance{0%,100%{transform:rotate(-7deg)}25%{transform:translateY(-7px)}50%{transform:rotate(7deg)}75%{transform:translateY(-7px)}}
+@keyframes mkSpin{to{transform:rotateY(360deg)}}
+@keyframes mkTalk{from{transform:scaleY(.3)}to{transform:scaleY(1)}}
+@keyframes mkZ{0%{opacity:0;transform:translate(0,4px)}30%{opacity:1}100%{opacity:0;transform:translate(6px,-10px)}}
+@keyframes mkPop{from{transform:scale(.6) translateY(10px);opacity:0}to{transform:none;opacity:1}}
+@keyframes mkHeart{0%{transform:translateY(0) scale(.5);opacity:0}15%{opacity:1}100%{transform:translateY(-80px) scale(1.25);opacity:0}}
+.mkhead{display:flex;gap:12px;align-items:center}.mkava{width:72px;height:102px;flex:none}
+.mkbar{display:grid;grid-template-columns:104px 1fr 40px;align-items:center;gap:6px;font-size:12px;margin:3px 0;font-weight:600}.mkbar small{color:var(--muted);text-align:right}
+.mkbar i{height:9px;border-radius:5px;background:var(--line);overflow:hidden;display:block}.mkbar b{display:block;height:100%;border-radius:5px;transition:width .4s}
+.mkchat{margin-top:10px;max-height:36vh;overflow:auto;display:flex;flex-direction:column;gap:6px;padding:4px 2px}
+.mkm{max-width:86%;padding:8px 12px;border-radius:16px;font-size:14px;line-height:1.38;animation:mkPop .2s ease-out}.mkm.in{background:var(--card);align-self:flex-start;border-bottom-left-radius:6px;border:1.5px solid var(--line)}.mkm.out{background:var(--ink);color:var(--bg);align-self:flex-end;border-bottom-right-radius:6px}
+
 </style>
 </head>
 <body>
@@ -2075,7 +2131,7 @@ const IC={
   pay:'<svg viewBox="0 0 24 24"><rect x="3" y="6.5" width="18" height="11" rx="2.5"/><circle cx="12" cy="12" r="2.4"/><path d="M6.5 9.5v5M17.5 9.5v5"/></svg>',
   photo:'<svg viewBox="0 0 24 24"><path d="M4 8.5h3.2L9 6h6l1.8 2.5H20V19H4z"/><circle cx="12" cy="13.3" r="3.3"/></svg>'};
 /* ================= Стройка 2.2: бизнес-функции ================= */
-const APP_VERSION='3.13';
+const APP_VERSION='3.14';
 const LOGC=['work','expenses','payments','est','payplan','cash','objects','tools'];
 const TRASHC=['objects','tasks','work','workers','rates','est','plans','expenses','payments','fuelDays','tools','events','photos','payplan','cash','checks','tpls','team'];
 const STAGES={before:'До',work:'Процесс',after:'После',hidden:'Скрытые'};
@@ -3149,13 +3205,13 @@ async function checkUpdate(){
 function moreSheet(){return ()=>{
   const row=([i,t,k,s])=>`<button class="li" data-s="go" data-id="${k}"><span>${i}</span><span class="t"><b>${t}</b>${s?`<small>${s}</small>`:''}</span></button>`;
   const grp=(h,items)=>`<div class="menu-h">${h}</div><div class="list menu">${items.map(row).join('')}</div>`;
-  if(isWorker())return {title:'Меню',html:grp('Работа',[['💰','Мой заработок','money','начисления, выплаты, долг'],['🧮','Калькуляторы работ','calc','сколько материала нужно'],['🏷','Цены материалов','mprices']])+grp('Настройки',[['🔄','Синхронизация','sync'],['👤','Профиль и вид','profile']])+`<p class="muted sm" style="text-align:center;margin-top:16px">Стройка ${APP_VERSION} · режим рабочего</p>`,init(){SS.go=el=>{const k=el.dataset.id;if(k==='money'){closeAllSheets();ui.page=[];ui.tab='workers';render();return}const m={calc:()=>calcPickSheet(''),mprices:matPricesSheet,sync:syncSheet,profile:profileSheet};if(m[k])openSheet(m[k]())}}};
+  if(isWorker())return {title:'Меню',html:grp('Работа',[['💰','Мой заработок','money','начисления, выплаты, долг'],['🧮','Калькуляторы работ','calc','сколько материала нужно'],['🏷','Цены материалов','mprices']])+grp('Настройки',[['🌸',(MKA&&MKA.name)||'Мика','mika','помощница'],['🔄','Синхронизация','sync'],['👤','Профиль и вид','profile']])+`<p class="muted sm" style="text-align:center;margin-top:16px">Стройка ${APP_VERSION} · режим рабочего</p>`,init(){SS.go=el=>{const k=el.dataset.id;if(k==='mika')return mkOpenFromMenu();if(k==='money'){closeAllSheets();ui.page=[];ui.tab='workers';render();return}const m={calc:()=>calcPickSheet(''),mprices:matPricesSheet,sync:syncSheet,profile:profileSheet};if(m[k])openSheet(m[k]())}}};
   return {title:'Меню',html:grp('Работа',[['📊','Отчёт за месяц','report','доходы, расходы, прибыль, Excel'],['💰','Касса и партнёры','cash','у кого деньги, кто кому должен'],['🔨','Прайс работ','rates'],['📋','Шаблоны объектов','tpls'],['🧾','Все расходы','allExp'],['🧰','Мой инструмент','tools']])
    +grp('Материалы',[['🧮','Калькуляторы работ','calc','комната, электрика, сантехника, фундамент, кровля, забор, септик…'],['🏷','Цены материалов','mprices','вводятся один раз, магазин «Оптима»']])
    +grp('Данные',[['🔄','Синхронизация с партнёром','sync'],['👥','Люди и доступ','people','роли: админ / рабочий'],['🕓','История изменений','hist'],['🗑','Корзина','trash',S.trash.length?S.trash.length+' шт.':''],['💾','Резервные копии','backups']])
-   +grp('Настройки',[['👤','Моё имя, фирма, крупный режим','profile']])
+   +grp('Настройки',[['🌸',(MKA&&MKA.name)||'Мика','mika','помощница: поболтать, покормить, подсказки'],['👤','Моё имя, фирма, крупный режим','profile']])
    +`<p class="muted sm" style="text-align:center;margin-top:16px">Стройка ${APP_VERSION}</p>`,
-  init(){SS.go=el=>{const k=el.dataset.id,m={calc:()=>calcPickSheet(''),mprices:matPricesSheet,report:reportSheet,cash:cashSheet,rates:ratesSheet,tpls:tplsSheet,allExp:allExpSheet,tools:toolsSheet,sync:syncSheet,people:peopleSheet,hist:historySheet,trash:trashSheet,backups:backupsSheet,profile:profileSheet};if(m[k])openSheet(m[k]())}}};
+  init(){SS.go=el=>{const k=el.dataset.id;if(k==='mika')return mkOpenFromMenu();const m={calc:()=>calcPickSheet(''),mprices:matPricesSheet,report:reportSheet,cash:cashSheet,rates:ratesSheet,tpls:tplsSheet,allExp:allExpSheet,tools:toolsSheet,sync:syncSheet,people:peopleSheet,hist:historySheet,trash:trashSheet,backups:backupsSheet,profile:profileSheet};if(m[k])openSheet(m[k]())}}};
 }}
 function profileSheet(){return ()=>{
   const st=S.settings;
@@ -3250,7 +3306,7 @@ function nativeInit(){
 
 /* ---------- действия ---------- */
 function bizInit(){
-planInit();workersInit();chatInit();chatInit2();wkInit();acctInit();plansInit2();
+planInit();workersInit();chatInit();chatInit2();wkInit();acctInit();plansInit2();mikaInit();
 Object.assign(A,{
   tab(el){ui.tab=el.dataset.id;const n=ui.page.length;ui.page=[];if(n)history.go(-n);render();window.scrollTo(0,0)},
   fab(el){const k=el.dataset.k,p=curPage();
@@ -4290,6 +4346,251 @@ function plansInit2(){
   });
   SY.deny={};
 }
+/* ================= Мика — помощница-тамагочи =================
+   Своя оригинальная героиня (рисуется SVG прямо в коде). Ходит по нижнему краю экрана, стоит на панели вкладок,
+   реагирует на нажатия, её можно перетаскивать, кормить, гладить, укладывать спать; отвечает на вопросы по данным приложения.
+   Состояние — только на этом телефоне (localStorage), в Supabase ничего не пишет. */
+const MK_KEY='stroyka.mika';
+const MK_HATS={hard:{n:'Каска',lv:1},cap:{n:'Кепка',lv:2},bow:{n:'Бантик',lv:3},beanie:{n:'Шапка',lv:4},crown:{n:'Корона прораба',lv:6}};
+const MK_FOOD=[['🍩','Пончик',{food:18,mood:6}],['🍎','Яблоко',{food:12,mood:3}],['🍜','Рамен',{food:35,mood:5}],['☕','Кофе',{food:4,energy:25,mood:2}],['🍫','Шоколадка',{food:8,mood:12}]];
+let MKA=null,mkEl=null;
+function mkLoad(){let d={};try{d=JSON.parse(localStorage.getItem(MK_KEY)||'{}')}catch(e){}
+  return Object.assign({on:true,name:'Мика',tips:true,hat:'hard',food:80,mood:80,energy:90,xp:0,xpDay:'',xpToday:0,last:Date.now(),chat:[],greet:'',seen:{}},d)}
+function mkSave(){try{const c={...MKA,chat:(MKA.chat||[]).slice(-60)};localStorage.setItem(MK_KEY,JSON.stringify(c))}catch(e){}}
+const mkLv=()=>Math.floor(Math.sqrt((MKA.xp||0)/25))+1;
+const mkLvNext=()=>{const l=mkLv();return {cur:(l-1)*(l-1)*25,next:l*l*25}};
+const mkClamp=x=>Math.max(0,Math.min(100,Math.round(x)));
+function mkXP(n,why){const d=today();if(MKA.xpDay!==d){MKA.xpDay=d;MKA.xpToday=0}if(MKA.xpToday>=60&&why==='app')return;
+  const l0=mkLv();MKA.xp+=n;MKA.xpToday+=n;mkSave();const l1=mkLv();
+  if(l1>l0){const un=Object.entries(MK_HATS).find(([k,h])=>h.lv===l1);mkSay(`Ура, уровень ${l1}! 🎉${un?` Открыт наряд: ${un[1].n}`:''}`,'happy',5000);mkAct('jump')}}
+/* время идёт и когда приложение закрыто */
+function mkTick(){const now=Date.now(),h=Math.min(48,(now-(MKA.last||now))/3.6e6);MKA.last=now;if(h<=0)return;
+  const sleeping=mkNight()||MKA.sleep;MKA.food=mkClamp(MKA.food-h*3.2);MKA.energy=mkClamp(MKA.energy+(sleeping?h*14:-h*2.5));
+  MKA.mood=mkClamp(MKA.mood-h*(MKA.food<25?4:1.6));mkSave()}
+const mkNight=()=>{const h=new Date().getHours();return h>=23||h<7};
+
+/* ---------- рисунок ---------- */
+function mkHat(k){
+  if(k==='cap')return `<path d="M25 33 Q26 12 50 11 Q74 12 75 33 Z" fill="#7fdcbf"/><path d="M50 31 Q72 30 86 36 Q72 40 50 36 Z" fill="#5fc4a6"/><circle cx="50" cy="12" r="2.4" fill="#5fc4a6"/>`;
+  if(k==='beanie')return `<path d="M24 35 Q24 9 50 8 Q76 9 76 35 Z" fill="#e2564f"/><rect x="22" y="30" width="56" height="8" rx="4" fill="#f2f2f2"/><circle cx="50" cy="7" r="5" fill="#f2f2f2"/><path d="M32 16 L34 30 M42 11 L43 30 M58 11 L57 30 M68 16 L66 30" stroke="#c44740" stroke-width="1.6"/>`;
+  if(k==='bow')return `<g transform="translate(66 16) rotate(18)"><path d="M0 0 L-11 -7 L-11 7 Z M0 0 L11 -7 L11 7 Z" fill="#ff7aa8"/><circle r="3" fill="#ff5c93"/></g>`;
+  if(k==='crown')return `<path d="M30 24 L34 8 L42 18 L50 5 L58 18 L66 8 L70 24 Z" fill="#ffd24a" stroke="#e0a91c" stroke-width="1.2"/><circle cx="50" cy="15" r="2.2" fill="#ff6b6b"/><circle cx="38" cy="18" r="1.6" fill="#6bd1ff"/><circle cx="62" cy="18" r="1.6" fill="#6bd1ff"/>`;
+  return `<path d="M24 34 Q25 9 50 8 Q75 9 76 34 Z" fill="#ffcc33"/><path d="M47 9 L53 9 L53 31 L47 31 Z" fill="#f0b81f"/><path d="M19 33 Q50 39 81 33 L81 37 Q50 43 19 37 Z" fill="#e8ae17"/><path d="M33 16 Q37 12 42 11" stroke="#fff6c9" stroke-width="2" fill="none" stroke-linecap="round" opacity=".8"/>`}
+function mkSVG(hat){return `<svg class="mks" viewBox="0 0 100 142" aria-hidden="true">
+ <ellipse class="mk-shadow" cx="50" cy="139" rx="20" ry="3.2" fill="rgba(0,0,0,.18)"/>
+ <g class="mk-legs"><g class="mk-lgL"><rect x="40" y="104" width="9" height="27" rx="4" fill="#7fdcbf"/><rect x="37.5" y="129" width="12.5" height="8" rx="4" fill="#2b2f36"/></g>
+  <g class="mk-lgR"><rect x="51" y="104" width="9" height="27" rx="4" fill="#7fdcbf"/><rect x="50" y="129" width="12.5" height="8" rx="4" fill="#2b2f36"/></g></g>
+ <g class="mk-up">
+  <g class="mk-pt"><path d="M66 26 Q90 34 84 62 Q80 80 70 86 Q78 66 72 48 Q70 38 62 32 Z" fill="#4a2f2f"/><circle cx="66" cy="28" r="3.6" fill="#ff7aa8"/></g>
+  <g class="mk-arL"><rect x="30" y="72" width="9" height="11" rx="4.5" fill="#ffffff"/><rect x="31.5" y="80" width="6.5" height="19" rx="3.2" fill="#ffe1d0"/><circle cx="34.8" cy="100" r="3.8" fill="#ffe1d0"/></g>
+  <path d="M37 72 Q50 67 63 72 L62 104 Q50 107 38 104 Z" fill="#ffffff"/>
+  <path d="M40 84 L60 84 L61 106 Q50 109 39 106 Z" fill="#7fdcbf"/><rect x="43" y="88" width="14" height="8" rx="2" fill="#6ccbae"/><text x="50" y="94.4" text-anchor="middle" font-size="5" font-weight="800" fill="#1d2b26" font-family="Manrope,sans-serif">S</text>
+  <path d="M41 84 L38 73 M59 84 L62 73" stroke="#6ccbae" stroke-width="3" stroke-linecap="round"/>
+  <rect x="38.5" y="100" width="23" height="4" rx="1.5" fill="#8a5a3c"/><rect x="47.5" y="99.5" width="5" height="5" rx="1" fill="#e8ae17"/>
+  <g class="mk-tool"><rect x="58" y="102" width="2.6" height="11" rx="1" fill="#8a5a3c"/><rect x="55.5" y="100.5" width="8" height="3.4" rx="1" fill="#5d6570"/></g>
+  <g class="mk-arR"><rect x="61" y="72" width="9" height="11" rx="4.5" fill="#ffffff"/><rect x="62" y="80" width="6.5" height="19" rx="3.2" fill="#ffe1d0"/><circle cx="65.2" cy="100" r="3.8" fill="#ffe1d0"/></g>
+  <rect x="46.5" y="62" width="7" height="9" rx="3" fill="#ffe1d0"/>
+  <g class="mk-head">
+   <ellipse cx="50" cy="42" rx="28.5" ry="27.5" fill="#4a2f2f"/>
+   <path d="M23 46 Q21 68 31 74 Q28 60 29 50 Z M77 46 Q79 68 69 74 Q72 60 71 50 Z" fill="#4a2f2f"/>
+   <ellipse cx="50" cy="47" rx="22.5" ry="21.5" fill="#ffe8da"/>
+   <g class="mk-eyes"><g class="mk-eo"><ellipse cx="40.5" cy="49" rx="4.4" ry="5.8" fill="#3a2742"/><ellipse cx="59.5" cy="49" rx="4.4" ry="5.8" fill="#3a2742"/>
+     <ellipse cx="40.5" cy="51.5" rx="3" ry="2.6" fill="#7a5a9e"/><ellipse cx="59.5" cy="51.5" rx="3" ry="2.6" fill="#7a5a9e"/>
+     <circle cx="42" cy="46.6" r="1.8" fill="#fff"/><circle cx="61" cy="46.6" r="1.8" fill="#fff"/><circle cx="39.2" cy="51.6" r=".9" fill="#fff"/><circle cx="58.2" cy="51.6" r=".9" fill="#fff"/></g>
+    <g class="mk-eh"><path d="M36 50 Q40.5 45 45 50 M55 50 Q59.5 45 64 50" stroke="#3a2742" stroke-width="2.2" fill="none" stroke-linecap="round"/></g>
+    <g class="mk-ec"><path d="M36 50 Q40.5 53 45 50 M55 50 Q59.5 53 64 50" stroke="#3a2742" stroke-width="2" fill="none" stroke-linecap="round"/></g>
+    <g class="mk-ex"><path d="M37 46 L44 50 L37 53 M63 46 L56 50 L63 53" stroke="#3a2742" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g></g>
+   <path d="M35.5 42 Q40 40 44.5 41.6 M55.5 41.6 Q60 40 64.5 42" stroke="#4a2f2f" stroke-width="1.4" fill="none" stroke-linecap="round" class="mk-brow"/>
+   <ellipse cx="35" cy="57.5" rx="4" ry="2.3" fill="#ff9fb0" opacity=".55"/><ellipse cx="65" cy="57.5" rx="4" ry="2.3" fill="#ff9fb0" opacity=".55"/>
+   <g class="mk-mouth"><path class="mk-ms" d="M46.5 59.5 Q50 62.5 53.5 59.5" stroke="#b5485a" stroke-width="1.7" fill="none" stroke-linecap="round"/>
+    <ellipse class="mk-mo" cx="50" cy="60.5" rx="2.9" ry="2.4" fill="#c4515f"/><path class="mk-md" d="M46.5 62 Q50 59 53.5 62" stroke="#b5485a" stroke-width="1.7" fill="none" stroke-linecap="round"/>
+    <path class="mk-mc" d="M46 59 Q48 62 50 59.5 Q52 62 54 59" stroke="#b5485a" stroke-width="1.5" fill="none" stroke-linecap="round"/></g>
+   <path d="M24 40 Q27 20 50 19 Q73 20 76 40 Q70 30 62 30 Q64 37 58 39 Q57 31 50 29 Q47 37 38 39 Q40 33 37 30 Q29 31 24 40 Z" fill="#4a2f2f"/>
+   <g class="mk-hat">${mkHat(hat)}</g>
+  </g>
+ </g>
+ <g class="mk-fx"></g>
+</svg>`}
+
+/* ---------- поведение ---------- */
+const mkS={x:0,dir:1,state:'idle',tx:null,until:0,drag:null,y:0,vy:0,air:false,raf:0,lastT:0,bubbleT:0,tipAt:0,hidden:false};
+function mkGround(){const t=document.querySelector('.tabs');if(t&&getComputedStyle(t).display!=='none'&&!t.hidden){const r=t.getBoundingClientRect();if(r.height>0)return innerHeight-r.top-6}return 8}
+function mkMaxX(){const f=document.getElementById('fab');if(f&&!f.hidden&&getComputedStyle(f).display!=='none'){const r=f.getBoundingClientRect();if(r.width)return Math.max(60,r.left-72)}return innerWidth-90}
+function mkMount(){
+  if(mkEl)mkEl.remove();if(!MKA.on)return;
+  mkEl=document.createElement('div');mkEl.id='mika';mkEl.innerHTML=`<div class="mkb" hidden></div><div class="mkw">${mkSVG(MKA.hat)}<span class="mkz">z<b>z</b><i>z</i></span></div>`;
+  document.body.appendChild(mkEl);
+  mkS.x=Math.max(10,Math.min(innerWidth-80,innerWidth*0.12));mkPlace();
+  const w=mkEl.querySelector('.mkw');let down=null;
+  w.addEventListener('pointerdown',e=>{down={x:e.clientX,y:e.clientY,t:Date.now(),ox:mkS.x,oy:mkS.y,moved:false};w.setPointerCapture(e.pointerId);e.preventDefault()});
+  w.addEventListener('pointermove',e=>{if(!down)return;const dx=e.clientX-down.x,dy=e.clientY-down.y;
+    if(!down.moved&&Math.hypot(dx,dy)>8){down.moved=true;mkSet('drag');mkSay(['Эй! Куда?! 😳','Ай-ай, высоко!','Только не урони!'][Math.floor(Math.random()*3)],'',1600)}
+    if(down.moved){mkS.x=Math.max(-10,Math.min(innerWidth-60,down.ox+dx));mkS.y=Math.max(0,Math.min(innerHeight-200,down.oy-dy));mkS.air=true;mkS.vy=0;mkPlace()}});
+  const up=e=>{if(!down)return;const d=down;down=null;
+    if(d.moved){mkS.state='fall';mkEl.classList.remove('drag');return}
+    if(Date.now()-d.t<500)mkTap()};
+  w.addEventListener('pointerup',up);w.addEventListener('pointercancel',()=>{down=null});
+  mkS.lastT=performance.now();cancelAnimationFrame(mkS.raf);mkS.raf=requestAnimationFrame(mkLoop);
+  mkFace();
+}
+function mkPlace(){if(!mkEl)return;const g0=mkGround();mkEl.style.transform=`translate(${Math.round(mkS.x)}px,${-Math.round(g0+mkS.y)}px)`;
+  mkEl.querySelector('.mkw').style.transform=`scaleX(${mkS.dir<0?-1:1})`}
+function mkSet(st,ms){if(!mkEl)return;['walk','wave','jump','dance','sleep','eat','drag','sad','spin','pet'].forEach(c=>mkEl.classList.toggle(c,c===st));
+  mkS.state=st;mkS.until=ms?performance.now()+ms:0;mkFace()}
+function mkAct(a){const T={wave:1800,jump:900,dance:3200,spin:900,eat:2200,pet:1800};mkSet(a,T[a]||1500)}
+function mkFace(){if(!mkEl)return;const st=mkS.state,sad=MKA.food<20||MKA.mood<20;
+  const eyes=st==='sleep'?'c':st==='drag'?'x':['jump','dance','pet','eat'].includes(st)||MKA.mood>85&&st==='wave'?'h':'o';
+  const mouth=st==='drag'||st==='eat'?'o':st==='sleep'?'c':sad?'d':mkEl.classList.contains('talk')?'o':'s';
+  mkEl.dataset.e=eyes;mkEl.dataset.m=mouth;mkEl.classList.toggle('sadm',sad&&st!=='sleep')}
+function mkLoop(t){mkS.raf=requestAnimationFrame(mkLoop);if(!mkEl)return;const dt=Math.min(0.05,(t-mkS.lastT)/1000);mkS.lastT=t;
+  // скрыть на экранах, где мешает
+  const hide=document.body.classList.contains('ed')||document.body.classList.contains('chatpg')||!!document.querySelector('.ped,.qrscan:not(.out)');
+  if(hide!==mkS.hidden){mkS.hidden=hide;mkEl.classList.toggle('gone',hide)}
+  if(hide)return;
+  if(mkS.state==='fall'||(mkS.air&&mkS.state!=='drag')){mkS.vy-=1800*dt;mkS.y+=mkS.vy*dt;if(mkS.y<=0){mkS.y=0;mkS.air=false;mkS.vy=0;mkSet('jump',500);mkSay(['Фух! 😅','Приземлилась!','Больше так не делай 😤'][Math.floor(Math.random()*3)],'',1600)}mkPlace();return}
+  if(mkS.state==='drag')return;
+  if(mkS.until&&t>mkS.until){mkS.until=0;mkSet(mkNight()||MKA.sleep?'sleep':'idle')}
+  if(mkS.state==='walk'){const sp=(MKA.energy<20||MKA.food<20?28:46)*(mkS.run?1.9:1);const d=mkS.tx-mkS.x;
+    if(Math.abs(d)<2){mkS.run=false;mkSet('idle');mkS.next=t+2500+Math.random()*6000}
+    else{mkS.dir=d>0?1:-1;mkS.x+=Math.sign(d)*Math.min(Math.abs(d),sp*dt);mkPlace()}}
+  else if(mkS.state==='idle'&&!mkS.until){
+    if(!mkS.next)mkS.next=t+3000;
+    if(t>mkS.next){mkS.next=0;const r=Math.random();
+      if(mkNight()||MKA.sleep||MKA.energy<8){mkSet('sleep');if(!MKA.sleep&&MKA.energy<8)mkSay('Я так устала… посплю чуть-чуть 😴','',3000)}
+      else if(r<0.62){mkS.tx=12+Math.random()*Math.max(40,mkMaxX()-12);mkSet('walk')}
+      else if(r<0.72)mkAct('wave');else if(r<0.8&&MKA.mood>60)mkAct('dance');else if(r<0.86)mkAct('spin');else mkS.next=t+2000+Math.random()*4000}}
+  // подсказки
+  if(MKA.tips&&t>mkS.tipAt&&!sheets.length&&!document.hidden&&mkS.state!=='sleep'){mkS.tipAt=t+(4+Math.random()*4)*60000;if(mkS.tipAt0){const tip=mkTip();if(tip)mkSay(tip,'',7000)}mkS.tipAt0=1}
+  // мигание
+  if(Math.random()<dt*0.35&&mkS.state!=='sleep'){mkEl.classList.add('blink');setTimeout(()=>mkEl&&mkEl.classList.remove('blink'),140)}
+}
+function mkSay(text,mood,ms){if(!mkEl||mkS.hidden)return;const b=mkEl.querySelector('.mkb');b.innerHTML=esc(text).replace(/\n/g,'<br>');b.hidden=false;
+  const x=mkS.x,w=Math.min(260,innerWidth-24);b.style.width=w+'px';b.style.left=Math.max(12-x,Math.min(innerWidth-12-w-x,-w/2+34))+'px';
+  b.classList.remove('pop');void b.offsetWidth;b.classList.add('pop');mkEl.classList.add('talk');mkFace();clearTimeout(mkS.bubbleT);
+  setTimeout(()=>{mkEl&&mkEl.classList.remove('talk');mkFace()},Math.min(2600,300+text.length*45));
+  mkS.bubbleT=setTimeout(()=>{b.hidden=true},ms||4000);if(mood==='happy')mkAct('jump')}
+function mkHearts(n=5,ch='💗'){if(!mkEl)return;for(let i=0;i<n;i++){const h=document.createElement('span');h.className='mkh';h.textContent=ch;h.style.left=(20+Math.random()*30)+'px';h.style.animationDelay=(i*0.12)+'s';mkEl.appendChild(h);setTimeout(()=>h.remove(),1800)}}
+function mkTap(){
+  if(mkS.state==='sleep'){MKA.sleep=false;mkSave();mkSet('idle');mkSay(mkNight()?'М-м… ночь же… ну ладно, я тут 🥱':'Ой, я проснулась! ☀️','',3000);return}
+  const now=Date.now();mkS.taps=(mkS.taps||[]).filter(x=>now-x<2500);mkS.taps.push(now);
+  if(mkS.taps.length>=4){mkS.taps=[];mkAct('spin');mkSay('Щекотно! 🤭','',2000);MKA.mood=mkClamp(MKA.mood+2);mkSave();return}
+  if(mkS.taps.length>1)return;
+  setTimeout(()=>{if((mkS.taps||[]).length===1)openSheet(mkSheet())},260)}
+
+/* ---------- подсказки по делу ---------- */
+function mkTip(){const T=today(),W=isWorker(),n=me(),r=[];
+  if(MKA.food<25)r.push(`${MKA.name} голодная 🥺 Нажми на меня → покормить`);
+  const ev=S.events.filter(e=>e.date===T&&(!W||(e.who||[]).includes(n)));if(ev.length)r.push(`Сегодня ${ev.length===1?'выход':'выходов: '+ev.length}: ${ev.slice(0,3).map(e=>oname(e.objectId)||'без объекта').join(', ')}`);
+  const tm=S.events.filter(e=>e.date===dAdd(T,1)&&(!W||(e.who||[]).includes(n)));if(new Date().getHours()>=17&&tm.length)r.push(`Завтра: ${tm.slice(0,3).map(e=>oname(e.objectId)||'выход').join(', ')}. Ничего не забыли взять? 🧰`);
+  const od=S.tasks.filter(t=>!t.done&&t.due&&t.due<T&&(!W||t.who===n));if(od.length)r.push(`Просроченных задач: ${od.length}. Например: «${od[0].title}»`);
+  if(!W){const owe=workerNames(true).filter(x=>!isPartner(x)).map(x=>[x,workerStat(x).debt]).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]);if(owe.length)r.push(`${owe[0][0]} ждёт выплату ${money(owe[0][1])} 💸`);
+    const y=dAdd(T,-1),wd=new Date(y+'T12:00').getDay();if(wd&&wd<6&&!S.work.some(w=>w.date===y)&&S.events.some(e=>e.date===y))r.push('Вчера был выход, а работ не записано. Записать? ✍️')}
+  r.push(MK_TIPS[Math.floor(Math.random()*MK_TIPS.length)]);
+  const fresh=r.filter(x=>!MKA.seen[x]||Date.now()-MKA.seen[x]>3*3600e3);const pick=fresh[0]||null;if(pick){MKA.seen[pick]=Date.now();const ks=Object.keys(MKA.seen);if(ks.length>40)ks.slice(0,ks.length-40).forEach(k=>delete MKA.seen[k]);mkSave()}return pick}
+const MK_TIPS=['Подсказка: в поле количества есть «📐 По размерам» — считаю метры сама!','Подсказка: чек можно отсканировать по QR — суммы подставятся 🧾','Подсказка: в чате можно отправить целый чертёж 📐','Подсказка: дёрни меня пальцем — я полетаю 😄','Подсказка: спроси меня «что сегодня?» или «кому должны?»','Подсказка: «напомни купить клей завтра» — и я создам задачу 📝','Не забывай пить воду на объекте 💧','Каска — лучший аксессуар ⛑️'];
+const MK_JOKES=['Прораб говорит: «Сделаем за неделю». Вопрос только — какую неделю 😅','Уровень — лучший друг плиточника. Второй лучший друг — затирка, которая всё скроет.','— Сколько стоит сделать по уровню? — Тысяча. — А на глаз? — Две, потом переделывать 🙃','Электрик не боится тока. Он его уважает. И выключает автомат. Дважды.','Ламинат кладут быстро. Плинтус — вечность.','«Тут работы на пять минут» — самые дорогие пять минут в стройке.'];
+
+/* ---------- разговор ---------- */
+function mkReply(q){const s=String(q||'').toLowerCase().replace(/ё/g,'е').trim(),T=today(),W=isWorker(),n=me(),nm=MKA.name;
+  const has=(...a)=>a.some(x=>s.includes(x));
+  const evList=d=>S.events.filter(e=>e.date===d&&(!W||(e.who||[]).includes(n)));
+  const evText=(d,L)=>{const ev=evList(d);return ev.length?`${L}: ${ev.map(e=>`🏠 ${oname(e.objectId)||'без объекта'}${(e.who||[]).length?' — '+e.who.join(', '):''}${e.note?' ('+e.note+')':''}`).join('\n')}`:`${L} выходов нет 🌿`};
+  if(!s)return {t:'Я слушаю 👂'};
+  if(has('привет','здравств','хай','добр','доброе','салют','привiт','вітаю'))return {t:`Привет, ${n||'босс'}! ${MKA.mood>60?'Настроение отличное ☀️':'Немного грустно… погладишь? 🥺'}\n${evText(T,'Сегодня')}`,a:'wave'};
+  if(has('как дела','как ты','як справи'))return {t:`${MKA.food<30?'Кушать хочется 🍩':MKA.energy<30?'Сонная немного 🥱':'Отлично!'} Сытость ${MKA.food}%, настроение ${MKA.mood}%, энергия ${MKA.energy}%.`};
+  if(has('кто ты','ты кто','что умеешь','помощ','help','умеешь'))return {t:`Я ${nm} — твоя помощница 👷‍♀️ Могу рассказать, что сегодня и завтра, какие задачи, ${W?'сколько ты заработал':'кому должны и сколько осталось вам за месяц'}, создать задачу («напомни…»), посчитать пример, открыть нужный раздел и пошутить. А ещё меня надо кормить 😋`,c:['Что сегодня?','Мои задачи',W?'Мой заработок':'Кому должны?','Пошути']};
+  if(has('открой','перейди','покажи')){const m=[['объект','objects'],['график','sched'],['календар','sched'],['чертеж','plans'],['рабоч','workers'],['заработ','workers'],['авто','car'],['машин','car'],['сегодня','today'],['главн','today'],['задач','sched']].find(([k])=>s.includes(k));
+    if(s.includes('чат')){backThen(()=>openPage({t:'chat',id:'all'}));return {t:'Открываю чат 💬',close:1}}
+    if(m&&!(W&&m[1]==='car')){backThen(()=>{ui.page=[];ui.tab=m[1];if(m[0]==='задач')ui.schedMode='tasks';render()});return {t:'Открываю! 🏃‍♀️',close:1}}}
+  if(has('сегодня','что по плану','куда едем','куда ехать'))return {t:evText(T,'Сегодня')};
+  if(has('завтра'))if(!has('напомни'))return {t:evText(dAdd(T,1),'Завтра')};
+  if(has('недел'))return {t:[...Array(7)].map((_,i)=>dAdd(weekStart(),i)).map(d=>{const e=evList(d);return `${wdName(d)} ${fdate(d)}: ${e.length?e.map(x=>oname(x.objectId)||'выход').join(', '):'—'}`}).join('\n')};
+  const mR=s.match(/^(?:напомни|напомнить|задача|добавь задачу|запиши задачу)[:\s]+(.+)$/);
+  if(mR){let t=mR[1].trim(),due='';if(/(^|\s)завтра(?=\s|$)/.test(t)){due=dAdd(T,1);t=t.replace(/(^|\s)завтра(?=\s|$)/,' ').trim()}else if(/(^|\s)сегодня(?=\s|$)/.test(t)){due=T;t=t.replace(/(^|\s)сегодня(?=\s|$)/,' ').trim()}
+    if(!t)return {t:'Что напомнить? Например: «напомни купить клей завтра»'};t=t[0].toUpperCase()+t.slice(1);put('tasks',{id:uid(),title:t,done:false,who:n,due,objectId:''});commit(true);mkXP(3,'app');
+    return {t:`Записала задачу: «${t}»${due?' на '+(due===T?'сегодня':'завтра'):''} ✅`,a:'jump'}}
+  if(has('задач','дела на','что сделать'))return (()=>{const L=S.tasks.filter(t=>!t.done&&(!W||t.who===n)).sort(taskSort);if(!L.length)return {t:'Открытых задач нет — красота! ✨'};
+    return {t:`Открытых задач: ${L.length}\n${L.slice(0,5).map(t=>`▫️ ${t.title}${t.due?' — '+(t.due===T?'сегодня':t.due<T?'просрочено!':fdate(t.due)):''}${t.objectId?' ('+oname(t.objectId)+')':''}`).join('\n')}`,c:['Открой задачи']}})();
+  if(W&&has('заработ','зарплат','должны мне','выплат','мои деньги','сколько я'))return (()=>{const i=workerInfo(n);return {t:`За эту неделю: ${money(i.week)}, за месяц: ${money(i.month)}.\n${i.debt>0?'Тебе должны '+money(i.debt)+' 💸':i.debt<0?'Аванс выдан наперёд: '+money(-i.debt):'Долгов нет, всё выплачено ✅'}`}})();
+  if(!W&&has('кому должн','должны рабоч','долг','выплат','зарплат'))return (()=>{const L=workerNames(true).filter(x=>!isPartner(x)).map(x=>[x,workerStat(x).debt]).filter(x=>x[1]>0.5).sort((a,b)=>b[1]-a[1]);
+    return {t:L.length?`Рабочим к выплате ${money(L.reduce((a,x)=>a+x[1],0))}:\n${L.map(([x,d])=>`💸 ${x} — ${money(d)}`).join('\n')}`:'Рабочим никто ничего не должен ✅'}})();
+  if(!W&&has('нам должн','заказчик','кто должен','не заплатил','не оплатил'))return (()=>{const L=S.objects.filter(o=>!['lost'].includes(objStatus(o))).map(o=>[o,objStats(o.id).clientOwes]).filter(x=>x[1]>0.5).sort((a,b)=>b[1]-a[1]);
+    return {t:L.length?`Заказчики должны ${money(L.reduce((a,x)=>a+x[1],0))} за сделанное:\n${L.slice(0,6).map(([o,d])=>`🏠 ${o.name} — ${money(d)}`).join('\n')}`:'Все заказчики рассчитались за сделанное ✅'}})();
+  if(!W&&has('месяц','прибыл','осталось нам','заработали','доход','итог'))return (()=>{const m=monthStats(T.slice(0,7));return {t:`За этот месяц:\nпришло за работу ${money(m.recWork)}\nнаёмным ${money(m.wages)}, расходы ${money(m.fuel+m.other)}\nосталось вам: ${money(m.profit)} ${m.profit>=0?'💰':'😬'}`}})();
+  if(has('посчитай','сколько будет')||/^[\d\s.,+\-*/()×x]+$/.test(s)&&/\d/.test(s)&&/[+\-*/×x]/.test(s)){const ex=s.replace(/посчитай|сколько будет|=|\?/g,'');const v=evalNum(ex);return {t:v||v===0?`${ex.trim()} = ${qf(r2(v))} 🧮`:'Не поняла пример 🤔 Напиши, например: 2.4*3+1.2'}}
+  if(has('шут','анекдот','смешн','рассмеши'))return {t:MK_JOKES[Math.floor(Math.random()*MK_JOKES.length)],a:'dance'};
+  if(has('спасибо','дякую','молодец','умница','класс'))return {t:'Всегда пожалуйста! 💗',a:'jump',mood:4};
+  if(has('люблю','красив','мила','свидан','замуж','поцел'))return {t:'Ой, смущаешь 😳 Давай лучше вместе закроем все задачи — это самое романтичное на стройке 😄',a:'spin'};
+  if(has('есть хочешь','голод','покорм','кушать'))return {t:MKA.food<70?'Очень! Выбери что-нибудь внизу 🍩':'Я сытая, спасибо! 😊',feed:1};
+  if(has('спать','спокойной','спи','устала'))return {t:'Тогда я посплю. Разбуди касанием 😴',sleep:1};
+  if(has('танц','дэнс'))return {t:'Смотри! 💃',a:'dance'};
+  if(has('погод'))return {t:'Я не вижу окно 🙈 Но на объект всегда бери куртку и воду!'};
+  return {t:`Я пока учусь понимать 🙈 Спроси попроще, например:`,c:['Что сегодня?','Завтра','Мои задачи',W?'Мой заработок':'Кому должны?','Напомни купить клей завтра','Пошути']};
+}
+
+/* ---------- окно Мики ---------- */
+function mkSheet(){return ()=>{mkTick();const lv=mkLv(),nx=mkLvNext(),pr=Math.round((MKA.xp-nx.cur)/Math.max(1,nx.next-nx.cur)*100);
+  const bar=(l,v2,c)=>`<div class="mkbar"><span>${l}</span><i><b style="width:${v2}%;background:${c}"></b></i><small>${v2}%</small></div>`;
+  const msgs=(MKA.chat||[]).slice(-30);
+  return {title:`${MKA.name} · ур. ${lv}`,html:`
+   <div class="mkhead"><div class="mkava">${mkSVG(MKA.hat)}</div><div style="flex:1;min-width:0">
+     ${bar('🍩 Сытость',MKA.food,'#ffb547')}${bar('💗 Настроение',MKA.mood,'#ff7aa8')}${bar('⚡ Энергия',MKA.energy,'#7fdcbf')}
+     <div class="mkbar"><span>⭐ Опыт</span><i><b style="width:${pr}%;background:#a58bff"></b></i><small>ур.${lv}</small></div></div></div>
+   <div class="chips" style="flex-wrap:wrap;margin-top:10px">${MK_FOOD.map(([e,t],i)=>`<button class="chip" data-s="mkFeed" data-id="${i}">${e} ${t}</button>`).join('')}
+     <button class="chip" data-s="mkPet">🤗 Погладить</button><button class="chip" data-s="mkSleep">${MKA.sleep?'☀️ Разбудить':'😴 Уложить спать'}</button><button class="chip" data-s="mkDance">💃 Танец</button></div>
+   <div class="mkchat" id="mkchat">${msgs.map(mkMsgHtml).join('')||`<div class="mkm in">Привет! Я ${esc(MKA.name)} 👷‍♀️ Спроси «что сегодня?», «${isWorker()?'мой заработок':'кому должны?'}» или «напомни купить клей завтра».</div>`}</div>
+   <div class="chips" id="mkqc" style="margin-top:6px;flex-wrap:wrap">${['Что сегодня?','Завтра','Мои задачи',isWorker()?'Мой заработок':'Кому должны?',isWorker()?'Пошути':'Итог месяца'].map(t=>`<button class="chip" data-s="mkQ" data-id="${esc(t)}">${esc(t)}</button>`).join('')}</div>
+   <div class="qadd" style="margin-top:8px"><input id="mkin" placeholder="Напиши сообщение…" enterkeyhint="send" autocomplete="off"><button class="btn p" data-s="mkSend">➤</button></div>
+   <details style="margin-top:14px"><summary class="muted">⚙️ Настройки помощницы</summary>
+    ${F('Имя',I('mkname',MKA.name))}
+    <div class="f"><span>Наряд</span><div class="chips" style="flex-wrap:wrap">${Object.entries(MK_HATS).map(([k,h])=>`<button class="chip ${MKA.hat===k?'on':''}" data-s="mkHat" data-id="${k}" ${lv<h.lv?'disabled':''}>${h.n}${lv<h.lv?' 🔒'+h.lv:''}</button>`).join('')}</div></div>
+    <div class="chips" style="flex-wrap:wrap"><button class="chip ${MKA.tips?'on':''}" data-s="mkTips">💡 Подсказки ${MKA.tips?'вкл':'выкл'}</button><button class="chip" data-s="mkOff">🙈 Убрать с экрана</button><button class="chip" data-s="mkClr">🧹 Очистить переписку</button></div>
+    <p class="muted sm" style="margin-top:8px">Опыт растёт, когда вы работаете в приложении и заботитесь о ${esc(MKA.name)}. Её состояние хранится только на этом телефоне. Вернуть на экран: Меню → «${esc(MKA.name)}».</p></details>`,
+  init(){const box=g('mkchat');const scr=()=>{box.scrollTop=box.scrollHeight};scr();
+    const say=(q)=>{q=String(q||'').trim();if(!q)return;MKA.chat.push({f:'me',t:q,at:Date.now()});const r=mkReply(q);
+      if(r.mood)MKA.mood=mkClamp(MKA.mood+r.mood);MKA.chat.push({f:'mk',t:r.t,at:Date.now()});mkSave();
+      box.insertAdjacentHTML('beforeend',mkMsgHtml({f:'me',t:q})+mkMsgHtml({f:'mk',t:r.t}));scr();
+      if(r.c)g('mkqc').innerHTML=r.c.map(t=>`<button class="chip" data-s="mkQ" data-id="${esc(t)}">${esc(t)}</button>`).join('');
+      if(r.a)mkAct(r.a);if(r.sleep){MKA.sleep=true;mkSave();mkSet('sleep')}if(r.close)return;};
+    SS.mkQ=el=>say(el.dataset.id);SS.mkSend=()=>{const i=g('mkin');say(i.value);i.value='';i.focus()};
+    g('mkin').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();SS.mkSend()}});
+    SS.mkFeed=el=>{const [e,t,fx]=MK_FOOD[+el.dataset.id];if(MKA.food>=95&&!fx.energy){mkSay('Я уже наелась! 😵','',2000);toast('Мика сытая');return}
+      MKA.food=mkClamp(MKA.food+(fx.food||0));MKA.mood=mkClamp(MKA.mood+(fx.mood||0));MKA.energy=mkClamp(MKA.energy+(fx.energy||0));mkSave();mkXP(4,'care');
+      mkAct('eat');mkHearts(3,e);mkSay(['Ням! Спасибо 😋','Вкуснятина! 💗','Ммм, обожаю '+t.toLowerCase()+'!'][Math.floor(Math.random()*3)],'',2500);replaceSheet(sheets[sheets.length-1])};
+    SS.mkPet=()=>{const now=Date.now();if(now-(MKA.petAt||0)<20000){mkSay('Хи-хи, хватит, щекотно 🤭','',2000);mkAct('spin');return}MKA.petAt=now;MKA.mood=mkClamp(MKA.mood+10);mkSave();mkXP(3,'care');mkAct('pet');mkHearts(6);mkSay('Мурр… 💗','',2000);replaceSheet(sheets[sheets.length-1])};
+    SS.mkSleep=()=>{MKA.sleep=!MKA.sleep;mkSave();if(MKA.sleep){mkSet('sleep');mkSay('Спокойной ночи 🌙','',2000)}else{mkSet('idle');mkAct('wave');mkSay('Доброе утро! ☀️','',2000)}replaceSheet(sheets[sheets.length-1])};
+    SS.mkDance=()=>{if(MKA.energy<10)return mkSay('Нет сил танцевать… дай кофе ☕','',2500);MKA.energy=mkClamp(MKA.energy-4);MKA.mood=mkClamp(MKA.mood+3);mkSave();backThen(()=>{mkAct('dance');mkHearts(4,'🎵')})};
+    SS.mkHat=el=>{MKA.hat=el.dataset.id;mkSave();const h=mkEl&&mkEl.querySelector('.mk-hat');if(h)h.innerHTML=mkHat(MKA.hat);replaceSheet(sheets[sheets.length-1]);mkAct('spin')};
+    SS.mkTips=()=>{MKA.tips=!MKA.tips;mkSave();replaceSheet(sheets[sheets.length-1])};
+    SS.mkOff=()=>{MKA.on=false;mkSave();if(mkEl){mkEl.remove();mkEl=null}toast(`${MKA.name} спряталась. Вернуть: Меню → «${MKA.name}»`);back()};
+    SS.mkClr=()=>{MKA.chat=[];mkSave();replaceSheet(sheets[sheets.length-1])};
+    SS.input=ev=>{if(ev.target.id==='mkname'){const v2=ev.target.value.trim().slice(0,16);if(v2){MKA.name=v2;mkSave()}}};
+  }}}}
+const mkMsgHtml=m=>`<div class="mkm ${m.f==='me'?'out':'in'}">${esc(m.t).replace(/\n/g,'<br>')}</div>`;
+
+/* ---------- реакции на действия в приложении ---------- */
+function mkReact(c,r,isNew){if(!MKA||!MKA.on)return;
+  if(['work','payments','expenses','tasks','events','plans','photos','msgs'].includes(c))mkXP(c==='msgs'?1:2,'app');
+  if(!isNew&&!(c==='tasks'&&r&&r.done))return;
+  const L={work:['Работу записала! 💪','Ещё один шаг к цели 🏗️'],payments:['Деньги пришли! 💰','Ура, оплата! 🎉'],expenses:['Расход записан 🧾'],events:['Выход в календаре 📅'],plans:['Новый чертёж! 📐'],tasks:r&&r.done?['Задача сделана! ✅','Молодцы! ✨']:['Задачу записала 📝']}[c];
+  if(L&&Math.random()<0.7){setTimeout(()=>{mkSay(L[Math.floor(Math.random()*L.length)],'',2200);mkAct(c==='payments'||(c==='tasks'&&r.done)?'jump':'wave')},sheets.length?700:100)}
+  if(c==='payments')MKA.mood=mkClamp(MKA.mood+5)}
+let mkLastTab='';
+function mkOnRender(){if(!MKA||!MKA.on)return;const k=(curPage()&&curPage().t)||ui.tab;if(k===mkLastTab)return;mkLastTab=k;
+  if(mkEl&&!mkS.hidden&&mkS.state!=='sleep'&&mkS.state!=='drag'&&Math.random()<0.35){mkS.x=mkS.dir>0?-40:innerWidth-20;mkS.tx=20+Math.random()*Math.max(40,mkMaxX()-20);mkS.run=true;mkSet('walk')}}
+function mikaInit(){MKA=mkLoad();mkTick();
+  const _put=put;put=function(c,r){const isNew=!(S[c]||[]).some(x=>x.id===r.id);const x=_put(c,r);try{mkReact(c,r,isNew)}catch(e){}return x};
+  const _render=render;render=function(){const x=_render.apply(this,arguments);try{mkOnRender()}catch(e){}return x};
+  A.mika=()=>{if(!MKA.on){MKA.on=true;mkSave();mkMount();setTimeout(()=>{mkAct('wave');mkSay(`Я вернулась! 💗`,'',2500)},400)}openSheet(mkSheet())};
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden){mkTick();mkFace()}});
+  setInterval(()=>{mkTick();mkFace()},60000);
+  if(MKA.on)setTimeout(()=>{mkMount();const d=today();
+    if(MKA.greet!==d){MKA.greet=d;mkSave();setTimeout(()=>{const h=new Date().getHours(),ev=S.events.filter(e=>e.date===d&&(!isWorker()||(e.who||[]).includes(me())));
+      mkAct('wave');mkSay(`${h<12?'Доброе утро':h<18?'Добрый день':'Добрый вечер'}${me()?', '+me():''}! ${ev.length?'Сегодня '+(ev.length===1?'выход: '+(oname(ev[0].objectId)||'—'):'выходов: '+ev.length):'Сегодня выходов нет'} ${MKA.food<40?'\nИ я проголодалась 🥺':''}`,'',6000)},900)}
+    else if(mkNight()||MKA.sleep)mkSet('sleep')},600);
+}
+
+function mkOpenFromMenu(){if(!MKA.on){MKA.on=true;mkSave();mkMount();setTimeout(()=>{mkAct('wave');mkSay('Я вернулась! 💗','',2500)},400)}replaceSheet(mkSheet())}
 
 /* ================= Чертежи: план, ГОСТ-лист, электрика, сантехника, фигуры, 3D ================= */
 const WT=0.12; // толщина стены, м
