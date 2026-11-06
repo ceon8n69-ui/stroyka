@@ -486,9 +486,9 @@ body.wk [data-s=toEst],body.wk [data-e=toEst],body.wk .adm{display:none!importan
 #mika.gone{opacity:0;visibility:hidden}
 #mika .mkw{position:absolute;inset:0;pointer-events:auto;touch-action:none;cursor:grab;-webkit-tap-highlight-color:transparent}
 .mks{width:100%;height:100%;overflow:visible;display:block;transform-origin:50% 100%}
-.mk-eh,.mk-ec,.mk-ex,.mk-mo,.mk-md,.mk-mc{display:none}
-#mika[data-e=h] .mk-eo,#mika[data-e=c] .mk-eo,#mika[data-e=x] .mk-eo{display:none}
-#mika[data-e=h] .mk-eh,#mika[data-e=c] .mk-ec,#mika[data-e=x] .mk-ex{display:inline}
+.mk-eh,.mk-ec,.mk-ex,.mk-ew,.mk-mo,.mk-md,.mk-mc{display:none}
+#mika[data-e=h] .mk-eo,#mika[data-e=c] .mk-eo,#mika[data-e=x] .mk-eo,#mika[data-e=w] .mk-eo{display:none}
+#mika[data-e=h] .mk-eh,#mika[data-e=c] .mk-ec,#mika[data-e=x] .mk-ex,#mika[data-e=w] .mk-ew{display:inline}
 #mika[data-m=o] .mk-ms,#mika[data-m=d] .mk-ms,#mika[data-m=c] .mk-ms{display:none}
 #mika[data-m=o] .mk-mo,#mika[data-m=d] .mk-md,#mika[data-m=c] .mk-mc{display:inline}
 #mika.talk .mk-ms,#mika.talk .mk-md{display:none}#mika.talk .mk-mo{display:inline;transform-origin:50px 60.5px;animation:mkTalk .2s ease-in-out infinite alternate}
@@ -536,6 +536,11 @@ body.wk [data-s=toEst],body.wk [data-e=toEst],body.wk .adm{display:none!importan
 .mkbar i{height:9px;border-radius:5px;background:var(--line);overflow:hidden;display:block}.mkbar b{display:block;height:100%;border-radius:5px;transition:width .4s}
 .mkchat{margin-top:10px;max-height:36vh;overflow:auto;display:flex;flex-direction:column;gap:6px;padding:4px 2px}
 .mkm{max-width:86%;padding:8px 12px;border-radius:16px;font-size:14px;line-height:1.38;animation:mkPop .2s ease-out}.mkm.in{background:var(--card);align-self:flex-start;border-bottom-left-radius:6px;border:1.5px solid var(--line)}.mkm.out{background:var(--ink);color:var(--bg);align-self:flex-end;border-bottom-right-radius:6px}
+
+.mks[data-skin=bike] .mk-lgL{transform-origin:45.5px 86px}.mks[data-skin=bike] .mk-lgR{transform-origin:54.5px 86px}
+.mks[data-skin=bike] .mk-arL{transform-origin:39px 52px}.mks[data-skin=bike] .mk-arR{transform-origin:61px 52px}
+.mks[data-skin=bike] .mk-head{transform-origin:50px 46px}.mks[data-skin=bike] .mk-eyes{transform-origin:50px 32px}.mks[data-skin=bike] .mk-pt{transform-origin:57px 15px}
+#mika.talk .mks[data-skin=bike] .mk-mo{transform-origin:50px 39.8px}
 
 </style>
 </head>
@@ -2131,7 +2136,7 @@ const IC={
   pay:'<svg viewBox="0 0 24 24"><rect x="3" y="6.5" width="18" height="11" rx="2.5"/><circle cx="12" cy="12" r="2.4"/><path d="M6.5 9.5v5M17.5 9.5v5"/></svg>',
   photo:'<svg viewBox="0 0 24 24"><path d="M4 8.5h3.2L9 6h6l1.8 2.5H20V19H4z"/><circle cx="12" cy="13.3" r="3.3"/></svg>'};
 /* ================= Стройка 2.2: бизнес-функции ================= */
-const APP_VERSION='3.14';
+const APP_VERSION='3.15';
 const LOGC=['work','expenses','payments','est','payplan','cash','objects','tools'];
 const TRASHC=['objects','tasks','work','workers','rates','est','plans','expenses','payments','fuelDays','tools','events','photos','payplan','cash','checks','tpls','team'];
 const STAGES={before:'До',work:'Процесс',after:'После',hidden:'Скрытые'};
@@ -4351,11 +4356,53 @@ function plansInit2(){
    реагирует на нажатия, её можно перетаскивать, кормить, гладить, укладывать спать; отвечает на вопросы по данным приложения.
    Состояние — только на этом телефоне (localStorage), в Supabase ничего не пишет. */
 const MK_KEY='stroyka.mika';
+const MK_SKINS={bike:'Велосипедистка',hard:'Прораб в каске'};
+function mkSVGFor(){return MKA.skin==='hard'?mkSVG(MKA.hat):mkSVGBike()}
+function mkSVGBike(){return `<svg class="mks" data-skin="bike" viewBox="0 0 100 142" aria-hidden="true">
+ <ellipse class="mk-shadow" cx="50" cy="139" rx="16" ry="2.8" fill="rgba(0,0,0,.18)"/>
+ <g class="mk-legs">
+  <g class="mk-lgL"><path d="M41.5 86 L49 86 L48.2 112 L47.6 133 L43.2 133 L42.6 112 Z" fill="#ffe3d3"/><path d="M41 84 L49.6 84 L49.1 101 L41.7 101 Z" fill="#ffffff"/><path d="M41.1 86 L43.1 86 L43 101 L41.7 101 Z" fill="#ffcc33"/>
+   <path d="M42.4 132 L48.4 132 L49.6 137.6 Q45 139.6 40.4 138.1 Z" fill="#ffffff" stroke="#d6d6d6" stroke-width=".6"/><rect x="42.6" y="133.4" width="5.8" height="1.4" rx=".6" fill="#ffcc33"/></g>
+  <g class="mk-lgR"><path d="M58.5 86 L51 86 L51.8 112 L52.4 133 L56.8 133 L57.4 112 Z" fill="#ffe3d3"/><path d="M59 84 L50.4 84 L50.9 101 L58.3 101 Z" fill="#ffffff"/><path d="M58.9 86 L56.9 86 L57 101 L58.3 101 Z" fill="#ffcc33"/>
+   <path d="M57.6 132 L51.6 132 L50.4 137.6 Q55 139.6 59.6 138.1 Z" fill="#ffffff" stroke="#d6d6d6" stroke-width=".6"/><rect x="51.6" y="133.4" width="5.8" height="1.4" rx=".6" fill="#ffcc33"/></g></g>
+ <g class="mk-up">
+  <g class="mk-pt"><path d="M56 14 Q73 17 71 40 Q69.5 60 75 80 Q64 72 62.5 53 Q61 35 54 22 Z" fill="#2a1d22"/><path d="M54.5 13.4 Q58.5 11.4 60.8 15" stroke="#ffcc33" stroke-width="2.2" fill="none" stroke-linecap="round"/></g>
+  <path d="M36.2 30 Q36 14 50 13.6 Q64 14 63.8 30 Q65 46 61.2 59 L57.2 52.5 Q60 40 59 32 L41 32 Q40 40 42.8 52.5 L38.8 59 Q35 46 36.2 30 Z" fill="#2a1d22"/>
+  <g class="mk-arL"><path d="M36 50.5 Q39 48.2 42.2 50.2 L42 61.5 L36.4 61.5 Z" fill="#ffcc33"/><rect x="36.9" y="60" width="4.6" height="21" rx="2.3" fill="#ffe3d3"/><rect x="36.3" y="78" width="5.8" height="6.6" rx="2.4" fill="#1d1f24"/><rect x="37.4" y="83.6" width="3.6" height="2.4" rx="1.2" fill="#ffe3d3"/></g>
+  <rect x="47.6" y="41.5" width="4.8" height="9" rx="2" fill="#ffe3d3"/>
+  <path d="M40 50.2 Q50 46.6 60 50.2 L59 64 Q57.6 72 57.2 80 L42.8 80 Q42.4 72 41 64 Z" fill="#ffcc33"/>
+  <path d="M41 58 Q42.4 70 42.8 80 L45.8 80 Q44.4 68 44 57 Z M59 58 Q57.6 70 57.2 80 L54.2 80 Q55.6 68 56 57 Z" fill="#ffffff"/>
+  <path d="M45.6 48.6 L50 53.6 L54.4 48.6" fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linejoin="round"/>
+  <line x1="50" y1="53.6" x2="50" y2="80" stroke="#2b2f36" stroke-width=".8"/><rect x="49.2" y="53.2" width="1.6" height="3" rx=".6" fill="#2b2f36"/>
+  <text x="54.6" y="66" text-anchor="middle" font-size="3.6" font-weight="800" fill="#2b2f36" font-family="Manrope,sans-serif">S</text>
+  <path d="M42.6 79 L57.4 79 Q59.6 85 59.6 88 L40.4 88 Q40.4 85 42.6 79 Z" fill="#ffffff"/><rect x="42.6" y="79" width="14.8" height="2.2" rx=".8" fill="#ffcc33"/>
+  <g class="mk-arR"><path d="M64 50.5 Q61 48.2 57.8 50.2 L58 61.5 L63.6 61.5 Z" fill="#ffcc33"/><rect x="58.5" y="60" width="4.6" height="21" rx="2.3" fill="#ffe3d3"/><rect x="57.9" y="78" width="5.8" height="6.6" rx="2.4" fill="#1d1f24"/><rect x="59" y="83.6" width="3.6" height="2.4" rx="1.2" fill="#ffe3d3"/></g>
+  <g class="mk-head">
+   <path d="M37.6 29 Q38 43 50 45.6 Q62 43 62.4 29 Q62 17 50 17 Q38 17 37.6 29 Z" fill="#ffe8da"/>
+   <g class="mk-eyes"><g class="mk-eo"><ellipse cx="45" cy="32" rx="2.3" ry="3.1" fill="#3a2742"/><ellipse cx="55" cy="32" rx="2.3" ry="3.1" fill="#3a2742"/>
+     <ellipse cx="45" cy="33.3" rx="1.5" ry="1.3" fill="#7d5a5a"/><ellipse cx="55" cy="33.3" rx="1.5" ry="1.3" fill="#7d5a5a"/><circle cx="45.8" cy="30.9" r=".9" fill="#fff"/><circle cx="55.8" cy="30.9" r=".9" fill="#fff"/>
+     <path d="M42.2 29.4 Q45 27.6 47.9 29.2 M52.1 29.2 Q55 27.6 57.8 29.4" stroke="#2a1d22" stroke-width="1.1" fill="none" stroke-linecap="round"/></g>
+    <g class="mk-eh"><path d="M42.5 32.6 Q45 29.8 47.5 32.6 M52.5 32.6 Q55 29.8 57.5 32.6" stroke="#2a1d22" stroke-width="1.3" fill="none" stroke-linecap="round"/></g>
+    <g class="mk-ec"><path d="M42.5 32 Q45 34 47.5 32 M52.5 32 Q55 34 57.5 32" stroke="#2a1d22" stroke-width="1.2" fill="none" stroke-linecap="round"/></g>
+    <g class="mk-ex"><path d="M43 30 L47 32 L43 34 M57 30 L53 32 L57 34" stroke="#2a1d22" stroke-width="1.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>
+    <g class="mk-ew"><ellipse cx="45" cy="32" rx="2.3" ry="3.1" fill="#3a2742"/><ellipse cx="45" cy="33.3" rx="1.5" ry="1.3" fill="#7d5a5a"/><circle cx="45.8" cy="30.9" r=".9" fill="#fff"/><path d="M42.2 29.4 Q45 27.6 47.9 29.2" stroke="#2a1d22" stroke-width="1.1" fill="none" stroke-linecap="round"/><path d="M52.4 32.6 Q55 30 57.6 32.6" stroke="#2a1d22" stroke-width="1.3" fill="none" stroke-linecap="round"/></g></g>
+   <path d="M42.4 26.6 Q45 25.6 47.6 26.4 M52.4 26.4 Q55 25.6 57.6 26.6" stroke="#2a1d22" stroke-width=".9" fill="none" stroke-linecap="round"/>
+   <ellipse cx="42.4" cy="36.6" rx="2.2" ry="1.2" fill="#ff9fb0" opacity=".55"/><ellipse cx="57.6" cy="36.6" rx="2.2" ry="1.2" fill="#ff9fb0" opacity=".55"/>
+   <path d="M50.2 34.6 L49.7 36.4" stroke="#e5b3a1" stroke-width=".7" stroke-linecap="round"/>
+   <g class="mk-mouth"><path class="mk-ms" d="M48 39.4 Q50 40.9 52 39.4" stroke="#d9667a" stroke-width="1.1" fill="none" stroke-linecap="round"/>
+    <ellipse class="mk-mo" cx="50" cy="39.8" rx="1.5" ry="1.2" fill="#cf5569"/><path class="mk-md" d="M48 40.4 Q50 39 52 40.4" stroke="#d9667a" stroke-width="1.1" fill="none" stroke-linecap="round"/>
+    <path class="mk-mc" d="M47.8 39.2 Q49 40.6 50 39.4 Q51 40.6 52.2 39.2" stroke="#d9667a" stroke-width="1" fill="none" stroke-linecap="round"/></g>
+   <path d="M37.5 29 Q38 16 50 15.6 Q62 16 62.5 29 Q60 22 55 21 Q56 26 53 28 Q52 22 47 21.6 Q46 27 41 29 Q42 24 40.6 22 Q38.6 25 37.5 29 Z" fill="#2a1d22"/>
+   <g class="mk-hat"><path d="M40 17 Q50 12.4 60 17" stroke="#ffcc33" stroke-width="1.5" fill="none"/><path d="M40.4 15.6 Q44 13 48 14.5 Q47.6 18.1 44 18.3 Q41 18.1 40.4 15.6 Z M59.6 15.6 Q56 13 52 14.5 Q52.4 18.1 56 18.3 Q59 18.1 59.6 15.6 Z" fill="#3a4a6a"/><path d="M42 15 Q44 14 46 14.6 M54 14.6 Q56 14 58 15" stroke="#9fb6ff" stroke-width=".7" fill="none"/></g>
+  </g>
+ </g>
+ <g class="mk-fx"></g>
+</svg>`}
 const MK_HATS={hard:{n:'Каска',lv:1},cap:{n:'Кепка',lv:2},bow:{n:'Бантик',lv:3},beanie:{n:'Шапка',lv:4},crown:{n:'Корона прораба',lv:6}};
 const MK_FOOD=[['🍩','Пончик',{food:18,mood:6}],['🍎','Яблоко',{food:12,mood:3}],['🍜','Рамен',{food:35,mood:5}],['☕','Кофе',{food:4,energy:25,mood:2}],['🍫','Шоколадка',{food:8,mood:12}]];
 let MKA=null,mkEl=null;
 function mkLoad(){let d={};try{d=JSON.parse(localStorage.getItem(MK_KEY)||'{}')}catch(e){}
-  return Object.assign({on:true,name:'Мика',tips:true,hat:'hard',food:80,mood:80,energy:90,xp:0,xpDay:'',xpToday:0,last:Date.now(),chat:[],greet:'',seen:{}},d)}
+  return Object.assign({on:true,skin:'bike',name:'Мика',tips:true,hat:'hard',food:80,mood:80,energy:90,xp:0,xpDay:'',xpToday:0,last:Date.now(),chat:[],greet:'',seen:{}},d)}
 function mkSave(){try{const c={...MKA,chat:(MKA.chat||[]).slice(-60)};localStorage.setItem(MK_KEY,JSON.stringify(c))}catch(e){}}
 const mkLv=()=>Math.floor(Math.sqrt((MKA.xp||0)/25))+1;
 const mkLvNext=()=>{const l=mkLv();return {cur:(l-1)*(l-1)*25,next:l*l*25}};
@@ -4376,7 +4423,7 @@ function mkHat(k){
   if(k==='bow')return `<g transform="translate(66 16) rotate(18)"><path d="M0 0 L-11 -7 L-11 7 Z M0 0 L11 -7 L11 7 Z" fill="#ff7aa8"/><circle r="3" fill="#ff5c93"/></g>`;
   if(k==='crown')return `<path d="M30 24 L34 8 L42 18 L50 5 L58 18 L66 8 L70 24 Z" fill="#ffd24a" stroke="#e0a91c" stroke-width="1.2"/><circle cx="50" cy="15" r="2.2" fill="#ff6b6b"/><circle cx="38" cy="18" r="1.6" fill="#6bd1ff"/><circle cx="62" cy="18" r="1.6" fill="#6bd1ff"/>`;
   return `<path d="M24 34 Q25 9 50 8 Q75 9 76 34 Z" fill="#ffcc33"/><path d="M47 9 L53 9 L53 31 L47 31 Z" fill="#f0b81f"/><path d="M19 33 Q50 39 81 33 L81 37 Q50 43 19 37 Z" fill="#e8ae17"/><path d="M33 16 Q37 12 42 11" stroke="#fff6c9" stroke-width="2" fill="none" stroke-linecap="round" opacity=".8"/>`}
-function mkSVG(hat){return `<svg class="mks" viewBox="0 0 100 142" aria-hidden="true">
+function mkSVG(hat){return `<svg class="mks" data-skin="hard" viewBox="0 0 100 142" aria-hidden="true">
  <ellipse class="mk-shadow" cx="50" cy="139" rx="20" ry="3.2" fill="rgba(0,0,0,.18)"/>
  <g class="mk-legs"><g class="mk-lgL"><rect x="40" y="104" width="9" height="27" rx="4" fill="#7fdcbf"/><rect x="37.5" y="129" width="12.5" height="8" rx="4" fill="#2b2f36"/></g>
   <g class="mk-lgR"><rect x="51" y="104" width="9" height="27" rx="4" fill="#7fdcbf"/><rect x="50" y="129" width="12.5" height="8" rx="4" fill="#2b2f36"/></g></g>
@@ -4399,7 +4446,8 @@ function mkSVG(hat){return `<svg class="mks" viewBox="0 0 100 142" aria-hidden="
      <circle cx="42" cy="46.6" r="1.8" fill="#fff"/><circle cx="61" cy="46.6" r="1.8" fill="#fff"/><circle cx="39.2" cy="51.6" r=".9" fill="#fff"/><circle cx="58.2" cy="51.6" r=".9" fill="#fff"/></g>
     <g class="mk-eh"><path d="M36 50 Q40.5 45 45 50 M55 50 Q59.5 45 64 50" stroke="#3a2742" stroke-width="2.2" fill="none" stroke-linecap="round"/></g>
     <g class="mk-ec"><path d="M36 50 Q40.5 53 45 50 M55 50 Q59.5 53 64 50" stroke="#3a2742" stroke-width="2" fill="none" stroke-linecap="round"/></g>
-    <g class="mk-ex"><path d="M37 46 L44 50 L37 53 M63 46 L56 50 L63 53" stroke="#3a2742" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g></g>
+    <g class="mk-ex"><path d="M37 46 L44 50 L37 53 M63 46 L56 50 L63 53" stroke="#3a2742" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>
+    <g class="mk-ew"><ellipse cx="40.5" cy="49" rx="4.4" ry="5.8" fill="#3a2742"/><ellipse cx="40.5" cy="51.5" rx="3" ry="2.6" fill="#7a5a9e"/><circle cx="42" cy="46.6" r="1.8" fill="#fff"/><path d="M55 50 Q59.5 45.5 64 50" stroke="#3a2742" stroke-width="2.2" fill="none" stroke-linecap="round"/></g></g>
    <path d="M35.5 42 Q40 40 44.5 41.6 M55.5 41.6 Q60 40 64.5 42" stroke="#4a2f2f" stroke-width="1.4" fill="none" stroke-linecap="round" class="mk-brow"/>
    <ellipse cx="35" cy="57.5" rx="4" ry="2.3" fill="#ff9fb0" opacity=".55"/><ellipse cx="65" cy="57.5" rx="4" ry="2.3" fill="#ff9fb0" opacity=".55"/>
    <g class="mk-mouth"><path class="mk-ms" d="M46.5 59.5 Q50 62.5 53.5 59.5" stroke="#b5485a" stroke-width="1.7" fill="none" stroke-linecap="round"/>
@@ -4418,7 +4466,7 @@ function mkGround(){const t=document.querySelector('.tabs');if(t&&getComputedSty
 function mkMaxX(){const f=document.getElementById('fab');if(f&&!f.hidden&&getComputedStyle(f).display!=='none'){const r=f.getBoundingClientRect();if(r.width)return Math.max(60,r.left-72)}return innerWidth-90}
 function mkMount(){
   if(mkEl)mkEl.remove();if(!MKA.on)return;
-  mkEl=document.createElement('div');mkEl.id='mika';mkEl.innerHTML=`<div class="mkb" hidden></div><div class="mkw">${mkSVG(MKA.hat)}<span class="mkz">z<b>z</b><i>z</i></span></div>`;
+  mkEl=document.createElement('div');mkEl.id='mika';mkEl.innerHTML=`<div class="mkb" hidden></div><div class="mkw">${mkSVGFor()}<span class="mkz">z<b>z</b><i>z</i></span></div>`;
   document.body.appendChild(mkEl);
   mkS.x=Math.max(10,Math.min(innerWidth-80,innerWidth*0.12));mkPlace();
   const w=mkEl.querySelector('.mkw');let down=null;
@@ -4437,9 +4485,10 @@ function mkPlace(){if(!mkEl)return;const g0=mkGround();mkEl.style.transform=`tra
   mkEl.querySelector('.mkw').style.transform=`scaleX(${mkS.dir<0?-1:1})`}
 function mkSet(st,ms){if(!mkEl)return;['walk','wave','jump','dance','sleep','eat','drag','sad','spin','pet'].forEach(c=>mkEl.classList.toggle(c,c===st));
   mkS.state=st;mkS.until=ms?performance.now()+ms:0;mkFace()}
-function mkAct(a){const T={wave:1800,jump:900,dance:3200,spin:900,eat:2200,pet:1800};mkSet(a,T[a]||1500)}
+function mkWink(ms=800){if(!mkEl)return;mkEl.classList.add('wink');mkFace();setTimeout(()=>{if(mkEl){mkEl.classList.remove('wink');mkFace()}},ms)}
+function mkAct(a){if(a==='wink')return mkWink();const T={wave:1800,jump:900,dance:3200,spin:900,eat:2200,pet:1800};if(a==='wave'&&MKA.skin!=='hard')setTimeout(()=>mkWink(700),500);mkSet(a,T[a]||1500)}
 function mkFace(){if(!mkEl)return;const st=mkS.state,sad=MKA.food<20||MKA.mood<20;
-  const eyes=st==='sleep'?'c':st==='drag'?'x':['jump','dance','pet','eat'].includes(st)||MKA.mood>85&&st==='wave'?'h':'o';
+  const eyes=mkEl.classList.contains('wink')&&st!=='sleep'&&st!=='drag'?'w':st==='sleep'?'c':st==='drag'?'x':['jump','dance','pet','eat'].includes(st)||MKA.mood>85&&st==='wave'?'h':'o';
   const mouth=st==='drag'||st==='eat'?'o':st==='sleep'?'c':sad?'d':mkEl.classList.contains('talk')?'o':'s';
   mkEl.dataset.e=eyes;mkEl.dataset.m=mouth;mkEl.classList.toggle('sadm',sad&&st!=='sleep')}
 function mkLoop(t){mkS.raf=requestAnimationFrame(mkLoop);if(!mkEl)return;const dt=Math.min(0.05,(t-mkS.lastT)/1000);mkS.lastT=t;
@@ -4458,7 +4507,7 @@ function mkLoop(t){mkS.raf=requestAnimationFrame(mkLoop);if(!mkEl)return;const d
     if(t>mkS.next){mkS.next=0;const r=Math.random();
       if(mkNight()||MKA.sleep||MKA.energy<8){mkSet('sleep');if(!MKA.sleep&&MKA.energy<8)mkSay('Я так устала… посплю чуть-чуть 😴','',3000)}
       else if(r<0.62){mkS.tx=12+Math.random()*Math.max(40,mkMaxX()-12);mkSet('walk')}
-      else if(r<0.72)mkAct('wave');else if(r<0.8&&MKA.mood>60)mkAct('dance');else if(r<0.86)mkAct('spin');else mkS.next=t+2000+Math.random()*4000}}
+      else if(r<0.68)mkAct('wave');else if(r<0.74)mkWink(900);else if(r<0.8&&MKA.mood>60)mkAct('dance');else if(r<0.86)mkAct('spin');else mkS.next=t+2000+Math.random()*4000}}
   // подсказки
   if(MKA.tips&&t>mkS.tipAt&&!sheets.length&&!document.hidden&&mkS.state!=='sleep'){mkS.tipAt=t+(4+Math.random()*4)*60000;if(mkS.tipAt0){const tip=mkTip();if(tip)mkSay(tip,'',7000)}mkS.tipAt0=1}
   // мигание
@@ -4519,7 +4568,7 @@ function mkReply(q){const s=String(q||'').toLowerCase().replace(/ё/g,'е').trim
   if(!W&&has('месяц','прибыл','осталось нам','заработали','доход','итог'))return (()=>{const m=monthStats(T.slice(0,7));return {t:`За этот месяц:\nпришло за работу ${money(m.recWork)}\nнаёмным ${money(m.wages)}, расходы ${money(m.fuel+m.other)}\nосталось вам: ${money(m.profit)} ${m.profit>=0?'💰':'😬'}`}})();
   if(has('посчитай','сколько будет')||/^[\d\s.,+\-*/()×x]+$/.test(s)&&/\d/.test(s)&&/[+\-*/×x]/.test(s)){const ex=s.replace(/посчитай|сколько будет|=|\?/g,'');const v=evalNum(ex);return {t:v||v===0?`${ex.trim()} = ${qf(r2(v))} 🧮`:'Не поняла пример 🤔 Напиши, например: 2.4*3+1.2'}}
   if(has('шут','анекдот','смешн','рассмеши'))return {t:MK_JOKES[Math.floor(Math.random()*MK_JOKES.length)],a:'dance'};
-  if(has('спасибо','дякую','молодец','умница','класс'))return {t:'Всегда пожалуйста! 💗',a:'jump',mood:4};
+  if(has('спасибо','дякую','молодец','умница','класс'))return {t:'Всегда пожалуйста! 💗',a:'wink',mood:4};
   if(has('люблю','красив','мила','свидан','замуж','поцел'))return {t:'Ой, смущаешь 😳 Давай лучше вместе закроем все задачи — это самое романтичное на стройке 😄',a:'spin'};
   if(has('есть хочешь','голод','покорм','кушать'))return {t:MKA.food<70?'Очень! Выбери что-нибудь внизу 🍩':'Я сытая, спасибо! 😊',feed:1};
   if(has('спать','спокойной','спи','устала'))return {t:'Тогда я посплю. Разбуди касанием 😴',sleep:1};
@@ -4533,7 +4582,7 @@ function mkSheet(){return ()=>{mkTick();const lv=mkLv(),nx=mkLvNext(),pr=Math.ro
   const bar=(l,v2,c)=>`<div class="mkbar"><span>${l}</span><i><b style="width:${v2}%;background:${c}"></b></i><small>${v2}%</small></div>`;
   const msgs=(MKA.chat||[]).slice(-30);
   return {title:`${MKA.name} · ур. ${lv}`,html:`
-   <div class="mkhead"><div class="mkava">${mkSVG(MKA.hat)}</div><div style="flex:1;min-width:0">
+   <div class="mkhead"><div class="mkava">${mkSVGFor()}</div><div style="flex:1;min-width:0">
      ${bar('🍩 Сытость',MKA.food,'#ffb547')}${bar('💗 Настроение',MKA.mood,'#ff7aa8')}${bar('⚡ Энергия',MKA.energy,'#7fdcbf')}
      <div class="mkbar"><span>⭐ Опыт</span><i><b style="width:${pr}%;background:#a58bff"></b></i><small>ур.${lv}</small></div></div></div>
    <div class="chips" style="flex-wrap:wrap;margin-top:10px">${MK_FOOD.map(([e,t],i)=>`<button class="chip" data-s="mkFeed" data-id="${i}">${e} ${t}</button>`).join('')}
@@ -4543,7 +4592,8 @@ function mkSheet(){return ()=>{mkTick();const lv=mkLv(),nx=mkLvNext(),pr=Math.ro
    <div class="qadd" style="margin-top:8px"><input id="mkin" placeholder="Напиши сообщение…" enterkeyhint="send" autocomplete="off"><button class="btn p" data-s="mkSend">➤</button></div>
    <details style="margin-top:14px"><summary class="muted">⚙️ Настройки помощницы</summary>
     ${F('Имя',I('mkname',MKA.name))}
-    <div class="f"><span>Наряд</span><div class="chips" style="flex-wrap:wrap">${Object.entries(MK_HATS).map(([k,h])=>`<button class="chip ${MKA.hat===k?'on':''}" data-s="mkHat" data-id="${k}" ${lv<h.lv?'disabled':''}>${h.n}${lv<h.lv?' 🔒'+h.lv:''}</button>`).join('')}</div></div>
+    <div class="f"><span>Образ</span><div class="chips" style="flex-wrap:wrap">${Object.entries(MK_SKINS).map(([k,t])=>`<button class="chip ${(MKA.skin||'bike')===k?'on':''}" data-s="mkSkin" data-id="${k}">${t}</button>`).join('')}</div></div>
+    ${MKA.skin==='hard'?`<div class="f"><span>Наряд</span><div class="chips" style="flex-wrap:wrap">${Object.entries(MK_HATS).map(([k,h])=>`<button class="chip ${MKA.hat===k?'on':''}" data-s="mkHat" data-id="${k}" ${lv<h.lv?'disabled':''}>${h.n}${lv<h.lv?' 🔒'+h.lv:''}</button>`).join('')}</div></div>`:''}
     <div class="chips" style="flex-wrap:wrap"><button class="chip ${MKA.tips?'on':''}" data-s="mkTips">💡 Подсказки ${MKA.tips?'вкл':'выкл'}</button><button class="chip" data-s="mkOff">🙈 Убрать с экрана</button><button class="chip" data-s="mkClr">🧹 Очистить переписку</button></div>
     <p class="muted sm" style="margin-top:8px">Опыт растёт, когда вы работаете в приложении и заботитесь о ${esc(MKA.name)}. Её состояние хранится только на этом телефоне. Вернуть на экран: Меню → «${esc(MKA.name)}».</p></details>`,
   init(){const box=g('mkchat');const scr=()=>{box.scrollTop=box.scrollHeight};scr();
@@ -4561,6 +4611,7 @@ function mkSheet(){return ()=>{mkTick();const lv=mkLv(),nx=mkLvNext(),pr=Math.ro
     SS.mkSleep=()=>{MKA.sleep=!MKA.sleep;mkSave();if(MKA.sleep){mkSet('sleep');mkSay('Спокойной ночи 🌙','',2000)}else{mkSet('idle');mkAct('wave');mkSay('Доброе утро! ☀️','',2000)}replaceSheet(sheets[sheets.length-1])};
     SS.mkDance=()=>{if(MKA.energy<10)return mkSay('Нет сил танцевать… дай кофе ☕','',2500);MKA.energy=mkClamp(MKA.energy-4);MKA.mood=mkClamp(MKA.mood+3);mkSave();backThen(()=>{mkAct('dance');mkHearts(4,'🎵')})};
     SS.mkHat=el=>{MKA.hat=el.dataset.id;mkSave();const h=mkEl&&mkEl.querySelector('.mk-hat');if(h)h.innerHTML=mkHat(MKA.hat);replaceSheet(sheets[sheets.length-1]);mkAct('spin')};
+    SS.mkSkin=el=>{MKA.skin=el.dataset.id;mkSave();if(mkEl){const w=mkEl.querySelector('.mkw');w.innerHTML=mkSVGFor()+'<span class="mkz">z<b>z</b><i>z</i></span>'}mkFace();replaceSheet(sheets[sheets.length-1]);setTimeout(()=>{mkAct('spin');mkWink(900)},300)};
     SS.mkTips=()=>{MKA.tips=!MKA.tips;mkSave();replaceSheet(sheets[sheets.length-1])};
     SS.mkOff=()=>{MKA.on=false;mkSave();if(mkEl){mkEl.remove();mkEl=null}toast(`${MKA.name} спряталась. Вернуть: Меню → «${MKA.name}»`);back()};
     SS.mkClr=()=>{MKA.chat=[];mkSave();replaceSheet(sheets[sheets.length-1])};
@@ -4586,7 +4637,7 @@ function mikaInit(){MKA=mkLoad();mkTick();
   setInterval(()=>{mkTick();mkFace()},60000);
   if(MKA.on)setTimeout(()=>{mkMount();const d=today();
     if(MKA.greet!==d){MKA.greet=d;mkSave();setTimeout(()=>{const h=new Date().getHours(),ev=S.events.filter(e=>e.date===d&&(!isWorker()||(e.who||[]).includes(me())));
-      mkAct('wave');mkSay(`${h<12?'Доброе утро':h<18?'Добрый день':'Добрый вечер'}${me()?', '+me():''}! ${ev.length?'Сегодня '+(ev.length===1?'выход: '+(oname(ev[0].objectId)||'—'):'выходов: '+ev.length):'Сегодня выходов нет'} ${MKA.food<40?'\nИ я проголодалась 🥺':''}`,'',6000)},900)}
+      mkAct('wave');setTimeout(()=>mkWink(900),1900);mkSay(`${h<12?'Доброе утро':h<18?'Добрый день':'Добрый вечер'}${me()?', '+me():''}! ${ev.length?'Сегодня '+(ev.length===1?'выход: '+(oname(ev[0].objectId)||'—'):'выходов: '+ev.length):'Сегодня выходов нет'} ${MKA.food<40?'\nИ я проголодалась 🥺':''}`,'',6000)},900)}
     else if(mkNight()||MKA.sleep)mkSet('sleep')},600);
 }
 
